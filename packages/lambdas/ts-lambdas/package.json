@@ -1,0 +1,32 @@
+{
+  "name": "@crossword-solver/ts-lambdas",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "@crossword-solver/ts-lambdas": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "dependencies": {
+    "@aws-lambda-powertools/logger": "catalog:",
+    "@aws-lambda-powertools/metrics": "catalog:",
+    "@aws-lambda-powertools/parameters": "catalog:",
+    "@aws-lambda-powertools/parser": "catalog:",
+    "@aws-lambda-powertools/tracer": "catalog:",
+    "@aws-sdk/client-appconfigdata": "catalog:",
+    "@middy/core": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "catalog:",
+    "rolldown": "^1.2.12"
+  }
+}

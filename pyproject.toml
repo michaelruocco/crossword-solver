@@ -1,0 +1,21 @@
+[project]
+name = "nx-workspace"
+version = "1.0.0"
+dependencies = [ "crossword-solver-create-puzzle" ]
+
+[tool.uv.workspace]
+members = [ "packages/lambdas/python-lambdas/create-puzzle" ]
+
+[tool.uv.sources.crossword-solver-create-puzzle]
+workspace = true
+
+[dependency-groups]
+dev = [
+  "ruff==0.16.9",
+  "autopep8>=2.3.1",
+  "pytest>=8.3.4",
+  "pytest-sugar>=1.0.0",
+  "pytest-cov>=6.0.0",
+  "pytest-html>=4.1.1",
+  "ty==0.0.84"
+]
