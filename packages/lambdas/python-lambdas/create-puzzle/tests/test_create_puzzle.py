@@ -1,8 +1,7 @@
-import importlib
 import json
 import uuid
 
-create_puzzle = importlib.import_module("crossword_solver_create_puzzle.create-puzzle.create_puzzle")
+from crossword_solver_create_puzzle.create_puzzle import create_puzzle
 
 
 def build_event() -> dict:

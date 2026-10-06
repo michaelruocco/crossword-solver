@@ -23,7 +23,7 @@ resource "aws_lambda_function" "create_puzzle" {
   role = aws_iam_role.create_puzzle.arn
 
   runtime = "python3.14"
-  handler = "crossword_solver_create_puzzle.create-puzzle.create_puzzle.lambda_handler"
+  handler = "crossword_solver_create_puzzle.create_puzzle.create_puzzle.lambda_handler"
 
   architectures = ["x86_64"]
 

@@ -14,7 +14,7 @@
     "components": [
       {
         "generator": "py#lambda-function",
-        "path": "crossword_solver_create_puzzle/create-puzzle/create_puzzle.py",
+        "path": "crossword_solver_create_puzzle/create_puzzle/create_puzzle.py",
         "name": "create-puzzle"
       }
     ]
