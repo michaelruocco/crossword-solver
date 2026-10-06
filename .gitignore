@@ -10,6 +10,7 @@ node_modules
 /.idea
 .project
 .classpath
+.coverage
 .c9/
 *.launch
 .settings/

@@ -15,6 +15,10 @@ addopts = """
  --junitxml='../../../../reports/packages/lambdas/python-lambdas/create-puzzle/unittests/junit.xml'
 """
 
+markers = [
+    "integration: tests that require external resources or infrastructure",
+]
+
 [tool.hatch.build.targets.wheel]
 packages = [ "crossword_solver_create_puzzle" ]
 

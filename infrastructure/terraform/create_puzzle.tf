@@ -31,7 +31,7 @@ resource "aws_lambda_function" "create_puzzle" {
   source_code_hash = data.archive_file.create_puzzle.output_base64sha256
 
   timeout     = 30
-  memory_size = 512
+  memory_size = 2048
 }
 
 resource "aws_lambda_permission" "create_puzzle_api_gateway" {

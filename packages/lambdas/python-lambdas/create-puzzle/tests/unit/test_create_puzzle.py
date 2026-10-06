@@ -1,10 +1,13 @@
 import json
 import uuid
+from datetime import datetime, timezone
+from unittest.mock import patch
 
 from crossword_solver_create_puzzle.create_puzzle import create_puzzle
+from crossword_solver_create_puzzle.create_puzzle.puzzle import Puzzle
 
 
-def build_event() -> dict:
+def build_event(body: dict) -> dict:
     return {
         "version": "2.0",
         "routeKey": "POST /v1/puzzles",
@@ -29,16 +32,35 @@ def build_event() -> dict:
             "time": "01/Jan/2024:00:00:00 +0000",
             "timeEpoch": 1704067200000,
         },
+        "body": json.dumps(body),
         "isBase64Encoded": False,
     }
 
 
-def test_handler_returns_created_puzzle_id(lambda_context):
-    response = create_puzzle.lambda_handler(build_event(), lambda_context)
+def test_handler_returns_created_puzzle(lambda_context):
+    puzzle = Puzzle(
+        id=uuid.uuid4(),
+        name="puzzle14",
+        format=".jpg",
+        hash="hash-value",
+        created_at=datetime.now(timezone.utc),
+    )
+
+    image_url = "https://example.com/puzzle14.jpg"
+    with patch.object(create_puzzle.puzzle_creator, "create", return_value=puzzle) as mock_create:
+        response = create_puzzle.lambda_handler(build_event({"imageUrl": image_url}), lambda_context)
+
+    mock_create.assert_called_once_with(image_url)
 
     assert response["statusCode"] == 201
     assert response["headers"]["content-type"] == "application/json"
 
     body = json.loads(response["body"])
-    assert set(body) == {"id"}
-    assert uuid.UUID(body["id"])
+    assert body == {
+        "id": str(puzzle.id),
+        "name": puzzle.name,
+        "format": puzzle.format,
+        "hash": puzzle.hash,
+        "createdAt": puzzle.created_at.isoformat().replace("+00:00", "Z"),
+    }
+
