@@ -29,6 +29,7 @@ def to_request(event: APIGatewayProxyEventV2Model) -> CreatePuzzleRequest:
 
     return CreatePuzzleRequest.model_validate(json.loads(event.body))
 
+
 def to_response(puzzle: Puzzle) -> PuzzleResponse:
     return PuzzleResponse(
         id=puzzle.id,
