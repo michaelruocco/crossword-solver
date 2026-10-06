@@ -19,17 +19,6 @@
     ]
   },
   "targets": {
-    "build": {
-      "executor": "@nx/esbuild:esbuild",
-      "outputs": ["{options.outputPath}"],
-      "options": {
-        "outputPath": "packages/lambdas/ts-lambdas/dist",
-        "main": "packages/lambdas/ts-lambdas/src/index.ts",
-        "tsConfig": "packages/lambdas/ts-lambdas/tsconfig.lib.json",
-        "format": ["esm"],
-        "declarationRootDir": "packages/lambdas/ts-lambdas/src"
-      }
-    },
     "bundle": {
       "executor": "nx:run-commands",
       "dependsOn": ["compile"],

@@ -17,15 +17,31 @@ const tracer = new Tracer();
 const logger = new Logger();
 const metrics = new Metrics();
 
+export const automaticAnswersEventSchema = APIGatewayProxyEventV2Schema.extend({
+  pathParameters: z.object({
+    puzzleId: z.string().min(1),
+    attemptId: z.string().min(1),
+  }),
+});
+
 export const automaticAnswers = async (
-  event: z.infer<typeof APIGatewayProxyEventV2Schema>,
+  event: z.infer<typeof automaticAnswersEventSchema>,
 ): Promise<APIGatewayProxyResultV2> => {
   logger.info('Received event', event);
 
-  // TODO: implement
+  const { puzzleId, attemptId } = event.pathParameters;
+  logger.info('Generating automatic answers for puzzle attempt', {
+    puzzleId,
+    attemptId,
+  });
+
   return {
-    statusCode: 200,
-    body: '',
+    statusCode: 201,
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({
+      id: attemptId,
+      puzzle: { id: puzzleId },
+    }),
   };
 };
 
@@ -33,5 +49,5 @@ export const handler = middy()
   .use(captureLambdaHandler(tracer))
   .use(injectLambdaContext(logger))
   .use(logMetrics(metrics))
-  .use(parser({ schema: APIGatewayProxyEventV2Schema }))
+  .use(parser({ schema: automaticAnswersEventSchema }))
   .handler(automaticAnswers);

@@ -9,3 +9,7 @@ output "create_attempt_function_name" {
 output "automatic_answers_function_name" {
   value = aws_lambda_function.automatic_answers.function_name
 }
+
+output "api_endpoint" {
+  value = aws_apigatewayv2_api.http.api_endpoint
+}
