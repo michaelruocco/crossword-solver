@@ -1,6 +1,5 @@
 from .image.default_image_downloader import DefaultImageDownloader
 from datetime import datetime, timezone
-from .image.image import Image
 from .puzzle import Puzzle
 import uuid as uid
 
