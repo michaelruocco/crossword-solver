@@ -1,3 +1,43 @@
+resource "aws_s3_object" "tesseract_layer" {
+  bucket = aws_s3_bucket.lambda_layers.id
+  key    = "tesseract/tesseract-layer.zip"
+  source = "../tesseract/build/tesseract-layer.zip"
+
+  source_hash = filebase64sha256("../tesseract/build/tesseract-layer.zip")
+}
+
+resource "aws_lambda_layer_version" "tesseract" {
+  layer_name = "crossword-solver-${var.environment}-tesseract"
+
+  s3_bucket = aws_s3_bucket.lambda_layers.id
+  s3_key    = aws_s3_object.tesseract_layer.key
+
+  source_code_hash = filebase64sha256("../tesseract/build/tesseract-layer.zip")
+
+  compatible_runtimes      = ["python3.14"]
+  compatible_architectures = ["x86_64"]
+}
+
+resource "aws_s3_object" "opencv_layer" {
+  bucket = aws_s3_bucket.lambda_layers.id
+  key    = "opencv/opencv-layer.zip"
+  source = "../opencv/build/opencv-layer.zip"
+
+  source_hash = filebase64sha256("../opencv/build/opencv-layer.zip")
+}
+
+resource "aws_lambda_layer_version" "opencv" {
+  layer_name = "crossword-solver-${var.environment}-opencv"
+
+  s3_bucket = aws_s3_bucket.lambda_layers.id
+  s3_key    = aws_s3_object.opencv_layer.key
+
+  source_code_hash = filebase64sha256("../opencv/build/opencv-layer.zip")
+
+  compatible_runtimes      = ["python3.14"]
+  compatible_architectures = ["x86_64"]
+}
+
 data "archive_file" "create_puzzle" {
   type = "zip"
 
@@ -60,8 +100,15 @@ resource "aws_lambda_function" "create_puzzle" {
   environment {
     variables = {
       CLUE_EXTRACTOR_MODEL_ID = local.create_puzzle_clue_extractor_model_id
+      LD_LIBRARY_PATH         = "/opt/lib:/var/lang/lib:/lib64:/usr/lib64:/var/runtime:/var/task"
+      TESSDATA_PREFIX         = "/opt/share/tessdata"
     }
   }
+
+  layers = [
+    aws_lambda_layer_version.tesseract.arn,
+    aws_lambda_layer_version.opencv.arn
+  ]
 }
 
 resource "aws_lambda_permission" "create_puzzle_api_gateway" {

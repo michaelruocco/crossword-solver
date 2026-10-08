@@ -1,6 +1,8 @@
 import json
 import os
 
+import cv2
+import pytesseract
 from aws_lambda_powertools import Logger, Metrics, Tracer
 from aws_lambda_powertools.metrics import MetricUnit
 from aws_lambda_powertools.utilities.parser import event_parser
@@ -54,6 +56,9 @@ def to_response(puzzle: Puzzle) -> PuzzleResponse:
 def lambda_handler(event: APIGatewayProxyEventV2Model, context: LambdaContext) -> APIGatewayProxyResponseV2:
     logger.info("Received event", extra={"event": event.model_dump()})
     metrics.add_metric(name="InvocationCount", unit=MetricUnit.Count, value=1)
+
+    logger.info("OpenCV version", extra={"version": cv2.__version__})
+    logger.info("Tesseract version", extra={"version": str(pytesseract.get_tesseract_version())})
 
     try:
         request = to_request(event)

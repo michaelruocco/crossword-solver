@@ -45,6 +45,7 @@
       "outputs": ["{workspaceRoot}/dist/{projectRoot}/bundle-x86"],
       "options": {
         "commands": [
+          "rm -rf dist/{projectRoot}/bundle-x86",
           "uv export --frozen --no-dev --no-editable --project {projectRoot} --package crossword_solver.create_puzzle -o dist/{projectRoot}/bundle-x86/requirements.txt",
           "uv pip install -n --no-deps --no-installer-metadata --no-compile-bytecode --python-platform x86_64-manylinux_2_28 --python-version 3.14 --target dist/{projectRoot}/bundle-x86 -r dist/{projectRoot}/bundle-x86/requirements.txt"
         ],
