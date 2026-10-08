@@ -24,7 +24,7 @@ class Clue:
     def total_length(self) -> int:
         return sum(self.lengths)
 
-    def normalize_hyphens(self) -> "Clue":
+    def normalize_hyphens(self) -> Clue:
         return Clue(
             id=self.id,
             text=normalize_hyphens(self.text),
@@ -32,7 +32,7 @@ class Clue:
             type=self.type,
         )
 
-    def with_type(self, clue_type: ClueType) -> "Clue":
+    def with_type(self, clue_type: ClueType) -> Clue:
         return Clue(
             id=self.id,
             text=self.text,

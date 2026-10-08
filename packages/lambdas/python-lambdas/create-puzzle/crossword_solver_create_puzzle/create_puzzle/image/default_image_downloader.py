@@ -1,18 +1,20 @@
-from io import BytesIO
-import time
 import logging
-from urllib.request import urlopen
+import time
+from io import BytesIO
 from urllib.error import HTTPError, URLError
-from .image_error import ImageError
+from urllib.request import urlopen
 
 from PIL import Image as PILImage
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
+
 from .hash_factory import HashFactory
 from .image import Image
 from .image_converter import ImageConverter
+from .image_error import ImageError
 from .image_rotator import ImageRotator
 from .url_converter import UrlConverter
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 
 class DefaultImageDownloader:
@@ -71,6 +73,4 @@ class DefaultImageDownloader:
             )
             return self.rotator.rotate_if_required(image)
         except (HTTPError, URLError) as e:
-            raise ImageError(
-                f"Failed to download image from {image_url}"
-            ) from e
+            raise ImageError(f"Failed to download image from {image_url}") from e

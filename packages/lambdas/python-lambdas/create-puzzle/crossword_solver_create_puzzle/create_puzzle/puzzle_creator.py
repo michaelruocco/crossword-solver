@@ -1,7 +1,9 @@
-from .image.default_image_downloader import DefaultImageDownloader
-from datetime import datetime, timezone
-from .puzzle import Puzzle
 import uuid as uid
+from datetime import UTC, datetime
+
+from crossword_solver_domain_entities.puzzle import Puzzle
+
+from .image.default_image_downloader import DefaultImageDownloader
 
 
 class PuzzleCreator:
@@ -11,9 +13,5 @@ class PuzzleCreator:
     def create(self, image_url: str) -> Puzzle:
         image = self.image_downloader.download_image(image_url)
         return Puzzle(
-            id=uid.uuid4(),
-            name=image.name,
-            format=image.format,
-            hash=image.hash,
-            created_at=datetime.now(timezone.utc)
+            id=uid.uuid4(), name=image.name, format=image.format, hash=image.hash, created_at=datetime.now(UTC)
         )

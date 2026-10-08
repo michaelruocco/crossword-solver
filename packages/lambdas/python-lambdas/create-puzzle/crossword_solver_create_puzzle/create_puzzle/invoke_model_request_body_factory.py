@@ -3,7 +3,6 @@ import json
 
 
 class InvokeModelRequestBodyFactory:
-
     def to_request_body(
         self,
         image_bytes: bytes,

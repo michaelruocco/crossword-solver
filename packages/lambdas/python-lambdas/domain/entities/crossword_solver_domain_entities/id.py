@@ -9,11 +9,11 @@ class Id:
     direction: Direction
 
     @classmethod
-    def across(cls, number: int) -> "Id":
+    def across(cls, number: int) -> Id:
         return cls(number, Direction.ACROSS)
 
     @classmethod
-    def down(cls, number: int) -> "Id":
+    def down(cls, number: int) -> Id:
         return cls(number, Direction.DOWN)
 
     def __str__(self) -> str:

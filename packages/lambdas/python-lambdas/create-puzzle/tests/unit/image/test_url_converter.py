@@ -2,6 +2,7 @@ import pytest
 
 from crossword_solver_create_puzzle.create_puzzle.image.url_converter import UrlConverter
 
+
 @pytest.fixture
 def converter():
     return UrlConverter()
@@ -11,7 +12,7 @@ def test_to_filename(converter):
     url = "https://example.com/puzzles/puzzle14.jpg"
 
     filename = converter.to_filename(url)
-    
+
     assert filename == "puzzle14.jpg"
 
 

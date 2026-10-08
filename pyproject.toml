@@ -1,12 +1,18 @@
 [project]
 name = "nx-workspace"
 version = "1.0.0"
-dependencies = [ "crossword-solver-create-puzzle" ]
+dependencies = [ "crossword-solver-create-puzzle", "crossword-solver-domain-entities" ]
 
 [tool.uv.workspace]
-members = [ "packages/lambdas/python-lambdas/create-puzzle" ]
+members = [
+  "packages/lambdas/python-lambdas/create-puzzle",
+  "packages/lambdas/python-lambdas/domain/entities"
+]
 
 [tool.uv.sources.crossword-solver-create-puzzle]
+workspace = true
+
+[tool.uv.sources.crossword-solver-domain-entities]
 workspace = true
 
 [dependency-groups]

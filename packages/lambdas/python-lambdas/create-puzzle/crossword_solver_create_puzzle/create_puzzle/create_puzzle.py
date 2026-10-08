@@ -7,10 +7,10 @@ from aws_lambda_powertools.utilities.parser import event_parser
 from aws_lambda_powertools.utilities.parser.models import APIGatewayProxyEventV2Model
 from aws_lambda_powertools.utilities.typing import LambdaContext
 from aws_lambda_typing.responses import APIGatewayProxyResponseV2
+from crossword_solver_domain_entities.puzzle import Puzzle
 
 from .create_puzzle_request import CreatePuzzleRequest
 from .puzzle_creator import PuzzleCreator
-from .puzzle import Puzzle
 from .puzzle_response import PuzzleResponse
 
 os.environ["POWERTOOLS_METRICS_NAMESPACE"] = "CreatePuzzle"

@@ -1,6 +1,6 @@
 import pytest
 
-from crossword_solver_create_puzzle.create_puzzle.hyphen_normalizer import (
+from crossword_solver_domain_entities.hyphen_normalizer import (
     normalize_hyphens,
 )
 

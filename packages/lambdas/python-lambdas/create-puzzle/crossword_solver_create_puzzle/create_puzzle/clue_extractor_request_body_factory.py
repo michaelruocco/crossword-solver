@@ -7,10 +7,7 @@ class ClueExtractorRequestBodyFactory:
         self,
         invoke_model_request_body_factory: InvokeModelRequestBodyFactory | None = None,
     ):
-        self.invoke_model_request_body_factory = (
-            invoke_model_request_body_factory
-            or InvokeModelRequestBodyFactory()
-        )
+        self.invoke_model_request_body_factory = invoke_model_request_body_factory or InvokeModelRequestBodyFactory()
 
     def to_request_body(self, image_bytes: bytes) -> str:
         return self.invoke_model_request_body_factory.to_request_body(

@@ -1,10 +1,11 @@
 import json
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from unittest.mock import patch
 
+from crossword_solver_domain_entities.puzzle import Puzzle
+
 from crossword_solver_create_puzzle.create_puzzle import create_puzzle
-from crossword_solver_create_puzzle.create_puzzle.puzzle import Puzzle
 
 
 def build_event(body: dict) -> dict:
@@ -43,7 +44,7 @@ def test_handler_returns_created_puzzle(lambda_context):
         name="puzzle14",
         format=".jpg",
         hash="hash-value",
-        created_at=datetime.now(timezone.utc),
+        created_at=datetime.now(UTC),
     )
 
     image_url = "https://example.com/puzzle14.jpg"
@@ -63,4 +64,3 @@ def test_handler_returns_created_puzzle(lambda_context):
         "hash": puzzle.hash,
         "createdAt": puzzle.created_at.isoformat().replace("+00:00", "Z"),
     }
-

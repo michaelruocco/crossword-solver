@@ -1,16 +1,15 @@
 import json
 
 import boto3
+from crossword_solver_domain_entities.clues import Clues
 
-from .clue import Clue
-from .clues import Clues
-from .image.image_compressor import ImageCompressor
+from .bedrock_clue import BedrockClue
+from .bedrock_response import BedrockResponse
 from .clue_extractor_request_body_factory import (
     ClueExtractorRequestBodyFactory,
 )
 from .image.image import Image
-from .bedrock_response import BedrockResponse
-from .bedrock_clue import BedrockClue
+from .image.image_compressor import ImageCompressor
 
 
 class BedrockClueExtractor:
@@ -25,18 +24,13 @@ class BedrockClueExtractor:
     ):
         self.client = client or boto3.client("bedrock-runtime")
         self.model_id = model_id
-        self.request_body_factory = (
-            request_body_factory
-            or ClueExtractorRequestBodyFactory()
-        )
+        self.request_body_factory = request_body_factory or ClueExtractorRequestBodyFactory()
         self.compressor = compressor or ImageCompressor()
 
     def extract_clues(self, image: Image) -> Clues:
         image_bytes = self.compressor.compress_and_resize(image.image)
 
-        request_body = self.request_body_factory.to_request_body(
-            image_bytes
-        )
+        request_body = self.request_body_factory.to_request_body(image_bytes)
 
         response = self.client.invoke_model(
             modelId=self.model_id,
@@ -53,9 +47,6 @@ class BedrockClueExtractor:
 
         bedrock_clues = json.loads(clues_json)
 
-        clues = [
-            BedrockClue.model_validate(clue).to_clue()
-            for clue in bedrock_clues
-        ]
+        clues = [BedrockClue.model_validate(clue).to_clue() for clue in bedrock_clues]
 
         return Clues(clues)

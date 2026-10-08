@@ -30,10 +30,7 @@ class ImageCompressor:
 
         image_data = self._compress_to_bytes(rgb_image, quality)
 
-        while (
-            len(image_data) > self.max_size_bytes
-            and (width > self.min_width or height > self.min_height)
-        ):
+        while len(image_data) > self.max_size_bytes and (width > self.min_width or height > self.min_height):
             width = int(width * 0.9)
             height = int(height * 0.9)
 

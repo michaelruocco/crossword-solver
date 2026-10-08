@@ -1,6 +1,5 @@
 import re
 
-
 _HYPHEN_PATTERN = re.compile(r"[–—‐\-−⁃‒]")
 _TRIPLE_HYPHEN_PATTERN = re.compile(r"\s*-\s*-\s*-\s*")
 _SPACE_BEFORE_COMMA_PATTERN = re.compile(r"\s+,")

@@ -5,6 +5,7 @@ from crossword_solver_create_puzzle.create_puzzle.image.default_image_downloader
 )
 from crossword_solver_create_puzzle.create_puzzle.image.image_error import ImageError
 
+
 @pytest.fixture
 def downloader():
     return DefaultImageDownloader()
@@ -26,6 +27,4 @@ def test_download_image(downloader):
 @pytest.mark.integration
 def test_download_image_not_found(downloader):
     with pytest.raises(ImageError, match="Failed to download image"):
-        downloader.download_image(
-            "https://hackathon.caci.co.uk/images/does-not-exist.jpg"
-        )
+        downloader.download_image("https://hackathon.caci.co.uk/images/does-not-exist.jpg")
