@@ -1,9 +1,9 @@
 import pytest
 
-from crossword_solver_create_puzzle.create_puzzle.image.default_image_downloader import (
+from crossword_solver_image.default_image_downloader import (
     DefaultImageDownloader,
 )
-from crossword_solver_create_puzzle.create_puzzle.image.image_error import ImageError
+from crossword_solver_image.image_error import ImageError
 
 
 @pytest.fixture

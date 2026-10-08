@@ -1,7 +1,7 @@
 import pytest
 from PIL import Image
 
-from crossword_solver_create_puzzle.create_puzzle.image.image_rotator import (
+from crossword_solver_image.image_rotator import (
     ImageRotator,
 )
 

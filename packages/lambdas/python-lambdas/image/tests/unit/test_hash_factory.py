@@ -1,6 +1,6 @@
 import pytest
 
-from crossword_solver_create_puzzle.create_puzzle.image.hash_factory import HashFactory
+from crossword_solver_image.hash_factory import HashFactory
 
 
 @pytest.fixture

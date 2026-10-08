@@ -17,13 +17,37 @@ resource "aws_iam_role_policy_attachment" "create_puzzle_basic_execution" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }
 
+data "aws_caller_identity" "current" {}
+
+locals {
+  create_puzzle_clue_extractor_model_id = "eu.anthropic.claude-opus-4-6-v1"
+}
+
+data "aws_iam_policy_document" "create_puzzle_bedrock" {
+  statement {
+    actions = ["bedrock:InvokeModel"]
+
+    # The eu.* inference profile routes to the model in several EU regions, so the model ARN needs a wildcard region.
+    resources = [
+      "arn:aws:bedrock:${var.aws_region}:${data.aws_caller_identity.current.account_id}:inference-profile/${local.create_puzzle_clue_extractor_model_id}",
+      "arn:aws:bedrock:*::foundation-model/${trimprefix(local.create_puzzle_clue_extractor_model_id, "eu.")}",
+    ]
+  }
+}
+
+resource "aws_iam_role_policy" "create_puzzle_bedrock" {
+  name   = "bedrock-invoke-model"
+  role   = aws_iam_role.create_puzzle.id
+  policy = data.aws_iam_policy_document.create_puzzle_bedrock.json
+}
+
 resource "aws_lambda_function" "create_puzzle" {
   function_name = "crossword-solver-${var.environment}-create-puzzle"
 
   role = aws_iam_role.create_puzzle.arn
 
   runtime = "python3.14"
-  handler = "crossword_solver_create_puzzle.create_puzzle.create_puzzle.lambda_handler"
+  handler = "crossword_solver_create_puzzle.create_puzzle.create_puzzle_handler.lambda_handler"
 
   architectures = ["x86_64"]
 
@@ -32,6 +56,12 @@ resource "aws_lambda_function" "create_puzzle" {
 
   timeout     = 30
   memory_size = 2048
+
+  environment {
+    variables = {
+      CLUE_EXTRACTOR_MODEL_ID = local.create_puzzle_clue_extractor_model_id
+    }
+  }
 }
 
 resource "aws_lambda_permission" "create_puzzle_api_gateway" {

@@ -7,10 +7,13 @@ from aws_lambda_powertools.utilities.parser import event_parser
 from aws_lambda_powertools.utilities.parser.models import APIGatewayProxyEventV2Model
 from aws_lambda_powertools.utilities.typing import LambdaContext
 from aws_lambda_typing.responses import APIGatewayProxyResponseV2
+from crossword_solver_adapter_clue_extractor.bedrock_clue_extractor import BedrockClueExtractor
 from crossword_solver_domain_entities.puzzle import Puzzle
+from crossword_solver_domain_use_case.puzzle_creator import PuzzleCreator
+from crossword_solver_image.default_image_downloader import DefaultImageDownloader
 
+from .clue_response import ClueResponse
 from .create_puzzle_request import CreatePuzzleRequest
-from .puzzle_creator import PuzzleCreator
 from .puzzle_response import PuzzleResponse
 
 os.environ["POWERTOOLS_METRICS_NAMESPACE"] = "CreatePuzzle"
@@ -20,7 +23,10 @@ logger: Logger = Logger()
 metrics: Metrics = Metrics()
 tracer: Tracer = Tracer()
 
-puzzle_creator = PuzzleCreator()
+puzzle_creator = PuzzleCreator(
+    clue_extractor=BedrockClueExtractor(model_id=os.environ["CLUE_EXTRACTOR_MODEL_ID"]),
+    image_downloader=DefaultImageDownloader(),
+)
 
 
 def to_request(event: APIGatewayProxyEventV2Model) -> CreatePuzzleRequest:
@@ -36,6 +42,7 @@ def to_response(puzzle: Puzzle) -> PuzzleResponse:
         name=puzzle.name,
         format=puzzle.format,
         hash=puzzle.hash,
+        clues=[ClueResponse.from_clue(clue) for clue in puzzle.clues],
         createdAt=puzzle.created_at,
     )
 

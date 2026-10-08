@@ -4,8 +4,11 @@ requires-python = ">=3.14"
 
 [manifest]
 members = [
+    "crossword-solver-adapter-clue-extractor",
     "crossword-solver-create-puzzle",
     "crossword-solver-domain-entities",
+    "crossword-solver-domain-use-case",
+    "crossword-solver-image",
     "nx-workspace",
 ]
 
@@ -180,14 +183,14 @@ wheels = [
 ]
 
 [[package]]
-name = "crossword-solver-create-puzzle"
+name = "crossword-solver-adapter-clue-extractor"
 version = "1.0.0"
-source = { editable = "packages/lambdas/python-lambdas/create-puzzle" }
+source = { editable = "packages/lambdas/python-lambdas/adapter/clue_extractor" }
 dependencies = [
-    { name = "aws-lambda-powertools", extra = ["parser", "tracer"] },
-    { name = "aws-lambda-typing" },
     { name = "crossword-solver-domain-entities" },
-    { name = "pillow" },
+    { name = "crossword-solver-domain-use-case" },
+    { name = "crossword-solver-image" },
+    { name = "pydantic" },
 ]
 
 [package.dev-dependencies]
@@ -197,21 +200,74 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "aws-lambda-powertools", specifier = "==3.35.0" },
-    { name = "aws-lambda-powertools", extras = ["parser"], specifier = "==3.35.0" },
-    { name = "aws-lambda-powertools", extras = ["tracer"], specifier = "==3.35.0" },
-    { name = "aws-lambda-typing", specifier = "==2.20.0" },
     { name = "crossword-solver-domain-entities", editable = "packages/lambdas/python-lambdas/domain/entities" },
-    { name = "pillow", specifier = ">=12.3.0" },
+    { name = "crossword-solver-domain-use-case", editable = "packages/lambdas/python-lambdas/domain/use-case" },
+    { name = "crossword-solver-image", editable = "packages/lambdas/python-lambdas/image" },
+    { name = "pydantic" },
 ]
 
 [package.metadata.requires-dev]
 dev = [{ name = "boto3", specifier = ">=1.43.109" }]
 
 [[package]]
+name = "crossword-solver-create-puzzle"
+version = "1.0.0"
+source = { editable = "packages/lambdas/python-lambdas/create-puzzle" }
+dependencies = [
+    { name = "aws-lambda-powertools", extra = ["parser", "tracer"] },
+    { name = "aws-lambda-typing" },
+    { name = "crossword-solver-adapter-clue-extractor" },
+    { name = "crossword-solver-domain-entities" },
+    { name = "crossword-solver-domain-use-case" },
+    { name = "crossword-solver-image" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "aws-lambda-powertools", specifier = "==3.35.0" },
+    { name = "aws-lambda-powertools", extras = ["parser"], specifier = "==3.35.0" },
+    { name = "aws-lambda-powertools", extras = ["tracer"], specifier = "==3.35.0" },
+    { name = "aws-lambda-typing", specifier = "==2.20.0" },
+    { name = "crossword-solver-adapter-clue-extractor", editable = "packages/lambdas/python-lambdas/adapter/clue_extractor" },
+    { name = "crossword-solver-domain-entities", editable = "packages/lambdas/python-lambdas/domain/entities" },
+    { name = "crossword-solver-domain-use-case", editable = "packages/lambdas/python-lambdas/domain/use-case" },
+    { name = "crossword-solver-image", editable = "packages/lambdas/python-lambdas/image" },
+]
+
+[[package]]
 name = "crossword-solver-domain-entities"
 version = "1.0.0"
 source = { editable = "packages/lambdas/python-lambdas/domain/entities" }
+
+[[package]]
+name = "crossword-solver-domain-use-case"
+version = "1.0.0"
+source = { editable = "packages/lambdas/python-lambdas/domain/use-case" }
+dependencies = [
+    { name = "crossword-solver-domain-entities" },
+    { name = "pillow" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "crossword-solver-domain-entities", editable = "packages/lambdas/python-lambdas/domain/entities" },
+    { name = "pillow", specifier = ">=12.3.0" },
+]
+
+[[package]]
+name = "crossword-solver-image"
+version = "1.0.0"
+source = { editable = "packages/lambdas/python-lambdas/image" }
+dependencies = [
+    { name = "crossword-solver-domain-use-case" },
+    { name = "pillow" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "crossword-solver-domain-use-case", editable = "packages/lambdas/python-lambdas/domain/use-case" },
+    { name = "pillow", specifier = ">=12.3.0" },
+]
 
 [[package]]
 name = "iniconfig"
@@ -326,8 +382,11 @@ name = "nx-workspace"
 version = "1.0.0"
 source = { virtual = "." }
 dependencies = [
+    { name = "crossword-solver-adapter-clue-extractor" },
     { name = "crossword-solver-create-puzzle" },
     { name = "crossword-solver-domain-entities" },
+    { name = "crossword-solver-domain-use-case" },
+    { name = "crossword-solver-image" },
 ]
 
 [package.dev-dependencies]
@@ -343,8 +402,11 @@ dev = [
 
 [package.metadata]
 requires-dist = [
+    { name = "crossword-solver-adapter-clue-extractor", editable = "packages/lambdas/python-lambdas/adapter/clue_extractor" },
     { name = "crossword-solver-create-puzzle", editable = "packages/lambdas/python-lambdas/create-puzzle" },
     { name = "crossword-solver-domain-entities", editable = "packages/lambdas/python-lambdas/domain/entities" },
+    { name = "crossword-solver-domain-use-case", editable = "packages/lambdas/python-lambdas/domain/use-case" },
+    { name = "crossword-solver-image", editable = "packages/lambdas/python-lambdas/image" },
 ]
 
 [package.metadata.requires-dev]

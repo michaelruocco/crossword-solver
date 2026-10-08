@@ -2,28 +2,29 @@ import json
 
 import boto3
 from crossword_solver_domain_entities.clues import Clues
+from crossword_solver_domain_use_case.clue_extractor import ClueExtractor
+from crossword_solver_domain_use_case.image import Image
+from crossword_solver_image.image_compressor import ImageCompressor
 
 from .bedrock_clue import BedrockClue
 from .bedrock_response import BedrockResponse
 from .clue_extractor_request_body_factory import (
     ClueExtractorRequestBodyFactory,
 )
-from .image.image import Image
-from .image.image_compressor import ImageCompressor
 
 
-class BedrockClueExtractor:
+class BedrockClueExtractor(ClueExtractor):
     DEFAULT_MODEL_ID = "eu.anthropic.claude-opus-4-6-v1"
 
     def __init__(
         self,
         client=None,
-        model_id: str = DEFAULT_MODEL_ID,
+        model_id: str | None = None,
         request_body_factory: ClueExtractorRequestBodyFactory | None = None,
         compressor: ImageCompressor | None = None,
     ):
         self.client = client or boto3.client("bedrock-runtime")
-        self.model_id = model_id
+        self.model_id = model_id or self.DEFAULT_MODEL_ID
         self.request_body_factory = request_body_factory or ClueExtractorRequestBodyFactory()
         self.compressor = compressor or ImageCompressor()
 

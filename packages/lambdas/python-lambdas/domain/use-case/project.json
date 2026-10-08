@@ -1,8 +1,8 @@
 {
-  "name": "crossword_solver.create_puzzle",
-  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
-  "projectType": "application",
-  "sourceRoot": "packages/lambdas/python-lambdas/create-puzzle/crossword_solver_create_puzzle",
+  "name": "crossword_solver.domain_use_case",
+  "$schema": "../../../../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "library",
+  "sourceRoot": "packages/lambdas/python-lambdas/domain/use-case/crossword_solver_domain_use_case",
   "release": {
     "version": {
       "versionActions": "@nxlv/python/release/version-actions"
@@ -10,45 +10,18 @@
   },
   "tags": [],
   "metadata": {
-    "generator": "py#project",
-    "components": [
-      {
-        "generator": "py#lambda-function",
-        "path": "crossword_solver_create_puzzle/create_puzzle/create_puzzle_handler.py",
-        "name": "create-puzzle"
-      }
-    ]
+    "generator": "py#project"
   },
   "targets": {
     "add": {
       "executor": "@nxlv/python:add",
       "options": {}
     },
-    "assemble": {
-      "dependsOn": ["compile", "bundle"]
-    },
     "build": {
-      "dependsOn": ["lint", "compile", "test", "typecheck", "bundle"],
+      "dependsOn": ["lint", "compile", "test", "typecheck"],
       "inputs": ["default", "^production"],
       "options": {
         "outputPath": "{workspaceRoot}/dist/{projectRoot}"
-      }
-    },
-    "bundle": {
-      "dependsOn": ["bundle-x86"]
-    },
-    "bundle-x86": {
-      "executor": "nx:run-commands",
-      "dependsOn": ["compile"],
-      "cache": true,
-      "inputs": ["production", "^production"],
-      "outputs": ["{workspaceRoot}/dist/{projectRoot}/bundle-x86"],
-      "options": {
-        "commands": [
-          "uv export --frozen --no-dev --no-editable --project {projectRoot} --package crossword_solver.create_puzzle -o dist/{projectRoot}/bundle-x86/requirements.txt",
-          "uv pip install -n --no-deps --no-installer-metadata --no-compile-bytecode --python-platform x86_64-manylinux_2_28 --python-version 3.14 --target dist/{projectRoot}/bundle-x86 -r dist/{projectRoot}/bundle-x86/requirements.txt"
-        ],
-        "parallel": false
       }
     },
     "compile": {
@@ -80,7 +53,7 @@
       "cache": true,
       "inputs": ["default", "^production"],
       "options": {
-        "filePatterns": ["crossword_solver_create_puzzle", "tests"],
+        "filePatterns": ["crossword_solver_domain_use_case", "tests"],
         "check": true
       },
       "configurations": {
@@ -108,7 +81,7 @@
       "inputs": ["default", "^production"],
       "outputs": [],
       "options": {
-        "lintFilePatterns": ["crossword_solver_create_puzzle", "tests"]
+        "lintFilePatterns": ["crossword_solver_domain_use_case", "tests"]
       },
       "configurations": {
         "fix": {

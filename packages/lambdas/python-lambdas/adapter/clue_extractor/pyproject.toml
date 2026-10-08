@@ -1,0 +1,61 @@
+[tool.coverage.run]
+branch = true
+source = [ "crossword_solver_adapter_clue_extractor" ]
+
+[tool.coverage.report]
+exclude_lines = [ "if TYPE_CHECKING:" ]
+show_missing = true
+
+[tool.pytest.ini_options]
+addopts = """
+ --cov
+ --cov-report html:'../../../../../coverage/packages/lambdas/python-lambdas/adapter/clue_extractor/html'
+ --cov-report xml:'../../../../../coverage/packages/lambdas/python-lambdas/adapter/clue_extractor/coverage.xml'
+ --html='../../../../../reports/packages/lambdas/python-lambdas/adapter/clue_extractor/unittests/html/index.html'
+ --junitxml='../../../../../reports/packages/lambdas/python-lambdas/adapter/clue_extractor/unittests/junit.xml'
+"""
+
+[tool.hatch.build.targets.wheel]
+packages = [ "crossword_solver_adapter_clue_extractor" ]
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.ruff]
+exclude = [ ".ruff_cache", ".svn", ".tox", ".venv", "dist" ]
+line-length = 120
+indent-width = 4
+
+  [tool.ruff.lint]
+  select = [ "E", "F", "UP", "B", "SIM", "I" ]
+  ignore = [ ]
+  fixable = [ "ALL" ]
+  unfixable = [ ]
+
+    [tool.ruff.lint.per-file-ignores]
+    "**/clue_extractor_prompt.py" = [ "E501" ]
+
+[project]
+name = "crossword-solver-adapter-clue-extractor"
+version = "1.0.0"
+description = "Crossword solver clue extraction adapter (Bedrock)."
+requires-python = ">=3.14"
+readme = "README.md"
+dependencies = [
+  "pydantic",
+  "crossword-solver-domain-entities",
+  "crossword-solver-domain-use-case",
+  "crossword-solver-image",
+]
+
+[tool.uv.sources]
+crossword-solver-domain-use-case = { workspace = true }
+crossword-solver-domain-entities = { workspace = true }
+crossword-solver-image = { workspace = true }
+
+[dependency-groups]
+dev = [ "boto3>=1.43.109" ]
+
+[build-system]
+requires = [ "hatchling" ]
+build-backend = "hatchling.build"

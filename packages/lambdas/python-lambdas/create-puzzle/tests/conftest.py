@@ -1,8 +1,13 @@
 """Unit tests configuration module."""
 
+import os
 from dataclasses import dataclass
 
 import pytest
+
+# The handler module builds a boto3 client at import time, which needs a region.
+os.environ.setdefault("AWS_DEFAULT_REGION", "eu-west-2")
+os.environ.setdefault("CLUE_EXTRACTOR_MODEL_ID", "test-model-id")
 
 
 @dataclass

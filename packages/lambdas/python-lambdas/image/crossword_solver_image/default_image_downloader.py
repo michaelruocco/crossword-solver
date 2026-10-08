@@ -4,10 +4,11 @@ from io import BytesIO
 from urllib.error import HTTPError, URLError
 from urllib.request import urlopen
 
+from crossword_solver_domain_use_case.image import Image
+from crossword_solver_domain_use_case.image_downloader import ImageDownloader
 from PIL import Image as PILImage
 
 from .hash_factory import HashFactory
-from .image import Image
 from .image_converter import ImageConverter
 from .image_error import ImageError
 from .image_rotator import ImageRotator
@@ -17,7 +18,7 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 
-class DefaultImageDownloader:
+class DefaultImageDownloader(ImageDownloader):
     def __init__(
         self,
         rotator: ImageRotator | None = None,

@@ -3,9 +3,12 @@ import uuid
 from datetime import UTC, datetime
 from unittest.mock import patch
 
+from crossword_solver_domain_entities.clue import Clue
+from crossword_solver_domain_entities.clues import Clues
+from crossword_solver_domain_entities.id import Id
 from crossword_solver_domain_entities.puzzle import Puzzle
 
-from crossword_solver_create_puzzle.create_puzzle import create_puzzle
+from crossword_solver_create_puzzle.create_puzzle import create_puzzle_handler
 
 
 def build_event(body: dict) -> dict:
@@ -44,12 +47,18 @@ def test_handler_returns_created_puzzle(lambda_context):
         name="puzzle14",
         format=".jpg",
         hash="hash-value",
+        clues=Clues(
+            [
+                Clue(id=Id.across(1), text="Pacific republic (4)", lengths=[4]),
+                Clue(id=Id.down(2), text="Muscular twitch (4)", lengths=[4]),
+            ]
+        ),
         created_at=datetime.now(UTC),
     )
 
     image_url = "https://example.com/puzzle14.jpg"
-    with patch.object(create_puzzle.puzzle_creator, "create", return_value=puzzle) as mock_create:
-        response = create_puzzle.lambda_handler(build_event({"imageUrl": image_url}), lambda_context)
+    with patch.object(create_puzzle_handler.puzzle_creator, "create", return_value=puzzle) as mock_create:
+        response = create_puzzle_handler.lambda_handler(build_event({"imageUrl": image_url}), lambda_context)
 
     mock_create.assert_called_once_with(image_url)
 
@@ -62,5 +71,9 @@ def test_handler_returns_created_puzzle(lambda_context):
         "name": puzzle.name,
         "format": puzzle.format,
         "hash": puzzle.hash,
+        "clues": [
+            {"id": 1, "direction": "ACROSS", "text": "Pacific republic (4)", "lengths": [4]},
+            {"id": 2, "direction": "DOWN", "text": "Muscular twitch (4)", "lengths": [4]},
+        ],
         "createdAt": puzzle.created_at.isoformat().replace("+00:00", "Z"),
     }

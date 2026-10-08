@@ -1,0 +1,54 @@
+[tool.coverage.run]
+branch = true
+source = [ "crossword_solver_image" ]
+
+[tool.coverage.report]
+exclude_lines = [ "if TYPE_CHECKING:" ]
+show_missing = true
+
+[tool.pytest.ini_options]
+addopts = """
+ --cov
+ --cov-report html:'../../../../coverage/packages/lambdas/python-lambdas/image/html'
+ --cov-report xml:'../../../../coverage/packages/lambdas/python-lambdas/image/coverage.xml'
+ --html='../../../../reports/packages/lambdas/python-lambdas/image/unittests/html/index.html'
+ --junitxml='../../../../reports/packages/lambdas/python-lambdas/image/unittests/junit.xml'
+"""
+markers = [
+  "integration: tests that require external resources or infrastructure",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = [ "crossword_solver_image" ]
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.ruff]
+exclude = [ ".ruff_cache", ".svn", ".tox", ".venv", "dist" ]
+line-length = 120
+indent-width = 4
+
+  [tool.ruff.lint]
+  select = [ "E", "F", "UP", "B", "SIM", "I" ]
+  ignore = [ ]
+  fixable = [ "ALL" ]
+  unfixable = [ ]
+
+[project]
+name = "crossword-solver-image"
+version = "1.0.0"
+description = "Crossword solver image downloading and processing."
+requires-python = ">=3.14"
+readme = "README.md"
+dependencies = [
+  "pillow>=12.3.0",
+  "crossword-solver-domain-use-case",
+]
+
+[tool.uv.sources]
+crossword-solver-domain-use-case = { workspace = true }
+
+[build-system]
+requires = [ "hatchling" ]
+build-backend = "hatchling.build"

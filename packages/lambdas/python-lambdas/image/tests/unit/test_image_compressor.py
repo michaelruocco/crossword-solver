@@ -2,7 +2,7 @@ from io import BytesIO
 
 from PIL import Image
 
-from crossword_solver_create_puzzle.create_puzzle.image.image_compressor import (
+from crossword_solver_image.image_compressor import (
     ImageCompressor,
 )
 

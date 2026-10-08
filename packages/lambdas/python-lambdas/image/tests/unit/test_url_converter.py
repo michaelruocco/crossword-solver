@@ -1,6 +1,6 @@
 import pytest
 
-from crossword_solver_create_puzzle.create_puzzle.image.url_converter import UrlConverter
+from crossword_solver_image.url_converter import UrlConverter
 
 
 @pytest.fixture
