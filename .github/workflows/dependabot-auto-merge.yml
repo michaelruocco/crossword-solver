@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - id: metadata
-        uses: dependabot/fetch-metadata@v2
+        uses: dependabot/fetch-metadata@v3
 
       # Merges once the required status checks on main pass
       - if: steps.metadata.outputs.update-type != 'version-update:semver-major'
