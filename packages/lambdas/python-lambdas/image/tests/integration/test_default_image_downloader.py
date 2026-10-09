@@ -19,7 +19,7 @@ def test_download_image(downloader):
 
     assert image.name == "puzzle24"
     assert image.format == ".jpg"
-    assert image.image is not None
+    assert image.pil_image is not None
     assert image.bytes
     assert image.hash
 

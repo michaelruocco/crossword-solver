@@ -1,7 +1,7 @@
 import logging
 import time
 from io import BytesIO
-from urllib.error import HTTPError, URLError
+from urllib.error import URLError
 from urllib.request import urlopen
 
 from crossword_solver_domain_use_case.image import Image
@@ -49,7 +49,7 @@ class DefaultImageDownloader(ImageDownloader):
         return Image(
             name=self.url_converter.to_filename_excluding_extension(image_url),
             format=self.url_converter.to_extension(image_url),
-            image=image,
+            pil_image=image,
             bytes=image_bytes,
             hash=self.hash_factory.to_hash(image_bytes),
         )
@@ -73,5 +73,5 @@ class DefaultImageDownloader(ImageDownloader):
                 time.perf_counter() - start,
             )
             return self.rotator.rotate_if_required(image)
-        except (HTTPError, URLError) as e:
+        except URLError as e:
             raise ImageError(f"Failed to download image from {image_url}") from e
