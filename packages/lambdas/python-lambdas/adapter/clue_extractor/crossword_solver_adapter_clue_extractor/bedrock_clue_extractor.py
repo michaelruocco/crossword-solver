@@ -29,7 +29,7 @@ class BedrockClueExtractor(ClueExtractor):
         self.compressor = compressor or ImageCompressor()
 
     def extract_clues(self, image: Image) -> Clues:
-        image_bytes = self.compressor.compress_and_resize(image.image)
+        image_bytes = self.compressor.compress_and_resize(image.pil_image)
 
         request_body = self.request_body_factory.to_request_body(image_bytes)
 

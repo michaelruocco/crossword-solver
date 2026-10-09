@@ -49,7 +49,7 @@ class DefaultImageDownloader(ImageDownloader):
         return Image(
             name=self.url_converter.to_filename_excluding_extension(image_url),
             format=self.url_converter.to_extension(image_url),
-            image=image,
+            pil_image=image,
             bytes=image_bytes,
             hash=self.hash_factory.to_hash(image_bytes),
         )
