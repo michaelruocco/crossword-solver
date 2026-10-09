@@ -11,7 +11,10 @@ export default defineConfig(() => ({
     include: ['{src,tests}/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
     reporters: ['default'],
     coverage: {
-      reportsDirectory: './test-output/vitest/coverage',
+      enabled: true,
+      reportsDirectory: '../../../coverage/packages/lambdas/ts-lambdas',
+      // Repo-relative paths in lcov.info so Sonar can resolve them
+      reporter: ['text', ['lcov', { projectRoot: '../../..' }] as ['lcov', { projectRoot: string }]],
       provider: 'v8' as const,
     },
   },

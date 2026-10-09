@@ -6,7 +6,6 @@ on:
   pull_request:
 
 permissions:
-  actions: read
   contents: read
 
 concurrency:
@@ -38,7 +37,17 @@ jobs:
 
       - run: uv sync --all-packages --frozen
 
-      # Sets NX_BASE/NX_HEAD to the last successful CI run on main (or the PR base)
-      - uses: nrwl/nx-set-shas@v4
+      - if: github.event_name == 'pull_request'
+        uses: nrwl/nx-set-shas@v4
 
-      - run: pnpm nx affected -t lint typecheck test build bundle
+      - if: github.event_name == 'pull_request'
+        run: pnpm nx affected -t lint typecheck test build bundle
+
+      - if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: pnpm nx run-many -t lint typecheck test build bundle
+
+      # Secrets aren't available to PRs from forks
+      - if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
+        uses: SonarSource/sonarqube-scan-action@v5
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
