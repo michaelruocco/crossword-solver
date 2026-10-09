@@ -24,9 +24,9 @@ export const createAttemptEventSchema = APIGatewayProxyEventV2Schema.extend({
   }),
 });
 
-export const createAttempt = async (
+export const createAttempt = (
   event: z.infer<typeof createAttemptEventSchema>,
-): Promise<APIGatewayProxyResultV2> => {
+): APIGatewayProxyResultV2 => {
   logger.info('Received event', event);
 
   const { puzzleId } = event.pathParameters;

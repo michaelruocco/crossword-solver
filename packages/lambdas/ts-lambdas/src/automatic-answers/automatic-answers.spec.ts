@@ -40,8 +40,8 @@ const buildEvent = (
 });
 
 describe('automaticAnswers', () => {
-  it('returns a new id with the puzzle and attempt ids from the path', async () => {
-    const result = await automaticAnswers(
+  it('returns a new id with the puzzle and attempt ids from the path', () => {
+    const result = automaticAnswers(
       buildEvent('puzzle-123', 'attempt-456'),
     );
 

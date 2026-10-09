@@ -36,8 +36,8 @@ const uuidPattern =
   /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 
 describe('createAttempt', () => {
-  it('returns a new attempt id and the puzzle id from the path', async () => {
-    const result = await createAttempt(buildEvent('puzzle-123'));
+  it('returns a new attempt id and the puzzle id from the path', () => {
+    const result = createAttempt(buildEvent('puzzle-123'));
 
     expect(result).toMatchObject({ statusCode: 201 });
 

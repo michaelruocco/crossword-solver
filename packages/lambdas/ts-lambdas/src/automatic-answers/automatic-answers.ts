@@ -24,9 +24,9 @@ export const automaticAnswersEventSchema = APIGatewayProxyEventV2Schema.extend({
   }),
 });
 
-export const automaticAnswers = async (
+export const automaticAnswers = (
   event: z.infer<typeof automaticAnswersEventSchema>,
-): Promise<APIGatewayProxyResultV2> => {
+): APIGatewayProxyResultV2 => {
   logger.info('Received event', event);
 
   const { puzzleId, attemptId } = event.pathParameters;
