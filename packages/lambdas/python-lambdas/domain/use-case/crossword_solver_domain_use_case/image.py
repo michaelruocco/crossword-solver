@@ -7,6 +7,6 @@ from PIL import Image as PILImage
 class Image:
     name: str
     format: str
-    image: PILImage.Image
+    pil_image: PILImage.Image
     bytes: bytes
     hash: str
