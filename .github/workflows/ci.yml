@@ -38,7 +38,7 @@ jobs:
       - run: uv sync --all-packages --frozen
 
       - if: github.event_name == 'pull_request'
-        uses: nrwl/nx-set-shas@v4
+        uses: nrwl/nx-set-shas@v5
 
       - if: github.event_name == 'pull_request'
         run: pnpm nx affected -t lint typecheck test build bundle
