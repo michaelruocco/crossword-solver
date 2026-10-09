@@ -52,8 +52,8 @@ describe('automaticAnswers', () => {
       unknown
     >;
 
-    expect(Object.keys(body).sort()).toEqual(['attempt', 'id', 'puzzle']);
-    expect(body['id']).toMatch('attempt-456');
+    expect(Object.keys(body).sort()).toEqual(['id', 'puzzle']);
+    expect(body['id']).toEqual('attempt-456');
     expect(body['puzzle']).toEqual({ id: 'puzzle-123' });
   });
 
