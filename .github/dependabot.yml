@@ -1,0 +1,54 @@
+version: 2
+
+# Routine updates are grouped into one minor/patch PR per ecosystem; major bumps get their own PRs
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      npm-security:
+        applies-to: security-updates
+        patterns: ['*']
+      npm-minor-patch:
+        applies-to: version-updates
+        update-types: [minor, patch]
+        patterns: ['*']
+
+  - package-ecosystem: uv
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      python-security:
+        applies-to: security-updates
+        patterns: ['*']
+      python-minor-patch:
+        applies-to: version-updates
+        update-types: [minor, patch]
+        patterns: ['*']
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions-security:
+        applies-to: security-updates
+        patterns: ['*']
+      actions-minor-patch:
+        applies-to: version-updates
+        update-types: [minor, patch]
+        patterns: ['*']
+
+  - package-ecosystem: docker
+    directories:
+      - /infrastructure/opencv
+      - /infrastructure/tesseract
+    schedule:
+      interval: weekly
+
+  - package-ecosystem: terraform
+    directory: /infrastructure/terraform
+    schedule:
+      interval: weekly
