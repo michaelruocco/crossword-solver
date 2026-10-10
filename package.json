@@ -6,22 +6,21 @@
   "private": true,
   "dependencies": {},
   "devDependencies": {
-    "@aws/nx-plugin": "^1.0.5",
-    "@nx/esbuild": "23.2.1",
-    "@nx/js": "23.2.1",
-    "@nx/oxlint": "23.2.1",
-    "@nx/vitest": "23.2.1",
+    "@nx/esbuild": "23.3.0",
+    "@nx/js": "23.3.0",
+    "@nx/oxlint": "23.3.0",
+    "@nx/vitest": "23.3.0",
     "@nxlv/python": "catalog:",
     "@swc/helpers": "~0.5.18",
     "@types/node": "^26.6.4",
-    "@vitest/coverage-v8": "~4.1.0",
+    "@vitest/coverage-v8": "5.0.3",
     "esbuild": "^0.27.0",
-    "nx": "23.2.1",
+    "nx": "23.3.0",
     "oxlint": "^1.75.0",
     "prettier": "~3.6.2",
     "tslib": "^2.3.0",
     "typescript": "~6.0.3",
     "vite": "^8.0.0",
-    "vitest": "~4.1.0"
+    "vitest": "5.0.3"
   }
 }
