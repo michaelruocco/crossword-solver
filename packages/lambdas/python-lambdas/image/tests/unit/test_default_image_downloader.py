@@ -23,9 +23,10 @@ def jpeg_bytes() -> bytes:
 
 
 def test_download_image(downloader, httpserver: HTTPServer, jpeg_bytes):
-    httpserver.expect_request("/images/puzzle24.jpg").respond_with_data(jpeg_bytes, content_type="image/jpeg")
+    endpoint = "/images/puzzle24.jpg"
+    httpserver.expect_request(endpoint).respond_with_data(jpeg_bytes, content_type="image/jpeg")
 
-    image = downloader.download_image(httpserver.url_for("/images/puzzle24.jpg"))
+    image = downloader.download_image(httpserver.url_for(endpoint))
 
     assert image.name == "puzzle24"
     assert image.format == ".jpg"
@@ -35,16 +36,18 @@ def test_download_image(downloader, httpserver: HTTPServer, jpeg_bytes):
 
 
 def test_download_image_not_found(downloader, httpserver: HTTPServer):
-    httpserver.expect_request("/images/does-not-exist.jpg").respond_with_data("", status=404)
-    url = httpserver.url_for("/images/does-not-exist.jpg")
+    endpoint = "/images/does-not-exist.jpg"
+    httpserver.expect_request(endpoint).respond_with_data("", status=404)
+    url = httpserver.url_for(endpoint)
 
     with pytest.raises(ImageError, match="Failed to download image"):
         downloader.download_image(url)
 
 
 def test_download_image_not_an_image(downloader, httpserver: HTTPServer):
-    httpserver.expect_request("/images/puzzle24.jpg").respond_with_data("<html></html>", content_type="text/html")
-    url = httpserver.url_for("/images/puzzle24.jpg")
+    endpoint = "/images/puzzle24.jpg"   
+    httpserver.expect_request(endpoint).respond_with_data("<html></html>", content_type="text/html")
+    url = httpserver.url_for(endpoint)
 
     with pytest.raises(ImageError, match="Failed to decode image"):
         downloader.download_image(url)
