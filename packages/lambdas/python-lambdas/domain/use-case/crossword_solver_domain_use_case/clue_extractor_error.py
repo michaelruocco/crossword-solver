@@ -1,0 +1,2 @@
+class ClueExtractorError(Exception):
+    pass
