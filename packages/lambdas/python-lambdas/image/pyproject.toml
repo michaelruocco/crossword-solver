@@ -14,9 +14,6 @@ addopts = """
  --html='../../../../reports/packages/lambdas/python-lambdas/image/unittests/html/index.html'
  --junitxml='../../../../reports/packages/lambdas/python-lambdas/image/unittests/junit.xml'
 """
-markers = [
-  "integration: tests that require external resources or infrastructure",
-]
 
 [tool.hatch.build.targets.wheel]
 packages = [ "crossword_solver_image" ]
