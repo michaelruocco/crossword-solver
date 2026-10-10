@@ -6,11 +6,12 @@ from urllib.request import urlopen
 
 from crossword_solver_domain_use_case.image import Image
 from crossword_solver_domain_use_case.image_downloader import ImageDownloader
+from crossword_solver_domain_use_case.image_error import ImageError
 from PIL import Image as PILImage
+from PIL import UnidentifiedImageError
 
 from .hash_factory import HashFactory
 from .image_converter import ImageConverter
-from .image_error import ImageError
 from .image_rotator import ImageRotator
 from .url_converter import UrlConverter
 
@@ -75,3 +76,5 @@ class DefaultImageDownloader(ImageDownloader):
             return self.rotator.rotate_if_required(image)
         except URLError as e:
             raise ImageError(f"Failed to download image from {image_url}") from e
+        except UnidentifiedImageError as e:
+            raise ImageError(f"Failed to decode image from {image_url}") from e
