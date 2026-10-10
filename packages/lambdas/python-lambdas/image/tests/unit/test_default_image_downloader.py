@@ -36,13 +36,15 @@ def test_download_image(downloader, httpserver: HTTPServer, jpeg_bytes):
 
 def test_download_image_not_found(downloader, httpserver: HTTPServer):
     httpserver.expect_request("/images/does-not-exist.jpg").respond_with_data("", status=404)
+    url = httpserver.url_for("/images/does-not-exist.jpg")
 
     with pytest.raises(ImageError, match="Failed to download image"):
-        downloader.download_image(httpserver.url_for("/images/does-not-exist.jpg"))
+        downloader.download_image(url)
 
 
 def test_download_image_not_an_image(downloader, httpserver: HTTPServer):
     httpserver.expect_request("/images/puzzle24.jpg").respond_with_data("<html></html>", content_type="text/html")
+    url = httpserver.url_for("/images/puzzle24.jpg")
 
     with pytest.raises(ImageError, match="Failed to decode image"):
-        downloader.download_image(httpserver.url_for("/images/puzzle24.jpg"))
+        downloader.download_image(url)
