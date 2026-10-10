@@ -5,6 +5,11 @@ autoInstallPeers: true
 allowBuilds:
   esbuild: true
   nx: true
+overrides:
+  # nx 23.3.0 pins a vulnerable undici 7.29.0; remove once nx ships a fixed version
+  undici: ^7.29.1
+  # @nxlv/python 23.2.1 depends on a vulnerable uuid 9; it only uses v4(), which is unchanged in 11
+  '@nxlv/python>uuid': ^11.1.1
 catalog:
   '@aws-lambda-powertools/tracer': 2.36.0
   '@aws-lambda-powertools/logger': 2.36.0
