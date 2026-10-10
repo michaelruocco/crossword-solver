@@ -45,7 +45,7 @@ def test_download_image_not_found(downloader, httpserver: HTTPServer):
 
 
 def test_download_image_not_an_image(downloader, httpserver: HTTPServer):
-    endpoint = "/images/puzzle24.jpg"   
+    endpoint = "/images/puzzle24.jpg"
     httpserver.expect_request(endpoint).respond_with_data("<html></html>", content_type="text/html")
     url = httpserver.url_for(endpoint)
 
