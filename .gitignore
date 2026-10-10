@@ -45,3 +45,4 @@ vitest.config.*.timestamp*
 **/.terraform/*
 *.tfstate
 *.tfstate.*
+.vitest
