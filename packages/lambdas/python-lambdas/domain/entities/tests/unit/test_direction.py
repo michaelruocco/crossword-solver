@@ -18,6 +18,7 @@ def test_parses_value_or_name(value, expected):
     assert Direction(value) == expected
 
 
-def test_rejects_unknown_value():
-    with pytest.raises(ValueError):
-        Direction("SIDEWAYS")
+@pytest.mark.parametrize("value", ["SIDEWAYS", "", "a", 1, None])
+def test_rejects_unknown_value(value):
+    with pytest.raises(ValueError, match="is not a valid Direction, expected one of: A, D, ACROSS, DOWN"):
+        Direction(value)
