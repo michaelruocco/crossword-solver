@@ -41,13 +41,10 @@ jobs:
         uses: nrwl/nx-set-shas@v5
 
       - if: github.event_name == 'pull_request'
-        run: pnpm nx affected -t lint typecheck test build bundle --output-style=stream
+        run: pnpm nx affected -t lint typecheck test build bundle
 
       - if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: pnpm nx run-many -t lint typecheck test build bundle
-
-      # Temporary diagnostics: shows which coverage reports exist when Sonar runs
-      - run: find coverage -type f \( -name coverage.xml -o -name lcov.info \) | sort
 
       # Secrets aren't available to fork PRs, and Dependabot PRs only get Dependabot secrets
       - if: github.event_name == 'push' || (github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.user.login != 'dependabot[bot]')
