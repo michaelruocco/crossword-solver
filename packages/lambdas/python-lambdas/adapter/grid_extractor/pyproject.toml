@@ -1,0 +1,65 @@
+[tool.coverage.run]
+branch = true
+source = [ "crossword_solver_adapter_grid_extractor" ]
+
+[tool.coverage.report]
+exclude_lines = [ "if TYPE_CHECKING:" ]
+show_missing = true
+
+[tool.pytest.ini_options]
+addopts = """
+ --cov
+ --cov-report html:'../../../../../coverage/packages/lambdas/python-lambdas/adap
+ter/grid_extractor/html'
+ --cov-report xml:'../../../../../coverage/packages/lambdas/python-lambdas/adapt
+er/grid_extractor/coverage.xml'
+ --html='../../../../../reports/packages/lambdas/python-lambdas/adapter/grid_ext
+ractor/unittests/html/index.html'
+ --junitxml='../../../../../reports/packages/lambdas/python-lambdas/adapter/grid
+_extractor/unittests/junit.xml'
+"""
+markers = [
+  "integration: tests that run against real puzzle images and are slower than unit tests",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = [ "crossword_solver_adapter_grid_extractor" ]
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.ruff]
+exclude = [ ".ruff_cache", ".svn", ".tox", ".venv", "dist" ]
+line-length = 120
+indent-width = 4
+
+  [tool.ruff.lint]
+  select = [ "E", "F", "UP", "B", "SIM", "I" ]
+  ignore = [ ]
+  fixable = [ "ALL" ]
+  unfixable = [ ]
+
+[project]
+name = "crossword-solver-adapter-grid-extractor"
+version = "1.0.0"
+description = "Crossword solver grid extraction adapter (OpenCV and Tesseract)."
+requires-python = ">=3.14"
+readme = "README.md"
+dependencies = [
+  "numpy>=2.5.3",
+  "pytesseract>=0.3.13",
+  "crossword-solver-domain-entities",
+  "crossword-solver-domain-use-case",
+]
+
+[tool.uv.sources]
+crossword-solver-domain-entities = { workspace = true }
+crossword-solver-domain-use-case = { workspace = true }
+
+[dependency-groups]
+# OpenCV itself comes from the Lambda layer at runtime, so it is only needed here for tests and type checking.
+dev = [ "opencv-python-headless" ]
+
+[build-system]
+requires = [ "hatchling" ]
+build-backend = "hatchling.build"
