@@ -24,8 +24,11 @@ def test_str(clue_id, expected):
 
 
 def test_same_number_and_direction_are_equal_and_hash_alike():
-    assert Id.across(1) == Id.across(1)
-    assert hash(Id.across(1)) == hash(Id.across(1))
+    first = Id.across(1)
+    second = Id(1, Direction.ACROSS)
+
+    assert first == second
+    assert hash(first) == hash(second)
 
 
 def test_same_number_with_different_direction_are_not_equal():
