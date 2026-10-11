@@ -10,13 +10,11 @@ from aws_lambda_powertools.utilities.parser.models import APIGatewayProxyEventV2
 from aws_lambda_powertools.utilities.typing import LambdaContext
 from aws_lambda_typing.responses import APIGatewayProxyResponseV2
 from crossword_solver_adapter_clue_extractor.bedrock_clue_extractor import BedrockClueExtractor
-from crossword_solver_domain_entities.puzzle import Puzzle
 from crossword_solver_domain_use_case.puzzle_creator import PuzzleCreator
 from crossword_solver_image.default_image_downloader import DefaultImageDownloader
 
-from .clue_response import ClueResponse
-from .create_puzzle_request import CreatePuzzleRequest
-from .puzzle_response import PuzzleResponse
+from .api_gateway_event_converter import ApiGatewayEventConverter
+from .puzzle_converter import PuzzleConverter
 
 os.environ["POWERTOOLS_METRICS_NAMESPACE"] = "CreatePuzzle"
 os.environ["POWERTOOLS_SERVICE_NAME"] = "CreatePuzzle"
@@ -30,23 +28,8 @@ puzzle_creator = PuzzleCreator(
     image_downloader=DefaultImageDownloader(),
 )
 
-
-def to_request(event: APIGatewayProxyEventV2Model) -> CreatePuzzleRequest:
-    if not isinstance(event.body, str):
-        raise ValueError("Request body is missing")
-
-    return CreatePuzzleRequest.model_validate(json.loads(event.body))
-
-
-def to_response(puzzle: Puzzle) -> PuzzleResponse:
-    return PuzzleResponse(
-        id=puzzle.id,
-        name=puzzle.name,
-        format=puzzle.format,
-        hash=puzzle.hash,
-        clues=[ClueResponse.from_clue(clue) for clue in puzzle.clues],
-        createdAt=puzzle.created_at,
-    )
+event_converter = ApiGatewayEventConverter()
+puzzle_converter = PuzzleConverter()
 
 
 @tracer.capture_lambda_handler
@@ -61,14 +44,14 @@ def lambda_handler(event: APIGatewayProxyEventV2Model, context: LambdaContext) -
     logger.info("Tesseract version", extra={"version": str(pytesseract.get_tesseract_version())})
 
     try:
-        request = to_request(event)
+        request = event_converter.to_request(event)
         puzzle = puzzle_creator.create(request.image_url)
         logger.info("Created puzzle", extra={"puzzle": puzzle})
         metrics.add_metric(name="SuccessCount", unit=MetricUnit.Count, value=1)
         return {
             "statusCode": 201,
             "headers": {"content-type": "application/json"},
-            "body": to_response(puzzle).model_dump_json(by_alias=True),
+            "body": puzzle_converter.to_response(puzzle).model_dump_json(by_alias=True),
         }
     except Exception as e:
         logger.exception(e)
