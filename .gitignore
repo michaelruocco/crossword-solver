@@ -46,3 +46,7 @@ vitest.config.*.timestamp*
 *.tfstate
 *.tfstate.*
 .vitest
+
+# Lambda layers built by infrastructure/*/build-layer.sh
+infrastructure/opencv/build/
+infrastructure/tesseract/build/
