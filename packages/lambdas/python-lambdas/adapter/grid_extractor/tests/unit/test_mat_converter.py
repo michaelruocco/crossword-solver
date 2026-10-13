@@ -161,3 +161,94 @@ def test_crop_limits_expansion_at_the_edge_the_grid_is_closest_to(converter):
 
     assert cropped.shape == (175, 197, 3)
     assert np.array_equal(cropped, image[13:188, 3:200])
+
+
+GRID_LINES = range(50, 351, 75)
+
+
+def binary_grid() -> np.ndarray:
+    image = np.zeros((400, 400), dtype=np.uint8)
+    for position in GRID_LINES:
+        cv2.line(image, (50, position), (350, position), 255, 3)
+        cv2.line(image, (position, 50), (position, 350), 255, 3)
+    return image
+
+
+def test_blur_softens_edges(converter):
+    image = np.zeros((50, 50), dtype=np.uint8)
+    image[:, 25:] = 255
+
+    blurred = converter.blur(image)
+
+    assert 0 < blurred[10, 23] < 255
+    assert 0 < blurred[10, 26] < 255
+    assert blurred[10, 0] == 0
+    assert blurred[10, 49] == 255
+
+
+def test_smooth_removes_specks_and_keeps_larger_shapes(converter):
+    image = np.zeros((50, 50), dtype=np.uint8)
+    image[10, 10] = 255
+    image[30:40, 30:40] = 255
+
+    smoothed = converter.smooth(image)
+
+    assert smoothed[10, 10] == 0
+    assert smoothed[35, 35] == 255
+
+
+def test_remove_noise_smaller_than(converter):
+    image = np.zeros((300, 300), dtype=np.uint8)
+    cv2.rectangle(image, (20, 20), (260, 260), 255, 3)
+    cv2.rectangle(image, (60, 60), (65, 65), 255, -1)
+    cv2.rectangle(image, (100, 100), (200, 110), 255, -1)
+    cv2.rectangle(image, (120, 150), (160, 190), 255, -1)
+    cv2.rectangle(image, (270, 270), (290, 290), 255, -1)
+
+    cleaned = converter.remove_noise_smaller_than(image, 1500)
+
+    assert cleaned[62, 62] == 0, "small shape inside the grid is noise"
+    assert cleaned[105, 150] == 255, "shape wider than the noise size limit is kept"
+    assert cleaned[170, 140] == 255, "shape with area above the minimum is kept"
+    assert cleaned[280, 280] == 0, "shape outside the grid bounds is removed"
+    assert cleaned[20, 100] == 255, "grid outline is kept"
+    assert image[62, 62] == 255, "input is not modified"
+
+
+def test_to_horizontal_grid_lines_keeps_only_horizontal_lines(converter):
+    horizontal = converter.to_horizontal_grid_lines(binary_grid())
+
+    assert horizontal[125, 90] == 255
+    assert horizontal[90, 125] == 0
+
+
+def test_to_vertical_grid_lines_keeps_only_vertical_lines(converter):
+    vertical = converter.to_vertical_grid_lines(binary_grid())
+
+    assert vertical[90, 125] == 255
+    assert vertical[125, 90] == 0
+
+
+def test_combine_and_intersect():
+    first = np.array([[0, 255], [255, 0]], dtype=np.uint8)
+    second = np.array([[0, 255], [0, 255]], dtype=np.uint8)
+    converter = MatConverter()
+
+    assert converter.combine(first, second).tolist() == [[0, 255], [255, 255]]
+    assert converter.intersect(first, second).tolist() == [[0, 255], [0, 0]]
+
+
+def test_to_points_finds_every_grid_intersection(converter):
+    intersections = converter.to_intersections(binary_grid())
+
+    points = converter.to_points(intersections)
+
+    expected = {(x, y) for x in GRID_LINES for y in GRID_LINES}
+    assert {(round(x), round(y)) for x, y in points} == expected
+
+
+def test_to_points_skips_contours_with_no_area(converter):
+    image = np.zeros((20, 20), dtype=np.uint8)
+    image[5, 5:15] = 255
+
+    assert converter.to_points(image) == []

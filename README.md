@@ -30,3 +30,21 @@ pnpm dedupe
 ```
 
 `pnpm dedupe` clears any older Nx packages the plugin left in the lockfile.
+
+## Python Tests
+
+Each Python project keeps unit tests in `tests/unit` and slower tests that use real resources (e.g. puzzle images)
+in `tests/integration`, marked with `pytestmark = pytest.mark.integration`. To run one set or the other from a
+project's directory:
+
+```
+uv run pytest tests -m "not integration"
+uv run pytest tests -m integration
+```
+
+Pytest runs with `--import-mode=importlib` (set in each project's `pyproject.toml`), so a unit test and an
+integration test can share the same file name, e.g. `tests/unit/test_grid_finder.py` and
+`tests/integration/test_grid_finder.py`. The trade-off is that test modules cannot import from each other, so
+shared fixtures and test helpers belong in a `conftest.py`, which pytest loads automatically for every test in
+that directory and below. For example, `create-puzzle/tests/conftest.py` provides the `build_event` and
+`lambda_context` fixtures used by its tests.
