@@ -103,6 +103,12 @@ class MatConverter:
     def combine(self, first: np.ndarray, second: np.ndarray) -> np.ndarray:
         return cv2.bitwise_or(first, second)
 
+    def scale(self, image: np.ndarray, factor: int) -> np.ndarray:
+        return cv2.resize(image, None, fx=factor, fy=factor, interpolation=cv2.INTER_NEAREST)
+
+    def invert(self, image: np.ndarray) -> np.ndarray:
+        return cv2.cvtColor(cv2.bitwise_not(image), cv2.COLOR_GRAY2BGR)
+
     def to_points(self, image: np.ndarray) -> list[Point]:
         points = []
         for contour in self.to_contours(image):

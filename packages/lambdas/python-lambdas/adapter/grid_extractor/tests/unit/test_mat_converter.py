@@ -252,3 +252,20 @@ def test_to_points_skips_contours_with_no_area(converter):
     image[5, 5:15] = 255
 
     assert converter.to_points(image) == []
+
+
+def test_scale_enlarges_without_blending_pixels(converter):
+    image = np.array([[0, 255]], dtype=np.uint8)
+
+    scaled = converter.scale(image, 3)
+
+    assert scaled.shape == (3, 6)
+    assert set(np.unique(scaled)) == {0, 255}
+
+
+def test_invert_swaps_black_and_white_and_returns_colour(converter):
+    image = np.array([[0, 255]], dtype=np.uint8)
+
+    inverted = converter.invert(image)
+
+    assert inverted.tolist() == [[[255, 255, 255], [0, 0, 0]]]
