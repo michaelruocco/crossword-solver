@@ -9,16 +9,16 @@ import pytesseract
 
 logger = logging.getLogger(__name__)
 
-_NUMBER = re.compile(r"[0-9]+")
+_NUMBER = re.compile(r"\d+", re.ASCII)
 
 
 class NumberDetector:
     LANGUAGE = "eng"
     # Treat the image as a single word, use the LSTM engine only, and only recognise digits.
-    CONFIG = "--psm 8 --oem 1 -c tessedit_char_whitelist=0123456789 -c user_defined_dpi=300"
+    BASE_CONFIG = "--psm 8 --oem 1 -c tessedit_char_whitelist=0123456789 -c user_defined_dpi=300"
 
     def __init__(self, tessdata_dir: str | Path):
-        self.config = f"{self.CONFIG} --tessdata-dir {shlex.quote(str(tessdata_dir))}"
+        self.config = f"{self.BASE_CONFIG} --tessdata-dir {shlex.quote(str(tessdata_dir))}"
 
     def detect(self, cell: np.ndarray) -> int | None:
         try:
