@@ -63,14 +63,17 @@ def test_raises_error_when_no_grid_lines_found():
     image = np.full((200, 200, 3), 255, dtype=np.uint8)
     for x in (50, 100, 150):
         cv2.circle(image, (x, 100), 5, (0, 0, 0), 2)
+    calculator = GridDimensionsCalculator()
 
     with pytest.raises(ValueError, match="No grid lines found"):
-        GridDimensionsCalculator().calculate_dimensions(image)
+        calculator.calculate_dimensions(image)
 
 
 def test_raises_error_when_too_few_intersections_found():
     converter = spying_converter()
     converter.to_points.return_value = [(0.0, 0.0)]
+    calculator = GridDimensionsCalculator(converter)
+    image = drawn_grid()
 
     with pytest.raises(ValueError, match="Found 1 grid intersections but expected 36"):
-        GridDimensionsCalculator(converter).calculate_dimensions(drawn_grid())
+        calculator.calculate_dimensions(image)
