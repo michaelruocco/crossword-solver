@@ -95,8 +95,7 @@ resource "aws_lambda_function" "create_puzzle" {
   source_code_hash = data.archive_file.create_puzzle.output_base64sha256
 
   timeout     = 30
-  # Lambda allocates vCPUs in proportion to memory, and grid extraction runs cells in parallel.
-  memory_size = 4096
+  memory_size = 2048
 
   environment {
     variables = {

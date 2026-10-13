@@ -1,4 +1,5 @@
 import json
+import logging
 from io import BytesIO
 
 import boto3
@@ -86,6 +87,19 @@ def test_extract_clues_sends_image_to_model(extractor, httpserver: HTTPServer, i
     assert body["anthropic_version"] == "bedrock-2023-05-31"
     content_types = [content["type"] for content in body["messages"][0]["content"]]
     assert content_types == ["text", "image"]
+
+
+def test_extract_clues_logs_durations(extractor, httpserver: HTTPServer, image, caplog):
+    httpserver.expect_request(INVOKE_PATH, method="POST").respond_with_json(bedrock_response("[]"))
+
+    with caplog.at_level(logging.INFO):
+        extractor.extract_clues(image)
+
+    record = next(record for record in caplog.records if record.message.startswith("Extracted"))
+    assert record.message.startswith("Extracted 0 clues in ")
+    assert record.clue_extraction_duration_ms >= 0
+    assert record.clue_compression_duration_ms >= 0
+    assert record.clue_model_invocation_duration_ms >= 0
 
 
 def test_extract_clues_raises_bedrock_error(extractor, httpserver: HTTPServer, image):

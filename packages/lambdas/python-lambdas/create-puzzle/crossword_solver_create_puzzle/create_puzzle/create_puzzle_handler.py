@@ -28,7 +28,11 @@ tracer: Tracer = Tracer()
 # Library modules use standard logging, which Lambda doesn't output unless given the Powertools handler.
 copy_config_to_registered_loggers(
     source_logger=logger,
-    include={"crossword_solver_adapter_grid_extractor", "crossword_solver_image"},
+    include={
+        "crossword_solver_adapter_clue_extractor",
+        "crossword_solver_adapter_grid_extractor",
+        "crossword_solver_image",
+    },
 )
 
 puzzle_creator = PuzzleCreator(
