@@ -54,8 +54,9 @@ crossword-solver-domain-entities = { workspace = true }
 crossword-solver-domain-use-case = { workspace = true }
 
 [dependency-groups]
-# OpenCV itself comes from the Lambda layer at runtime, so it is only needed here for tests and type checking.
-dev = [ "opencv-python-headless" ]
+# OpenCV comes from the Lambda layer at runtime, so is only needed here for tests; keep in step with
+# OPENCV_VERSION in infrastructure/opencv/Dockerfile.
+dev = [ "opencv-python-headless==5.0.0.*" ]
 
 [build-system]
 requires = [ "hatchling" ]

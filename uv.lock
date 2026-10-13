@@ -235,7 +235,7 @@ requires-dist = [
 ]
 
 [package.metadata.requires-dev]
-dev = [{ name = "opencv-python-headless" }]
+dev = [{ name = "opencv-python-headless", specifier = "==5.0.0.*" }]
 
 [[package]]
 name = "crossword-solver-create-puzzle"

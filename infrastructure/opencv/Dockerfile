@@ -1,6 +1,6 @@
 FROM --platform=linux/amd64 public.ecr.aws/lambda/python:3.14
 
-ARG OPENCV_VERSION=4.9.0
+ARG OPENCV_VERSION=5.0.0
 
 RUN dnf install -y \
     gcc \
