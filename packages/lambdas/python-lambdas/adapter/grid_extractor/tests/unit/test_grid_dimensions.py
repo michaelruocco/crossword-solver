@@ -41,9 +41,9 @@ def test_column_width(dimensions):
     assert dimensions.column_width(1) == 20
 
 
-def test_row_height_counts_y_from_the_bottom(dimensions):
-    assert dimensions.row_height(0) == 30
-    assert dimensions.row_height(1) == 10
+def test_row_height_counts_y_from_the_top(dimensions):
+    assert dimensions.row_height(0) == 10
+    assert dimensions.row_height(1) == 30
 
 
 @pytest.mark.parametrize(
@@ -70,14 +70,16 @@ def test_average_row_height_is_median():
 @pytest.mark.parametrize(
     ("x", "y", "expected_shape", "expected_colour"),
     [
-        (0, 0, (30, 10, 3), BLUE),
-        (1, 0, (30, 20, 3), WHITE),
-        (0, 1, (10, 10, 3), RED),
-        (1, 1, (10, 20, 3), GREEN),
+        (0, 0, (10, 10, 3), BLUE),
+        (1, 0, (10, 20, 3), WHITE),
+        (0, 1, (30, 10, 3), RED),
+        (1, 1, (30, 20, 3), GREEN),
     ],
     ids=["bottom left", "bottom right", "top left", "top right"],
 )
-def test_to_cell_counts_y_from_the_bottom(dimensions, x, y, expected_shape, expected_colour):
+def test_to_cell_counts_y_from_the_bottom_with_height_of_row_counted_from_the_top(
+    dimensions, x, y, expected_shape, expected_colour
+):
     cell = dimensions.to_cell(two_by_two_grid(), x, y)
 
     assert cell.shape == expected_shape

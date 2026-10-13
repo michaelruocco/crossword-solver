@@ -19,6 +19,9 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    ignore:
+      # Must match OPENCV_VERSION in infrastructure/opencv/Dockerfile, so both are upgraded together by hand.
+      - dependency-name: opencv-python-headless
     groups:
       python-security:
         applies-to: security-updates

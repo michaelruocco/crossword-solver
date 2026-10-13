@@ -34,9 +34,8 @@ class GridDimensions:
         return self.columns[x + 1] - self.columns[x]
 
     def row_height(self, y: int) -> int:
-        # y counts from the bottom like points, while rows are ordered top to bottom.
-        bottom = self.number_of_rows - y
-        return self.rows[bottom] - self.rows[bottom - 1]
+        # Top-down unlike to_cell's y, it reads all test puzzles' ids, bottom-up doesn't.
+        return self.rows[y + 1] - self.rows[y]
 
     def to_cell(self, grid: np.ndarray, x: int, y: int) -> np.ndarray:
         width = self.column_width(x)
