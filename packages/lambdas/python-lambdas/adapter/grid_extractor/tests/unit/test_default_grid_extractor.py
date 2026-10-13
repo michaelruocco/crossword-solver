@@ -78,6 +78,14 @@ def test_builds_each_cell_from_its_image_in_the_found_grid(extractor, calculator
     cell_factory.to_cell.assert_any_call("cell image 2,1", 2, 1)
 
 
+def test_defaults_workers_to_twice_cpu_count(cell_factory, finder, calculator, monkeypatch):
+    monkeypatch.setattr("os.cpu_count", lambda: 3)
+
+    extractor = DefaultGridExtractor(cell_factory, finder, calculator)
+
+    assert extractor.max_workers == 6
+
+
 @pytest.mark.parametrize(
     ("pil_image", "expected_pixel"),
     [

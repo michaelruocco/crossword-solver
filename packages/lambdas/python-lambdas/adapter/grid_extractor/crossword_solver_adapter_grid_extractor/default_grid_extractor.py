@@ -1,5 +1,7 @@
 import logging
+import os
 import time
+from concurrent.futures import ThreadPoolExecutor
 
 import cv2
 import numpy as np
@@ -18,15 +20,20 @@ logger = logging.getLogger(__name__)
 
 
 class DefaultGridExtractor(GridExtractor):
+    # Tesseract runs as a subprocess, so extra workers overlap its startup and file I/O.
+    WORKERS_PER_CPU = 2
+
     def __init__(
         self,
         cell_factory: CellFactory,
         finder: GridFinder | None = None,
         calculator: GridDimensionsCalculator | None = None,
+        max_workers: int | None = None,
     ):
         self.cell_factory = cell_factory
         self.finder = finder or GridFinder()
         self.calculator = calculator or GridDimensionsCalculator()
+        self.max_workers = max_workers or (os.cpu_count() or 1) * self.WORKERS_PER_CPU
 
     def extract_grid(self, image: Image) -> Grid:
         start = time.perf_counter()
@@ -35,11 +42,17 @@ class DefaultGridExtractor(GridExtractor):
         cells = self._to_cells(grid, dimensions)
         duration_ms = round((time.perf_counter() - start) * 1000)
         logger.info(
-            "Extracted %dx%d grid in %d ms",
+            "Extracted %dx%d grid in %d ms using %d workers on %s CPUs",
             dimensions.number_of_rows,
             dimensions.number_of_columns,
             duration_ms,
-            extra={"grid_extraction_duration_ms": duration_ms},
+            self.max_workers,
+            os.cpu_count(),
+            extra={
+                "grid_extraction_duration_ms": duration_ms,
+                "grid_extraction_workers": self.max_workers,
+                "cpu_count": os.cpu_count(),
+            },
         )
         return Grid(
             cells=Cells(cells),
@@ -49,11 +62,16 @@ class DefaultGridExtractor(GridExtractor):
 
     def _to_cells(self, grid: np.ndarray, dimensions: GridDimensions) -> list[Cell]:
         # y counts from the bottom row, so iterate it downwards to list cells top row first.
-        return [
-            self.cell_factory.to_cell(dimensions.to_cell(grid, x, y), x, y)
-            for y in reversed(range(dimensions.number_of_rows))
-            for x in range(dimensions.number_of_columns)
+        positions = [
+            (x, y) for y in reversed(range(dimensions.number_of_rows)) for x in range(dimensions.number_of_columns)
         ]
+        with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
+            return list(
+                executor.map(
+                    lambda position: self.cell_factory.to_cell(dimensions.to_cell(grid, *position), *position),
+                    positions,
+                )
+            )
 
 
 def _to_bgr(image: Image) -> np.ndarray:

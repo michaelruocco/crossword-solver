@@ -1,5 +1,3 @@
-from io import BytesIO
-
 import pytest
 from PIL import Image
 
@@ -37,17 +35,3 @@ def test_to_rgb_uses_white_background_for_transparent_pixels(converter):
     result = converter.to_rgb(image)
 
     assert result.getpixel((0, 0)) == (255, 255, 255)
-
-
-def test_to_bytes_returns_png(converter):
-    image = Image.new("RGB", (2, 2), (255, 0, 0))
-
-    result = converter.to_bytes(image)
-
-    assert isinstance(result, bytes)
-
-    decoded = Image.open(BytesIO(result))
-
-    assert decoded.format == "PNG"
-    assert decoded.size == (2, 2)
-    assert decoded.mode == "RGB"

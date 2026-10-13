@@ -95,12 +95,14 @@ resource "aws_lambda_function" "create_puzzle" {
   source_code_hash = data.archive_file.create_puzzle.output_base64sha256
 
   timeout     = 30
-  memory_size = 2048
+  # Lambda allocates vCPUs in proportion to memory, and grid extraction runs cells in parallel.
+  memory_size = 4096
 
   environment {
     variables = {
       CLUE_EXTRACTOR_MODEL_ID = local.create_puzzle_clue_extractor_model_id
       LD_LIBRARY_PATH         = "/opt/lib:/var/lang/lib:/lib64:/usr/lib64:/var/runtime:/var/task"
+      OMP_THREAD_LIMIT        = "1"
       TESSDATA_PREFIX         = "/opt/share/tessdata"
     }
   }

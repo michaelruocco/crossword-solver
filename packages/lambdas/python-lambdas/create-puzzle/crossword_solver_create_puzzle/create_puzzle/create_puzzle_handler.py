@@ -26,7 +26,10 @@ metrics: Metrics = Metrics()
 tracer: Tracer = Tracer()
 
 # Library modules use standard logging, which Lambda doesn't output unless given the Powertools handler.
-copy_config_to_registered_loggers(source_logger=logger, include={"crossword_solver_adapter_grid_extractor"})
+copy_config_to_registered_loggers(
+    source_logger=logger,
+    include={"crossword_solver_adapter_grid_extractor", "crossword_solver_image"},
+)
 
 puzzle_creator = PuzzleCreator(
     clue_extractor=BedrockClueExtractor(model_id=os.environ["CLUE_EXTRACTOR_MODEL_ID"]),

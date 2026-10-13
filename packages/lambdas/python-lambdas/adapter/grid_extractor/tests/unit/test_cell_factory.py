@@ -9,6 +9,7 @@ from crossword_solver_domain_entities.coordinates import Coordinates
 from crossword_solver_adapter_grid_extractor.cell_factory import CellFactory
 
 BLACK = (0, 0, 0)
+SCALE = CellFactory.DIGIT_SCALE
 CELL_SIZE = 120
 
 
@@ -48,7 +49,7 @@ def test_cell_without_digits_is_white(factory, detector):
 
 
 def test_digits_are_read_left_to_right_to_form_the_id(factory, detector):
-    numbers_by_scaled_width = {1500: 1, 1800: 2}
+    numbers_by_scaled_width = {30 * SCALE: 1, 36 * SCALE: 2}
     detector.detect.side_effect = lambda image: numbers_by_scaled_width[image.shape[1]]
     image = cell_with_digits((50, 20, 24, 30), (20, 20, 20, 30))
 
@@ -67,8 +68,8 @@ def test_digit_is_centred_on_a_white_border_and_scaled(factory, detector):
     factory.to_cell(cell_with_digits((20, 20, 20, 30)), 0, 0)
 
     image = detector.detect.call_args.args[0]
-    assert image.shape == (45 * 50, 30 * 50, 3)
-    digit_top, digit_left = 7 * 50, 5 * 50
+    assert image.shape == (45 * SCALE, 30 * SCALE, 3)
+    digit_top, digit_left = 7 * SCALE, 5 * SCALE
     assert image[digit_top - 1, digit_left - 1].tolist() == [255, 255, 255]
     assert image[digit_top, digit_left].tolist() == [0, 0, 0]
 
@@ -80,7 +81,7 @@ def test_narrow_digit_is_widened_and_retried_when_not_read(factory, detector):
 
     assert cell.id == 7
     widths = [call.args[0].shape[1] for call in detector.detect.call_args_list]
-    assert widths == [int(6 * 1.5) * 50, int(18 * 1.5) * 50]
+    assert widths == [int(6 * 1.5) * SCALE, int(18 * 1.5) * SCALE]
 
 
 def test_narrow_digit_is_not_retried_more_than_once(factory, detector):

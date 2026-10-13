@@ -1,5 +1,3 @@
-from io import BytesIO
-
 from PIL import Image
 
 
@@ -12,8 +10,3 @@ class ImageConverter:
         rgb_image.paste(image, mask=image.getchannel("A") if "A" in image.getbands() else None)
 
         return rgb_image
-
-    def to_bytes(self, image: Image.Image) -> bytes:
-        output = BytesIO()
-        image.save(output, format="PNG")
-        return output.getvalue()
