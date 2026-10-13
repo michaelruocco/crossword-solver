@@ -8,6 +8,9 @@ from aws_lambda_powertools.utilities.parser.models import APIGatewayProxyEventV2
 from aws_lambda_powertools.utilities.typing import LambdaContext
 from aws_lambda_typing.responses import APIGatewayProxyResponseV2
 from crossword_solver_adapter_clue_extractor.bedrock_clue_extractor import BedrockClueExtractor
+from crossword_solver_adapter_grid_extractor.cell_factory import CellFactory
+from crossword_solver_adapter_grid_extractor.default_grid_extractor import DefaultGridExtractor
+from crossword_solver_adapter_grid_extractor.number_detector import NumberDetector
 from crossword_solver_domain_use_case.puzzle_creator import PuzzleCreator
 from crossword_solver_image.default_image_downloader import DefaultImageDownloader
 
@@ -23,6 +26,7 @@ tracer: Tracer = Tracer()
 
 puzzle_creator = PuzzleCreator(
     clue_extractor=BedrockClueExtractor(model_id=os.environ["CLUE_EXTRACTOR_MODEL_ID"]),
+    grid_extractor=DefaultGridExtractor(CellFactory(NumberDetector(os.environ["TESSDATA_PREFIX"]))),
     image_downloader=DefaultImageDownloader(),
 )
 
