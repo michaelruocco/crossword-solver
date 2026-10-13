@@ -2,6 +2,7 @@ import json
 import os
 
 from aws_lambda_powertools import Logger, Metrics, Tracer
+from aws_lambda_powertools.logging.utils import copy_config_to_registered_loggers
 from aws_lambda_powertools.metrics import MetricUnit
 from aws_lambda_powertools.utilities.parser import event_parser
 from aws_lambda_powertools.utilities.parser.models import APIGatewayProxyEventV2Model
@@ -23,6 +24,9 @@ os.environ["POWERTOOLS_SERVICE_NAME"] = "CreatePuzzle"
 logger: Logger = Logger()
 metrics: Metrics = Metrics()
 tracer: Tracer = Tracer()
+
+# Library modules use standard logging, which Lambda doesn't output unless given the Powertools handler.
+copy_config_to_registered_loggers(source_logger=logger, include={"crossword_solver_adapter_grid_extractor"})
 
 puzzle_creator = PuzzleCreator(
     clue_extractor=BedrockClueExtractor(model_id=os.environ["CLUE_EXTRACTOR_MODEL_ID"]),

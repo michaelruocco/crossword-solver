@@ -1,3 +1,6 @@
+import logging
+import time
+
 import cv2
 import numpy as np
 from crossword_solver_domain_entities.cell import Cell
@@ -10,6 +13,8 @@ from .cell_factory import CellFactory
 from .grid_dimensions import GridDimensions
 from .grid_dimensions_calculator import GridDimensionsCalculator
 from .grid_finder import GridFinder
+
+logger = logging.getLogger(__name__)
 
 
 class DefaultGridExtractor(GridExtractor):
@@ -24,10 +29,20 @@ class DefaultGridExtractor(GridExtractor):
         self.calculator = calculator or GridDimensionsCalculator()
 
     def extract_grid(self, image: Image) -> Grid:
+        start = time.perf_counter()
         grid = self.finder.find_grid(_to_bgr(image))
         dimensions = self.calculator.calculate_dimensions(grid)
+        cells = self._to_cells(grid, dimensions)
+        duration_ms = round((time.perf_counter() - start) * 1000)
+        logger.info(
+            "Extracted %dx%d grid in %d ms",
+            dimensions.number_of_rows,
+            dimensions.number_of_columns,
+            duration_ms,
+            extra={"grid_extraction_duration_ms": duration_ms},
+        )
         return Grid(
-            cells=Cells(self._to_cells(grid, dimensions)),
+            cells=Cells(cells),
             column_width=dimensions.average_column_width,
             row_height=dimensions.average_row_height,
         )
