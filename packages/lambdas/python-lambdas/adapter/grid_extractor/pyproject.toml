@@ -8,6 +8,7 @@ show_missing = true
 
 [tool.pytest.ini_options]
 addopts = """
+ --import-mode=importlib
  --cov
  --cov-report html:'../../../../../coverage/packages/lambdas/python-lambdas/adapter/grid_extractor/html'
  --cov-report xml:'../../../../../coverage/packages/lambdas/python-lambdas/adapter/grid_extractor/coverage.xml'
