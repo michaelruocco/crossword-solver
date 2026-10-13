@@ -97,8 +97,8 @@ def test_wide_enough_digit_is_not_retried(factory, detector):
 
 @pytest.mark.parametrize(
     "box",
-    [(0, 20, 12, 30), (20, 0, 12, 30), (20, 20, 4, 4), (20, 20, 60, 60), (20, 20, 10, 60)],
-    ids=["touches left edge", "touches top edge", "too small", "too large", "too tall"],
+    [(0, 20, 12, 30), (20, 0, 12, 30), (20, 30, 31, 1), (20, 20, 4, 4), (20, 20, 60, 60), (20, 20, 10, 60)],
+    ids=["touches left edge", "touches top edge", "line with no area", "too small", "too large", "too tall"],
 )
 def test_shapes_that_are_unlikely_to_be_digits_are_ignored(factory, detector, box):
     factory.to_cell(cell_with_digits(box), 0, 0)

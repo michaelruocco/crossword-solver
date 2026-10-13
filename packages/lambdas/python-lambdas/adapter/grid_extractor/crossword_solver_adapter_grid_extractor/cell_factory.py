@@ -57,13 +57,10 @@ class CellFactory:
         return [self._to_digit(binary, contour) for contour in digits]
 
     def _is_likely_digit(self, binary: np.ndarray, contour: np.ndarray) -> bool:
-        area = cv2.contourArea(contour)
-        if area <= 0:
-            return False
         x, y, width, height = cv2.boundingRect(contour)
         if x == 0 or y == 0:
             return False
-        area_percent = area / binary.size * 100
+        area_percent = cv2.contourArea(contour) / binary.size * 100
         if not self.MIN_DIGIT_AREA_PERCENT < area_percent < self.MAX_DIGIT_AREA_PERCENT:
             return False
         rows, columns = binary.shape
