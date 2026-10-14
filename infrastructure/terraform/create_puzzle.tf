@@ -83,7 +83,7 @@ resource "aws_iam_role_policy" "create_puzzle_bedrock" {
 
 data "aws_iam_policy_document" "create_puzzle_dynamodb" {
   statement {
-    actions   = ["dynamodb:PutItem"]
+    actions   = ["dynamodb:PutItem", "dynamodb:GetItem"]
     resources = [aws_dynamodb_table.puzzles.arn]
   }
 }

@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 5
 requires-python = ">=3.14"
 
 [manifest]
@@ -436,6 +436,7 @@ dependencies = [
     { name = "aws-lambda-typing" },
     { name = "crossword-solver-adapter-clue-extractor" },
     { name = "crossword-solver-adapter-grid-extractor" },
+    { name = "crossword-solver-adapter-repository" },
     { name = "crossword-solver-domain-entities" },
     { name = "crossword-solver-domain-use-case" },
     { name = "crossword-solver-image" },
@@ -449,6 +450,7 @@ requires-dist = [
     { name = "aws-lambda-typing", specifier = "==2.20.0" },
     { name = "crossword-solver-adapter-clue-extractor", editable = "packages/lambdas/python-lambdas/adapter/clue_extractor" },
     { name = "crossword-solver-adapter-grid-extractor", editable = "packages/lambdas/python-lambdas/adapter/grid_extractor" },
+    { name = "crossword-solver-adapter-repository", editable = "packages/lambdas/python-lambdas/adapter/repository" },
     { name = "crossword-solver-domain-entities", editable = "packages/lambdas/python-lambdas/domain/entities" },
     { name = "crossword-solver-domain-use-case", editable = "packages/lambdas/python-lambdas/domain/use-case" },
     { name = "crossword-solver-image", editable = "packages/lambdas/python-lambdas/image" },
