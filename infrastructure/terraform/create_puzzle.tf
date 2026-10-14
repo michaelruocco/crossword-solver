@@ -81,6 +81,19 @@ resource "aws_iam_role_policy" "create_puzzle_bedrock" {
   policy = data.aws_iam_policy_document.create_puzzle_bedrock.json
 }
 
+data "aws_iam_policy_document" "create_puzzle_dynamodb" {
+  statement {
+    actions   = ["dynamodb:PutItem", "dynamodb:GetItem"]
+    resources = [aws_dynamodb_table.puzzles.arn]
+  }
+}
+
+resource "aws_iam_role_policy" "create_puzzle_dynamodb" {
+  name   = "dynamodb-puzzles"
+  role   = aws_iam_role.create_puzzle.id
+  policy = data.aws_iam_policy_document.create_puzzle_dynamodb.json
+}
+
 resource "aws_lambda_function" "create_puzzle" {
   function_name = "crossword-solver-${var.environment}-create-puzzle"
 
@@ -102,6 +115,7 @@ resource "aws_lambda_function" "create_puzzle" {
       CLUE_EXTRACTOR_MODEL_ID = local.create_puzzle_clue_extractor_model_id
       LD_LIBRARY_PATH         = "/opt/lib:/var/lang/lib:/lib64:/usr/lib64:/var/runtime:/var/task"
       OMP_THREAD_LIMIT        = "1"
+      PUZZLES_TABLE_NAME      = aws_dynamodb_table.puzzles.name
       TESSDATA_PREFIX         = "/opt/share/tessdata"
     }
   }

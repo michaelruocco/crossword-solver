@@ -10,6 +10,7 @@ import pytest
 os.environ.setdefault("AWS_DEFAULT_REGION", "eu-west-2")
 os.environ.setdefault("CLUE_EXTRACTOR_MODEL_ID", "test-model-id")
 os.environ.setdefault("TESSDATA_PREFIX", "/opt/share/tessdata")
+os.environ.setdefault("PUZZLES_TABLE_NAME", "puzzles")
 
 
 @dataclass

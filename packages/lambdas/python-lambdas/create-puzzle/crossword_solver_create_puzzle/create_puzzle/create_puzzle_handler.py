@@ -12,7 +12,10 @@ from crossword_solver_adapter_clue_extractor.bedrock_clue_extractor import Bedro
 from crossword_solver_adapter_grid_extractor.cell_factory import CellFactory
 from crossword_solver_adapter_grid_extractor.default_grid_extractor import DefaultGridExtractor
 from crossword_solver_adapter_grid_extractor.number_detector import NumberDetector
+from crossword_solver_adapter_repository.dynamo_puzzle_repository import DynamoPuzzleRepository
 from crossword_solver_domain_use_case.puzzle_creator import PuzzleCreator
+from crossword_solver_domain_use_case.puzzle_finder import PuzzleFinder
+from crossword_solver_domain_use_case.puzzle_service import PuzzleService
 from crossword_solver_image.default_image_downloader import DefaultImageDownloader
 
 from .api_gateway_event_converter import ApiGatewayEventConverter
@@ -35,10 +38,15 @@ copy_config_to_registered_loggers(
     },
 )
 
-puzzle_creator = PuzzleCreator(
-    clue_extractor=BedrockClueExtractor(model_id=os.environ["CLUE_EXTRACTOR_MODEL_ID"]),
-    grid_extractor=DefaultGridExtractor(CellFactory(NumberDetector(os.environ["TESSDATA_PREFIX"]))),
-    image_downloader=DefaultImageDownloader(),
+puzzle_repository = DynamoPuzzleRepository(os.environ["PUZZLES_TABLE_NAME"])
+puzzle_service = PuzzleService(
+    creator=PuzzleCreator(
+        clue_extractor=BedrockClueExtractor(model_id=os.environ["CLUE_EXTRACTOR_MODEL_ID"]),
+        grid_extractor=DefaultGridExtractor(CellFactory(NumberDetector(os.environ["TESSDATA_PREFIX"]))),
+        image_downloader=DefaultImageDownloader(),
+        repository=puzzle_repository,
+    ),
+    finder=PuzzleFinder(puzzle_repository),
 )
 
 event_converter = ApiGatewayEventConverter()
@@ -55,7 +63,8 @@ def lambda_handler(event: APIGatewayProxyEventV2Model, context: LambdaContext) -
 
     try:
         request = event_converter.to_request(event)
-        puzzle = puzzle_creator.create(request.image_url)
+        puzzle_id = puzzle_service.create(request.image_url)
+        puzzle = puzzle_service.find_by_id(puzzle_id)
         logger.info("Created puzzle", extra={"puzzle": puzzle})
         metrics.add_metric(name="SuccessCount", unit=MetricUnit.Count, value=1)
         return {

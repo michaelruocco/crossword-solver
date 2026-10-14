@@ -1,0 +1,16 @@
+from typing import Protocol
+from uuid import UUID
+
+from crossword_solver_domain_entities.puzzle import Puzzle
+
+
+class PuzzleRepository(Protocol):
+    def find_all(self) -> list[Puzzle]: ...
+
+    def find_by_id(self, puzzle_id: UUID) -> Puzzle | None: ...
+
+    def find_by_hash(self, hash: str) -> Puzzle | None: ...
+
+    def save(self, puzzle: Puzzle) -> None: ...
+
+    def delete_by_id(self, puzzle_id: UUID) -> None: ...

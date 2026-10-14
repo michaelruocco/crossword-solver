@@ -4,6 +4,7 @@ version = "1.0.0"
 dependencies = [
   "crossword-solver-adapter-clue-extractor",
   "crossword-solver-adapter-grid-extractor",
+  "crossword-solver-adapter-repository",
   "crossword-solver-create-puzzle",
   "crossword-solver-domain-entities",
   "crossword-solver-domain-use-case",
@@ -14,6 +15,7 @@ dependencies = [
 members = [
   "packages/lambdas/python-lambdas/adapter/clue_extractor",
   "packages/lambdas/python-lambdas/adapter/grid_extractor",
+  "packages/lambdas/python-lambdas/adapter/repository",
   "packages/lambdas/python-lambdas/create-puzzle",
   "packages/lambdas/python-lambdas/domain/entities",
   "packages/lambdas/python-lambdas/domain/use-case",
@@ -24,6 +26,9 @@ members = [
 workspace = true
 
 [tool.uv.sources.crossword-solver-adapter-grid-extractor]
+workspace = true
+
+[tool.uv.sources.crossword-solver-adapter-repository]
 workspace = true
 
 [tool.uv.sources.crossword-solver-create-puzzle]

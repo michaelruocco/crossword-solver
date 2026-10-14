@@ -13,3 +13,7 @@ output "automatic_answers_function_name" {
 output "api_endpoint" {
   value = aws_apigatewayv2_api.http.api_endpoint
 }
+
+output "puzzles_table_name" {
+  value = aws_dynamodb_table.puzzles.name
+}
