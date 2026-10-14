@@ -45,6 +45,7 @@ dependencies = [
   "aws-lambda-powertools[parser]==3.35.0",
   "aws-lambda-typing==2.20.0",
   "crossword-solver-adapter-clue-extractor",
+  "crossword-solver-adapter-grid-extractor",
   "crossword-solver-domain-entities",
   "crossword-solver-domain-use-case",
   "crossword-solver-image",
@@ -52,6 +53,7 @@ dependencies = [
 
 [tool.uv.sources]
 crossword-solver-adapter-clue-extractor = { workspace = true }
+crossword-solver-adapter-grid-extractor = { workspace = true }
 crossword-solver-domain-entities = { workspace = true }
 crossword-solver-domain-use-case = { workspace = true }
 crossword-solver-image = { workspace = true }

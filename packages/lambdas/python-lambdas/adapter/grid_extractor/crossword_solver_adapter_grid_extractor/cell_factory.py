@@ -24,7 +24,8 @@ class CellFactory:
     # ...and be less than this percentage of the cell's width and height.
     MAX_DIGIT_SIZE_PERCENT = 45
     DIGIT_BORDER_FACTOR = 1.5
-    DIGIT_SCALE = 50
+    # Larger scales were no more accurate on the test puzzles but made each OCR call much slower.
+    DIGIT_SCALE = 10
     # Narrow digits (typically "1") are widened to this width/height ratio and retried if they can't be read.
     MIN_DIGIT_ASPECT = 0.6
 

@@ -1,6 +1,7 @@
 import logging
 import re
 import shlex
+import time
 from pathlib import Path
 
 import cv2
@@ -21,12 +22,19 @@ class NumberDetector:
         self.config = f"{self.BASE_CONFIG} --tessdata-dir {shlex.quote(str(tessdata_dir))}"
 
     def detect(self, cell: np.ndarray) -> int | None:
+        start = time.perf_counter()
         try:
             text = pytesseract.image_to_string(self._to_rgb(cell), lang=self.LANGUAGE, config=self.config).strip()
         except pytesseract.TesseractError:
             logger.exception("Failed to read number from cell")
             return None
-        logger.debug("Detected text %r", text)
+        duration_ms = round((time.perf_counter() - start) * 1000)
+        logger.info(
+            "Tesseract read %r in %d ms",
+            text,
+            duration_ms,
+            extra={"tesseract_text": text, "tesseract_duration_ms": duration_ms},
+        )
         if not _NUMBER.fullmatch(text):
             return None
         return int(text)

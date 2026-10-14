@@ -101,6 +101,7 @@ resource "aws_lambda_function" "create_puzzle" {
     variables = {
       CLUE_EXTRACTOR_MODEL_ID = local.create_puzzle_clue_extractor_model_id
       LD_LIBRARY_PATH         = "/opt/lib:/var/lang/lib:/lib64:/usr/lib64:/var/runtime:/var/task"
+      OMP_THREAD_LIMIT        = "1"
       TESSDATA_PREFIX         = "/opt/share/tessdata"
     }
   }

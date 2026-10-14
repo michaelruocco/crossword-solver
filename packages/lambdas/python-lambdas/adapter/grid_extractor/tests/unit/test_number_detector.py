@@ -117,3 +117,15 @@ def test_detect_passes_grayscale_cells_unchanged(detector, ocr):
     detector.detect(gray)
 
     assert ocr.calls[0]["image"] is gray
+
+
+def test_detect_logs_text_and_duration_of_tesseract_call(detector, ocr, cell, caplog):
+    ocr.returns("12\n")
+
+    with caplog.at_level(logging.INFO):
+        detector.detect(cell)
+
+    record = next(record for record in caplog.records if record.message.startswith("Tesseract read"))
+    assert record.tesseract_text == "12"
+    assert isinstance(record.tesseract_duration_ms, int)
+    assert record.tesseract_duration_ms >= 0

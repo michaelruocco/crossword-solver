@@ -1,3 +1,4 @@
+import logging
 from unittest.mock import MagicMock
 
 import numpy as np
@@ -77,6 +78,14 @@ def test_builds_each_cell_from_its_image_in_the_found_grid(extractor, calculator
     cell_factory.to_cell.assert_any_call("cell image 2,1", 2, 1)
 
 
+def test_defaults_workers_to_twice_cpu_count(cell_factory, finder, calculator, monkeypatch):
+    monkeypatch.setattr("os.cpu_count", lambda: 3)
+
+    extractor = DefaultGridExtractor(cell_factory, finder, calculator)
+
+    assert extractor.max_workers == 6
+
+
 @pytest.mark.parametrize(
     ("pil_image", "expected_pixel"),
     [
@@ -92,3 +101,12 @@ def test_passes_image_to_finder_as_bgr(extractor, finder, pil_image, expected_pi
     image = finder.find_grid.call_args.args[0]
     assert image.shape == (4, 4, 3)
     assert image[0, 0].tolist() == expected_pixel
+
+
+def test_logs_grid_size_and_extraction_duration(extractor, caplog):
+    with caplog.at_level(logging.INFO):
+        extractor.extract_grid(to_image(PILImage.new("RGB", (4, 4))))
+
+    record = next(record for record in caplog.records if record.message.startswith("Extracted"))
+    assert record.message.startswith("Extracted 2x3 grid in ")
+    assert record.grid_extraction_duration_ms >= 0
