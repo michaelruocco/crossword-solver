@@ -1,6 +1,6 @@
 import pytest
 
-from crossword_solver_create_puzzle.create_puzzle.create_puzzle_request import CreatePuzzleRequest
+from crossword_solver_adapter_api.create_puzzle_request import CreatePuzzleRequest
 
 
 @pytest.mark.parametrize("url", ["https://example.com/puzzle.jpg", "http://example.com/puzzle.jpg"])

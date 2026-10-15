@@ -46,5 +46,7 @@ Pytest runs with `--import-mode=importlib` (set in each project's `pyproject.tom
 integration test can share the same file name, e.g. `tests/unit/test_grid_finder.py` and
 `tests/integration/test_grid_finder.py`. The trade-off is that test modules cannot import from each other, so
 shared fixtures and test helpers belong in a `conftest.py`, which pytest loads automatically for every test in
-that directory and below. For example, `create-puzzle/tests/conftest.py` provides the `build_event` and
-`lambda_context` fixtures used by its tests.
+that directory and below. Fixtures and helpers shared between projects live in the `test-utils` library, which
+projects add as a dev dependency. For example, `create-puzzle/tests/conftest.py` imports the `build_event`,
+`build_sqs_event` and `lambda_context` fixtures from `crossword_solver_test_utils.fixtures`, and handler tests use
+the `response_status` and `response_json` helpers from `crossword_solver_test_utils.responses`.

@@ -3,8 +3,8 @@ from uuid import UUID, uuid4
 
 from aws_lambda_powertools.utilities.parser.models import APIGatewayProxyEventV2Model
 
-from crossword_solver_create_puzzle.api_response import json_response, message_response
-from crossword_solver_create_puzzle.path_parameters import uuid_path_parameter
+from crossword_solver_adapter_api.api_response import json_response, message_response
+from crossword_solver_adapter_api.path_parameters import uuid_path_parameter
 
 
 def test_json_response_adds_content_type_and_extra_headers():
@@ -16,10 +16,11 @@ def test_json_response_adds_content_type_and_extra_headers():
 
 
 def test_message_response_wraps_message_in_json():
-    response = message_response(404, "Not found")
-
-    assert response["statusCode"] == 404
-    assert json.loads(response["body"]) == {"message": "Not found"}
+    assert message_response(404, "Not found") == {
+        "statusCode": 404,
+        "headers": {"content-type": "application/json"},
+        "body": json.dumps({"message": "Not found"}),
+    }
 
 
 def test_uuid_path_parameter_returns_uuid(build_event):

@@ -5,13 +5,12 @@ from aws_lambda_powertools.utilities.parser import event_parser
 from aws_lambda_powertools.utilities.parser.models import APIGatewayProxyEventV2Model
 from aws_lambda_powertools.utilities.typing import LambdaContext
 from aws_lambda_typing.responses import APIGatewayProxyResponseV2
+from crossword_solver_adapter_api.api_response import json_response, message_response
+from crossword_solver_adapter_api.path_parameters import uuid_path_parameter
+from crossword_solver_adapter_api.puzzle_import_converter import PuzzleImportConverter
 from crossword_solver_adapter_repository.dynamo_puzzle_import_repository import DynamoPuzzleImportRepository
 from crossword_solver_domain_use_case.puzzle_import_finder import PuzzleImportFinder
 from crossword_solver_domain_use_case.puzzle_import_not_found_error import PuzzleImportNotFoundError
-
-from crossword_solver_create_puzzle.api_response import json_response, message_response
-from crossword_solver_create_puzzle.path_parameters import uuid_path_parameter
-from crossword_solver_create_puzzle.puzzle_import.puzzle_import_converter import PuzzleImportConverter
 
 logger: Logger = Logger(service="GetPuzzleImport")
 tracer: Tracer = Tracer(service="GetPuzzleImport")

@@ -2,6 +2,7 @@
 name = "nx-workspace"
 version = "1.0.0"
 dependencies = [
+  "crossword-solver-adapter-api",
   "crossword-solver-adapter-clue-extractor",
   "crossword-solver-adapter-grid-extractor",
   "crossword-solver-adapter-queue",
@@ -9,11 +10,13 @@ dependencies = [
   "crossword-solver-create-puzzle",
   "crossword-solver-domain-entities",
   "crossword-solver-domain-use-case",
-  "crossword-solver-image"
+  "crossword-solver-image",
+  "crossword-solver-test-utils"
 ]
 
 [tool.uv.workspace]
 members = [
+  "packages/lambdas/python-lambdas/adapter/api",
   "packages/lambdas/python-lambdas/adapter/clue_extractor",
   "packages/lambdas/python-lambdas/adapter/grid_extractor",
   "packages/lambdas/python-lambdas/adapter/queue",
@@ -21,8 +24,12 @@ members = [
   "packages/lambdas/python-lambdas/create-puzzle",
   "packages/lambdas/python-lambdas/domain/entities",
   "packages/lambdas/python-lambdas/domain/use-case",
-  "packages/lambdas/python-lambdas/image"
+  "packages/lambdas/python-lambdas/image",
+  "packages/lambdas/python-lambdas/test-utils"
 ]
+
+[tool.uv.sources.crossword-solver-adapter-api]
+workspace = true
 
 [tool.uv.sources.crossword-solver-adapter-clue-extractor]
 workspace = true
@@ -46,6 +53,9 @@ workspace = true
 workspace = true
 
 [tool.uv.sources.crossword-solver-image]
+workspace = true
+
+[tool.uv.sources.crossword-solver-test-utils]
 workspace = true
 
 [dependency-groups]

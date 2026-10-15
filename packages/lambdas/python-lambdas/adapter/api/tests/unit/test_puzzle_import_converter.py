@@ -5,7 +5,7 @@ import pytest
 from crossword_solver_domain_entities.puzzle_import import PuzzleImport
 from crossword_solver_domain_entities.puzzle_import_status import PuzzleImportStatus
 
-from crossword_solver_create_puzzle.puzzle_import.puzzle_import_converter import PuzzleImportConverter
+from crossword_solver_adapter_api.puzzle_import_converter import PuzzleImportConverter
 
 NOW = datetime(2026, 10, 15, 9, 30, tzinfo=UTC)
 LATER = datetime(2026, 10, 15, 9, 31, tzinfo=UTC)
