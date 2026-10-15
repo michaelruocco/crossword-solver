@@ -4,6 +4,7 @@ from uuid import UUID
 from crossword_solver_domain_entities.puzzle_import_status import PuzzleImportStatus
 
 from .clock import Clock, system_clock
+from .log_sanitizer import sanitize_for_log
 from .puzzle_creator import PuzzleCreator
 from .puzzle_import_not_found_error import PuzzleImportNotFoundError
 from .puzzle_import_repository import PuzzleImportRepository
@@ -22,14 +23,18 @@ class PuzzleImportProcessor:
         if puzzle_import is None:
             raise PuzzleImportNotFoundError(import_id)
         if puzzle_import.status != PuzzleImportStatus.PENDING:
-            logger.info("Skipping puzzle import %s as its status is %s", import_id, puzzle_import.status.value)
+            logger.info(
+                "Skipping puzzle import %s as its status is %s",
+                sanitize_for_log(import_id),
+                puzzle_import.status.value,
+            )
             return
 
         try:
             puzzle_id = self.creator.create(puzzle_import.image_url)
         except Exception as e:
             # Recorded on the import for the client to see, rather than letting the queue retry an expensive call.
-            logger.exception("Failed to process puzzle import %s", import_id)
+            logger.exception("Failed to process puzzle import %s", sanitize_for_log(import_id))
             puzzle_import.fail(str(e) or type(e).__name__, self.clock())
         else:
             puzzle_import.complete(puzzle_id, self.clock())

@@ -1,7 +1,7 @@
 import logging
 from datetime import UTC, datetime
 from unittest.mock import Mock
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import pytest
 from crossword_solver_domain_entities.puzzle_import import PuzzleImport
@@ -95,3 +95,26 @@ def test_process_raises_error_when_import_not_found():
 
     creator.create.assert_not_called()
     repository.save.assert_not_called()
+
+
+class _IdWithLineBreak(UUID):
+    def __str__(self) -> str:
+        return "id\nFAKE LOG ENTRY\r"
+
+
+def test_process_removes_line_breaks_from_id_in_skipped_import_log(caplog):
+    processor, _, _ = a_processor(an_import(PuzzleImportStatus.COMPLETE))
+
+    with caplog.at_level(logging.INFO):
+        processor.process(_IdWithLineBreak(int=1))
+
+    assert "Skipping puzzle import idFAKE LOG ENTRY as its status is COMPLETE" in caplog.messages
+
+
+def test_process_removes_line_breaks_from_id_in_failure_log(caplog):
+    processor, _, creator = a_processor(an_import())
+    creator.create.side_effect = ValueError("boom")
+
+    processor.process(_IdWithLineBreak(int=1))
+
+    assert "Failed to process puzzle import idFAKE LOG ENTRY" in caplog.messages
