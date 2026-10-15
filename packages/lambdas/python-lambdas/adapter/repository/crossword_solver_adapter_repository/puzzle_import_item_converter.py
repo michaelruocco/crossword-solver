@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Any
 from uuid import UUID
 
@@ -9,6 +9,11 @@ Item = dict[str, Any]
 
 
 class PuzzleImportItemConverter:
+    DEFAULT_TTL = timedelta(days=7)
+
+    def __init__(self, ttl: timedelta = DEFAULT_TTL):
+        self.ttl = ttl
+
     def to_item(self, puzzle_import: PuzzleImport) -> Item:
         return {
             "id": str(puzzle_import.id),
@@ -18,6 +23,8 @@ class PuzzleImportItemConverter:
             "error": puzzle_import.error,
             "created_at": puzzle_import.created_at.isoformat(),
             "updated_at": puzzle_import.updated_at.isoformat(),
+            # Epoch seconds, which the table's TTL setting reads to expire the item.
+            "expires_at": int((puzzle_import.created_at + self.ttl).timestamp()),
         }
 
     def to_puzzle_import(self, item: Item) -> PuzzleImport:
