@@ -5,6 +5,7 @@ from aws_lambda_powertools.logging.utils import copy_config_to_registered_logger
 from aws_lambda_powertools.metrics import MetricUnit
 from aws_lambda_powertools.utilities.parser import envelopes, event_parser
 from aws_lambda_powertools.utilities.typing import LambdaContext
+from crossword_solver_adapter_api.puzzle_import_message import PuzzleImportMessage
 from crossword_solver_adapter_clue_extractor.bedrock_clue_extractor import BedrockClueExtractor
 from crossword_solver_adapter_grid_extractor.cell_factory import CellFactory
 from crossword_solver_adapter_grid_extractor.default_grid_extractor import DefaultGridExtractor
@@ -14,8 +15,6 @@ from crossword_solver_adapter_repository.dynamo_puzzle_repository import DynamoP
 from crossword_solver_domain_use_case.puzzle_creator import PuzzleCreator
 from crossword_solver_domain_use_case.puzzle_import_processor import PuzzleImportProcessor
 from crossword_solver_image.default_image_downloader import DefaultImageDownloader
-
-from .puzzle_import_message import PuzzleImportMessage
 
 logger: Logger = Logger(service="ProcessPuzzleImport")
 metrics: Metrics = Metrics(namespace="PuzzleImport", service="ProcessPuzzleImport")

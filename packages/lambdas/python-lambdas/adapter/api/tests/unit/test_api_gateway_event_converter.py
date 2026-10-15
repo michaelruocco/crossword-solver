@@ -1,7 +1,7 @@
 import pytest
 from aws_lambda_powertools.utilities.parser.models import APIGatewayProxyEventV2Model
 
-from crossword_solver_create_puzzle.create_puzzle.api_gateway_event_converter import (
+from crossword_solver_adapter_api.api_gateway_event_converter import (
     ApiGatewayEventConverter,
 )
 

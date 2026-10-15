@@ -1,0 +1,53 @@
+[tool.coverage.run]
+branch = true
+source = [ "crossword_solver_adapter_api" ]
+
+[tool.coverage.report]
+exclude_lines = [ "if TYPE_CHECKING:" ]
+show_missing = true
+
+[tool.pytest.ini_options]
+addopts = """
+ --import-mode=importlib
+ --cov
+ --cov-report html:'../../../../../coverage/packages/lambdas/python-lambdas/adapter/api/html'
+ --cov-report xml:'../../../../../coverage/packages/lambdas/python-lambdas/adapter/api/coverage.xml'
+ --html='../../../../../reports/packages/lambdas/python-lambdas/adapter/api/unittests/html/index.html'
+ --junitxml='../../../../../reports/packages/lambdas/python-lambdas/adapter/api/unittests/junit.xml'
+"""
+
+[tool.hatch.build.targets.wheel]
+packages = [ "crossword_solver_adapter_api" ]
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.ruff]
+exclude = [ ".ruff_cache", ".svn", ".tox", ".venv", "dist" ]
+line-length = 120
+indent-width = 4
+
+  [tool.ruff.lint]
+  select = [ "E", "F", "UP", "B", "SIM", "I" ]
+  ignore = [ ]
+  fixable = [ "ALL" ]
+  unfixable = [ ]
+
+[project]
+name = "crossword-solver-adapter-api"
+version = "1.0.0"
+description = "Crossword solver API adapter (request and response models, converters and API Gateway helpers)."
+requires-python = ">=3.14"
+readme = "README.md"
+dependencies = [
+  "aws-lambda-powertools[parser]==3.35.0",
+  "aws-lambda-typing==2.20.0",
+  "crossword-solver-domain-entities",
+]
+
+[tool.uv.sources]
+crossword-solver-domain-entities = { workspace = true }
+
+[build-system]
+requires = [ "hatchling" ]
+build-backend = "hatchling.build"

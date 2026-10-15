@@ -10,7 +10,7 @@ from crossword_solver_domain_entities.grid import Grid
 from crossword_solver_domain_entities.id import Id
 from crossword_solver_domain_entities.puzzle import Puzzle
 
-from crossword_solver_create_puzzle.create_puzzle.puzzle_converter import (
+from crossword_solver_adapter_api.puzzle_converter import (
     PuzzleConverter,
 )
 

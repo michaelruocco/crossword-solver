@@ -3,8 +3,8 @@ from uuid import UUID, uuid4
 
 from aws_lambda_powertools.utilities.parser.models import APIGatewayProxyEventV2Model
 
-from crossword_solver_create_puzzle.api_response import json_response, message_response
-from crossword_solver_create_puzzle.path_parameters import uuid_path_parameter
+from crossword_solver_adapter_api.api_response import json_response, message_response
+from crossword_solver_adapter_api.path_parameters import uuid_path_parameter
 
 
 def test_json_response_adds_content_type_and_extra_headers():
