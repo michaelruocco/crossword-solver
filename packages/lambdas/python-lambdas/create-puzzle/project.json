@@ -14,11 +14,6 @@
     "components": [
       {
         "generator": "py#lambda-function",
-        "path": "crossword_solver_create_puzzle/create_puzzle/create_puzzle_handler.py",
-        "name": "create-puzzle"
-      },
-      {
-        "generator": "py#lambda-function",
         "path": "crossword_solver_create_puzzle/start_puzzle_import/start_puzzle_import_handler.py",
         "name": "start-puzzle-import"
       },

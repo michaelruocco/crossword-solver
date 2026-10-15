@@ -1,5 +1,9 @@
-output "create_puzzle_function_name" {
-  value = aws_lambda_function.create_puzzle.function_name
+output "process_puzzle_import_function_name" {
+  value = aws_lambda_function.process_puzzle_import.function_name
+}
+
+output "puzzle_api_function_names" {
+  value = { for name, function in aws_lambda_function.puzzle_api : name => function.function_name }
 }
 
 output "create_attempt_function_name" {
