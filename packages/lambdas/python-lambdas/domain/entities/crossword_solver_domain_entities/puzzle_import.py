@@ -14,3 +14,13 @@ class PuzzleImport:
     updated_at: datetime
     puzzle_id: UUID | None = None
     error: str | None = None
+
+    def complete(self, puzzle_id: UUID, now: datetime) -> None:
+        self.status = PuzzleImportStatus.COMPLETE
+        self.puzzle_id = puzzle_id
+        self.updated_at = now
+
+    def fail(self, error: str, now: datetime) -> None:
+        self.status = PuzzleImportStatus.FAILED
+        self.error = error
+        self.updated_at = now

@@ -34,6 +34,7 @@ copy_config_to_registered_loggers(
     include={
         "crossword_solver_adapter_clue_extractor",
         "crossword_solver_adapter_grid_extractor",
+        "crossword_solver_domain_use_case",
         "crossword_solver_image",
     },
 )
