@@ -9,6 +9,8 @@ from crossword_solver_domain_entities.coordinates import Coordinates
 from crossword_solver_domain_entities.grid import Grid
 from crossword_solver_domain_entities.id import Id
 from crossword_solver_domain_entities.puzzle import Puzzle
+from crossword_solver_domain_entities.word import Word
+from crossword_solver_domain_entities.words import Words
 
 from crossword_solver_adapter_api.puzzle_converter import (
     PuzzleConverter,
@@ -39,6 +41,12 @@ def test_to_response():
             column_width=40,
             row_height=50,
         ),
+        words=Words(
+            [
+                Word(Id.across(1), 4, Coordinates(0, 1)),
+                Word(Id.down(2), 4, Coordinates(1, 1)),
+            ]
+        ),
         created_at=datetime.now(UTC),
     )
 
@@ -63,5 +71,9 @@ def test_to_response():
                 {"id": None, "coordinates": {"x": 1, "y": 0}, "black": False, "character": None},
             ],
         },
+        "words": [
+            {"id": 1, "direction": "ACROSS", "length": 4, "coordinates": {"x": 0, "y": 1}},
+            {"id": 2, "direction": "DOWN", "length": 4, "coordinates": {"x": 1, "y": 1}},
+        ],
         "createdAt": puzzle.created_at.isoformat().replace("+00:00", "Z"),
     }
