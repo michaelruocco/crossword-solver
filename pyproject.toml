@@ -10,7 +10,8 @@ dependencies = [
   "crossword-solver-create-puzzle",
   "crossword-solver-domain-entities",
   "crossword-solver-domain-use-case",
-  "crossword-solver-image"
+  "crossword-solver-image",
+  "crossword-solver-test-utils"
 ]
 
 [tool.uv.workspace]
@@ -23,7 +24,8 @@ members = [
   "packages/lambdas/python-lambdas/create-puzzle",
   "packages/lambdas/python-lambdas/domain/entities",
   "packages/lambdas/python-lambdas/domain/use-case",
-  "packages/lambdas/python-lambdas/image"
+  "packages/lambdas/python-lambdas/image",
+  "packages/lambdas/python-lambdas/test-utils"
 ]
 
 [tool.uv.sources.crossword-solver-adapter-api]
@@ -51,6 +53,9 @@ workspace = true
 workspace = true
 
 [tool.uv.sources.crossword-solver-image]
+workspace = true
+
+[tool.uv.sources.crossword-solver-test-utils]
 workspace = true
 
 [dependency-groups]

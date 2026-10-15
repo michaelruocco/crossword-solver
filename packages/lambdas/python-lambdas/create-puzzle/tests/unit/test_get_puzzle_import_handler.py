@@ -1,4 +1,3 @@
-import json
 from datetime import UTC, datetime
 from unittest.mock import patch
 from uuid import uuid4
@@ -7,6 +6,7 @@ import pytest
 from crossword_solver_domain_entities.puzzle_import import PuzzleImport
 from crossword_solver_domain_entities.puzzle_import_status import PuzzleImportStatus
 from crossword_solver_domain_use_case.puzzle_import_not_found_error import PuzzleImportNotFoundError
+from crossword_solver_test_utils.responses import response_body, response_headers, response_json, response_status
 
 from crossword_solver_create_puzzle.get_puzzle_import import get_puzzle_import_handler
 
@@ -30,9 +30,9 @@ def test_handler_returns_complete_import_with_puzzle_uri(build_event, lambda_con
         )
 
     find.assert_called_once_with(import_id)
-    assert response["statusCode"] == 200
-    assert response["headers"] == {"content-type": "application/json"}
-    assert json.loads(response["body"]) == {
+    assert response_status(response) == 200
+    assert response_headers(response) == {"content-type": "application/json"}
+    assert response_json(response) == {
         "id": str(import_id),
         "status": "COMPLETE",
         "puzzleId": str(puzzle_id),
@@ -59,10 +59,10 @@ def test_handler_returns_generic_error_for_failed_import(build_event, lambda_con
             build_event(None, {"importId": str(import_id)}), lambda_context
         )
 
-    body = json.loads(response["body"])
+    body = response_json(response)
     assert body["status"] == "FAILED"
     assert body["error"] == "Failed to import puzzle"
-    assert "arn:aws" not in response["body"]
+    assert "arn:aws" not in response_body(response)
 
 
 def test_handler_returns_not_found_when_import_does_not_exist(build_event, lambda_context):
@@ -75,8 +75,8 @@ def test_handler_returns_not_found_when_import_does_not_exist(build_event, lambd
             build_event(None, {"importId": str(import_id)}), lambda_context
         )
 
-    assert response["statusCode"] == 404
-    assert json.loads(response["body"]) == {"message": "Puzzle import not found"}
+    assert response_status(response) == 404
+    assert response_json(response) == {"message": "Puzzle import not found"}
 
 
 @pytest.mark.parametrize("path_parameters", [None, {}, {"importId": "not-a-uuid"}], ids=["none", "empty", "invalid"])
@@ -85,7 +85,7 @@ def test_handler_returns_not_found_for_missing_or_invalid_import_id(build_event,
         response = get_puzzle_import_handler.lambda_handler(build_event(None, path_parameters), lambda_context)
 
     find.assert_not_called()
-    assert response["statusCode"] == 404
+    assert response_status(response) == 404
 
 
 def test_handler_returns_internal_server_error_when_find_fails(build_event, lambda_context):
@@ -94,5 +94,5 @@ def test_handler_returns_internal_server_error_when_find_fails(build_event, lamb
             build_event(None, {"importId": str(uuid4())}), lambda_context
         )
 
-    assert response["statusCode"] == 500
-    assert json.loads(response["body"]) == {"message": "Internal server error"}
+    assert response_status(response) == 500
+    assert response_json(response) == {"message": "Internal server error"}

@@ -63,6 +63,10 @@ crossword-solver-adapter-repository = { workspace = true }
 crossword-solver-domain-entities = { workspace = true }
 crossword-solver-domain-use-case = { workspace = true }
 crossword-solver-image = { workspace = true }
+crossword-solver-test-utils = { workspace = true }
+
+[dependency-groups]
+dev = [ "crossword-solver-test-utils" ]
 
 [build-system]
 requires = [ "hatchling" ]

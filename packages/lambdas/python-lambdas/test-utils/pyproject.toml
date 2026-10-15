@@ -1,0 +1,52 @@
+[tool.coverage.run]
+branch = true
+source = [ "crossword_solver_test_utils" ]
+
+[tool.coverage.report]
+exclude_lines = [ "if TYPE_CHECKING:" ]
+show_missing = true
+
+[tool.pytest.ini_options]
+addopts = """
+ --import-mode=importlib
+ --cov
+ --cov-report html:'../../../../coverage/packages/lambdas/python-lambdas/test-utils/html'
+ --cov-report xml:'../../../../coverage/packages/lambdas/python-lambdas/test-utils/coverage.xml'
+ --html='../../../../reports/packages/lambdas/python-lambdas/test-utils/unittests/html/index.html'
+ --junitxml='../../../../reports/packages/lambdas/python-lambdas/test-utils/unittests/junit.xml'
+"""
+
+[tool.hatch.build.targets.wheel]
+packages = [ "crossword_solver_test_utils" ]
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.ruff]
+exclude = [ ".ruff_cache", ".svn", ".tox", ".venv", "dist" ]
+line-length = 120
+indent-width = 4
+
+  [tool.ruff.lint]
+  select = [ "E", "F", "UP", "B", "SIM", "I" ]
+  ignore = [ ]
+  fixable = [ "ALL" ]
+  unfixable = [ ]
+
+[project]
+name = "crossword-solver-test-utils"
+version = "1.0.0"
+description = "Shared pytest fixtures and helpers for the Lambda tests."
+requires-python = ">=3.14"
+readme = "README.md"
+dependencies = [
+  "aws-lambda-typing==2.20.0",
+  "pytest>=8.3.4",
+]
+
+[dependency-groups]
+dev = [ "aws-lambda-powertools[parser]==3.35.0" ]
+
+[build-system]
+requires = [ "hatchling" ]
+build-backend = "hatchling.build"

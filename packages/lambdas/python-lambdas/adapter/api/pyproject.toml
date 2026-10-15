@@ -47,6 +47,10 @@ dependencies = [
 
 [tool.uv.sources]
 crossword-solver-domain-entities = { workspace = true }
+crossword-solver-test-utils = { workspace = true }
+
+[dependency-groups]
+dev = [ "crossword-solver-test-utils" ]
 
 [build-system]
 requires = [ "hatchling" ]

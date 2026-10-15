@@ -1,4 +1,3 @@
-import json
 from datetime import UTC, datetime
 from unittest.mock import patch
 from uuid import uuid4
@@ -6,6 +5,7 @@ from uuid import uuid4
 import pytest
 from crossword_solver_domain_entities.puzzle_import import PuzzleImport
 from crossword_solver_domain_entities.puzzle_import_status import PuzzleImportStatus
+from crossword_solver_test_utils.responses import response_headers, response_json, response_status
 
 from crossword_solver_create_puzzle.start_puzzle_import import start_puzzle_import_handler
 
@@ -30,12 +30,12 @@ def test_handler_starts_import_and_returns_accepted_with_location(build_event, l
         response = start_puzzle_import_handler.lambda_handler(build_event({"imageUrl": IMAGE_URL}), lambda_context)
 
     start.assert_called_once_with(IMAGE_URL)
-    assert response["statusCode"] == 202
-    assert response["headers"] == {
+    assert response_status(response) == 202
+    assert response_headers(response) == {
         "content-type": "application/json",
         "location": f"/v1/puzzles/imports/{puzzle_import.id}",
     }
-    assert json.loads(response["body"]) == {
+    assert response_json(response) == {
         "id": str(puzzle_import.id),
         "status": "PENDING",
         "puzzleId": None,
@@ -56,13 +56,13 @@ def test_handler_returns_bad_request_for_invalid_request(build_event, lambda_con
         response = start_puzzle_import_handler.lambda_handler(build_event(body), lambda_context)
 
     start.assert_not_called()
-    assert response["statusCode"] == 400
-    assert json.loads(response["body"]) == {"message": "Invalid request"}
+    assert response_status(response) == 400
+    assert response_json(response) == {"message": "Invalid request"}
 
 
 def test_handler_returns_internal_server_error_when_start_fails(build_event, lambda_context):
     with patch.object(start_puzzle_import_handler.puzzle_import_starter, "start", side_effect=RuntimeError("boom")):
         response = start_puzzle_import_handler.lambda_handler(build_event({"imageUrl": IMAGE_URL}), lambda_context)
 
-    assert response["statusCode"] == 500
-    assert json.loads(response["body"]) == {"message": "Internal server error"}
+    assert response_status(response) == 500
+    assert response_json(response) == {"message": "Internal server error"}

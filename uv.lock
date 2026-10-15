@@ -13,6 +13,7 @@ members = [
     "crossword-solver-domain-entities",
     "crossword-solver-domain-use-case",
     "crossword-solver-image",
+    "crossword-solver-test-utils",
     "nx-workspace",
 ]
 
@@ -358,12 +359,20 @@ dependencies = [
     { name = "crossword-solver-domain-entities" },
 ]
 
+[package.dev-dependencies]
+dev = [
+    { name = "crossword-solver-test-utils" },
+]
+
 [package.metadata]
 requires-dist = [
     { name = "aws-lambda-powertools", extras = ["parser"], specifier = "==3.35.0" },
     { name = "aws-lambda-typing", specifier = "==2.20.0" },
     { name = "crossword-solver-domain-entities", editable = "packages/lambdas/python-lambdas/domain/entities" },
 ]
+
+[package.metadata.requires-dev]
+dev = [{ name = "crossword-solver-test-utils", editable = "packages/lambdas/python-lambdas/test-utils" }]
 
 [[package]]
 name = "crossword-solver-adapter-clue-extractor"
@@ -486,6 +495,11 @@ dependencies = [
     { name = "crossword-solver-image" },
 ]
 
+[package.dev-dependencies]
+dev = [
+    { name = "crossword-solver-test-utils" },
+]
+
 [package.metadata]
 requires-dist = [
     { name = "aws-lambda-powertools", specifier = "==3.35.0" },
@@ -501,6 +515,9 @@ requires-dist = [
     { name = "crossword-solver-domain-use-case", editable = "packages/lambdas/python-lambdas/domain/use-case" },
     { name = "crossword-solver-image", editable = "packages/lambdas/python-lambdas/image" },
 ]
+
+[package.metadata.requires-dev]
+dev = [{ name = "crossword-solver-test-utils", editable = "packages/lambdas/python-lambdas/test-utils" }]
 
 [[package]]
 name = "crossword-solver-domain-entities"
@@ -536,6 +553,29 @@ requires-dist = [
     { name = "crossword-solver-domain-use-case", editable = "packages/lambdas/python-lambdas/domain/use-case" },
     { name = "pillow", specifier = ">=12.3.0" },
 ]
+
+[[package]]
+name = "crossword-solver-test-utils"
+version = "1.0.0"
+source = { editable = "packages/lambdas/python-lambdas/test-utils" }
+dependencies = [
+    { name = "aws-lambda-typing" },
+    { name = "pytest" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "aws-lambda-powertools", extra = ["parser"] },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "aws-lambda-typing", specifier = "==2.20.0" },
+    { name = "pytest", specifier = ">=8.3.4" },
+]
+
+[package.metadata.requires-dev]
+dev = [{ name = "aws-lambda-powertools", extras = ["parser"], specifier = "==3.35.0" }]
 
 [[package]]
 name = "cryptography"
@@ -820,6 +860,7 @@ dependencies = [
     { name = "crossword-solver-domain-entities" },
     { name = "crossword-solver-domain-use-case" },
     { name = "crossword-solver-image" },
+    { name = "crossword-solver-test-utils" },
 ]
 
 [package.dev-dependencies]
@@ -845,6 +886,7 @@ requires-dist = [
     { name = "crossword-solver-domain-entities", editable = "packages/lambdas/python-lambdas/domain/entities" },
     { name = "crossword-solver-domain-use-case", editable = "packages/lambdas/python-lambdas/domain/use-case" },
     { name = "crossword-solver-image", editable = "packages/lambdas/python-lambdas/image" },
+    { name = "crossword-solver-test-utils", editable = "packages/lambdas/python-lambdas/test-utils" },
 ]
 
 [package.metadata.requires-dev]
