@@ -12,6 +12,8 @@ from crossword_solver_domain_entities.direction import Direction
 from crossword_solver_domain_entities.grid import Grid
 from crossword_solver_domain_entities.id import Id
 from crossword_solver_domain_entities.puzzle import Puzzle
+from crossword_solver_domain_entities.word import Word
+from crossword_solver_domain_entities.words import Words
 
 Item = dict[str, Any]
 
@@ -25,6 +27,7 @@ class PuzzleItemConverter:
             "hash": puzzle.hash,
             "clues": [self._clue_to_item(clue) for clue in puzzle.clues],
             "grid": self._grid_to_item(puzzle.grid),
+            "words": [self._word_to_item(word) for word in puzzle.words],
             "created_at": puzzle.created_at.isoformat(),
         }
 
@@ -36,6 +39,8 @@ class PuzzleItemConverter:
             hash=item["hash"],
             clues=Clues([self._item_to_clue(clue) for clue in item["clues"]]),
             grid=self._item_to_grid(item["grid"]),
+            # Intersections are not stored, the Words constructor works them out from the word positions.
+            words=Words([self._item_to_word(word) for word in item["words"]]),
             created_at=datetime.fromisoformat(item["created_at"]),
         )
 
@@ -57,6 +62,24 @@ class PuzzleItemConverter:
             text=item["text"],
             lengths=[int(length) for length in item["lengths"]],
             type=ClueType(item["type"]) if item.get("type") else None,
+        )
+
+    @staticmethod
+    def _word_to_item(word: Word) -> Item:
+        return {
+            "number": word.id.number,
+            "direction": word.id.direction.value,
+            "length": word.length,
+            "x": word.x,
+            "y": word.y,
+        }
+
+    @staticmethod
+    def _item_to_word(item: Item) -> Word:
+        return Word(
+            id=Id(int(item["number"]), Direction(item["direction"])),
+            length=int(item["length"]),
+            coordinates=Coordinates(int(item["x"]), int(item["y"])),
         )
 
     @staticmethod

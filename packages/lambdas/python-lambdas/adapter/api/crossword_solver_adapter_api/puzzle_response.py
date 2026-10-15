@@ -5,6 +5,7 @@ from pydantic import BaseModel, Field
 
 from .clue_response import ClueResponse
 from .grid_response import GridResponse
+from .word_response import WordResponse
 
 
 class PuzzleResponse(BaseModel):
@@ -14,4 +15,5 @@ class PuzzleResponse(BaseModel):
     hash: str
     clues: list[ClueResponse]
     grid: GridResponse
+    words: list[WordResponse]
     created_at: datetime = Field(alias="createdAt")

@@ -13,6 +13,8 @@ from crossword_solver_domain_entities.coordinates import Coordinates
 from crossword_solver_domain_entities.grid import Grid
 from crossword_solver_domain_entities.id import Id
 from crossword_solver_domain_entities.puzzle import Puzzle
+from crossword_solver_domain_entities.word import Word
+from crossword_solver_domain_entities.words import Words
 from moto import mock_aws
 
 from crossword_solver_adapter_repository.dynamo_puzzle_repository import DynamoPuzzleRepository
@@ -66,6 +68,12 @@ def a_puzzle(puzzle_id: UUID | None = None, hash: str = "hash-value") -> Puzzle:
             column_width=40,
             row_height=50,
         ),
+        words=Words(
+            [
+                Word(Id.across(1), 3, Coordinates(0, 1)),
+                Word(Id.down(2), 3, Coordinates(2, 2)),
+            ]
+        ),
         created_at=datetime(2026, 10, 14, 9, 30, 15, 123456, tzinfo=UTC),
     )
 
@@ -78,6 +86,7 @@ def assert_same_puzzle(actual: Puzzle | None, expected: Puzzle) -> None:
     assert actual.hash == expected.hash
     assert list(actual.clues) == list(expected.clues)
     assert actual.grid == expected.grid
+    assert actual.words == expected.words
     assert actual.created_at == expected.created_at
 
 
