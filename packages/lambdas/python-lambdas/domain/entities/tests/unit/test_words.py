@@ -28,10 +28,12 @@ def test_find_by_id_returns_word_with_id(words):
 
 
 def test_find_by_id_raises_error_when_no_word_has_id(words):
-    with pytest.raises(WordNotFoundForIdError, match="Word not found for id 9A") as error:
-        words.find_by_id(Id.across(9))
+    unknown_id = Id.across(9)
 
-    assert error.value.word_id == Id.across(9)
+    with pytest.raises(WordNotFoundForIdError, match="Word not found for id 9A") as error:
+        words.find_by_id(unknown_id)
+
+    assert error.value.word_id == unknown_id
 
 
 def test_works_out_every_intersection_between_crossing_words(words):
@@ -46,8 +48,10 @@ def test_get_intersecting_ids_returns_ids_of_crossing_words(words):
 
 
 def test_get_intersecting_ids_raises_error_when_no_word_has_id(words):
+    unknown_id = Id.across(9)
+
     with pytest.raises(WordNotFoundForIdError):
-        words.get_intersecting_ids(Id.across(9))
+        words.get_intersecting_ids(unknown_id)
 
 
 def test_get_intersecting_words_returns_crossing_words(words):

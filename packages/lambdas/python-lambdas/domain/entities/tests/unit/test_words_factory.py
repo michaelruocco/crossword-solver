@@ -61,6 +61,7 @@ def test_creates_no_words_for_no_clues():
 
 def test_raises_error_when_no_cell_has_the_clue_number():
     clues = Clues([Clue(Id.across(9), "missing cell (3)", [3])])
+    factory = WordsFactory()
 
     with pytest.raises(CellNotFoundForIdError, match="Cell not found for id 9"):
-        WordsFactory().to_words(clues, CELLS)
+        factory.to_words(clues, CELLS)

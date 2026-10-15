@@ -99,9 +99,10 @@ def test_create_raises_error_and_saves_nothing_when_a_clue_has_no_cell():
     grid = Grid(Cells([Cell(Coordinates(0, 2), black=False, id=1)]), 10, 10)
     repository = Mock()
     repository.find_by_hash.return_value = None
+    creator = a_creator(clues, grid, repository)
 
     with pytest.raises(CellNotFoundForIdError):
-        a_creator(clues, grid, repository).create("https://example.com/puzzle.png")
+        creator.create("https://example.com/puzzle.png")
 
     repository.save.assert_not_called()
 
