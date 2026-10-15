@@ -6,6 +6,7 @@ requires-python = ">=3.14"
 members = [
     "crossword-solver-adapter-clue-extractor",
     "crossword-solver-adapter-grid-extractor",
+    "crossword-solver-adapter-queue",
     "crossword-solver-adapter-repository",
     "crossword-solver-create-puzzle",
     "crossword-solver-domain-entities",
@@ -401,6 +402,29 @@ requires-dist = [
 dev = [{ name = "opencv-python-headless", specifier = "==5.0.0.*" }]
 
 [[package]]
+name = "crossword-solver-adapter-queue"
+version = "1.0.0"
+source = { editable = "packages/lambdas/python-lambdas/adapter/queue" }
+dependencies = [
+    { name = "crossword-solver-domain-use-case" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "boto3" },
+    { name = "moto" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "crossword-solver-domain-use-case", editable = "packages/lambdas/python-lambdas/domain/use-case" }]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "boto3", specifier = ">=1.43.109" },
+    { name = "moto", extras = ["sqs"], specifier = ">=5.2.4" },
+]
+
+[[package]]
 name = "crossword-solver-adapter-repository"
 version = "1.0.0"
 source = { editable = "packages/lambdas/python-lambdas/adapter/repository" }
@@ -436,6 +460,7 @@ dependencies = [
     { name = "aws-lambda-typing" },
     { name = "crossword-solver-adapter-clue-extractor" },
     { name = "crossword-solver-adapter-grid-extractor" },
+    { name = "crossword-solver-adapter-queue" },
     { name = "crossword-solver-adapter-repository" },
     { name = "crossword-solver-domain-entities" },
     { name = "crossword-solver-domain-use-case" },
@@ -450,6 +475,7 @@ requires-dist = [
     { name = "aws-lambda-typing", specifier = "==2.20.0" },
     { name = "crossword-solver-adapter-clue-extractor", editable = "packages/lambdas/python-lambdas/adapter/clue_extractor" },
     { name = "crossword-solver-adapter-grid-extractor", editable = "packages/lambdas/python-lambdas/adapter/grid_extractor" },
+    { name = "crossword-solver-adapter-queue", editable = "packages/lambdas/python-lambdas/adapter/queue" },
     { name = "crossword-solver-adapter-repository", editable = "packages/lambdas/python-lambdas/adapter/repository" },
     { name = "crossword-solver-domain-entities", editable = "packages/lambdas/python-lambdas/domain/entities" },
     { name = "crossword-solver-domain-use-case", editable = "packages/lambdas/python-lambdas/domain/use-case" },
@@ -767,6 +793,7 @@ source = { virtual = "." }
 dependencies = [
     { name = "crossword-solver-adapter-clue-extractor" },
     { name = "crossword-solver-adapter-grid-extractor" },
+    { name = "crossword-solver-adapter-queue" },
     { name = "crossword-solver-adapter-repository" },
     { name = "crossword-solver-create-puzzle" },
     { name = "crossword-solver-domain-entities" },
@@ -790,6 +817,7 @@ dev = [
 requires-dist = [
     { name = "crossword-solver-adapter-clue-extractor", editable = "packages/lambdas/python-lambdas/adapter/clue_extractor" },
     { name = "crossword-solver-adapter-grid-extractor", editable = "packages/lambdas/python-lambdas/adapter/grid_extractor" },
+    { name = "crossword-solver-adapter-queue", editable = "packages/lambdas/python-lambdas/adapter/queue" },
     { name = "crossword-solver-adapter-repository", editable = "packages/lambdas/python-lambdas/adapter/repository" },
     { name = "crossword-solver-create-puzzle", editable = "packages/lambdas/python-lambdas/create-puzzle" },
     { name = "crossword-solver-domain-entities", editable = "packages/lambdas/python-lambdas/domain/entities" },

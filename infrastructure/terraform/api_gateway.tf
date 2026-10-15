@@ -20,7 +20,8 @@ resource "aws_apigatewayv2_api" "http" {
     ]
 
     expose_headers = [
-      "etag"
+      "etag",
+      "location"
     ]
 
     max_age = 300
