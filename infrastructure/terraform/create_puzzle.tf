@@ -46,17 +46,6 @@ data "archive_file" "create_puzzle" {
   output_path = "${path.module}/.terraform/create-puzzle.zip"
 }
 
-resource "aws_iam_role" "create_puzzle" {
-  name = "crossword-solver-${var.environment}-create-puzzle-lambda"
-
-  assume_role_policy = data.aws_iam_policy_document.lambda_assume_role.json
-}
-
-resource "aws_iam_role_policy_attachment" "create_puzzle_basic_execution" {
-  role       = aws_iam_role.create_puzzle.name
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
-}
-
 data "aws_caller_identity" "current" {}
 
 locals {
@@ -75,48 +64,75 @@ data "aws_iam_policy_document" "create_puzzle_bedrock" {
   }
 }
 
-resource "aws_iam_role_policy" "create_puzzle_bedrock" {
+resource "aws_iam_role" "process_puzzle_import" {
+  name = "crossword-solver-${var.environment}-process-puzzle-import-lambda"
+
+  assume_role_policy = data.aws_iam_policy_document.lambda_assume_role.json
+}
+
+resource "aws_iam_role_policy_attachment" "process_puzzle_import_basic_execution" {
+  role       = aws_iam_role.process_puzzle_import.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+}
+
+resource "aws_iam_role_policy" "process_puzzle_import_bedrock" {
   name   = "bedrock-invoke-model"
-  role   = aws_iam_role.create_puzzle.id
+  role   = aws_iam_role.process_puzzle_import.id
   policy = data.aws_iam_policy_document.create_puzzle_bedrock.json
 }
 
-data "aws_iam_policy_document" "create_puzzle_dynamodb" {
+data "aws_iam_policy_document" "process_puzzle_import" {
   statement {
-    actions   = ["dynamodb:PutItem", "dynamodb:GetItem"]
+    actions   = ["dynamodb:GetItem", "dynamodb:PutItem"]
+    resources = [aws_dynamodb_table.puzzle_imports.arn]
+  }
+
+  statement {
+    actions   = ["dynamodb:PutItem"]
     resources = [aws_dynamodb_table.puzzles.arn]
+  }
+
+  statement {
+    actions   = ["dynamodb:Query"]
+    resources = ["${aws_dynamodb_table.puzzles.arn}/index/hash-index"]
+  }
+
+  statement {
+    actions   = ["sqs:ReceiveMessage", "sqs:DeleteMessage", "sqs:GetQueueAttributes"]
+    resources = [aws_sqs_queue.puzzle_import.arn]
   }
 }
 
-resource "aws_iam_role_policy" "create_puzzle_dynamodb" {
-  name   = "dynamodb-puzzles"
-  role   = aws_iam_role.create_puzzle.id
-  policy = data.aws_iam_policy_document.create_puzzle_dynamodb.json
+resource "aws_iam_role_policy" "process_puzzle_import" {
+  name   = "puzzle-import-access"
+  role   = aws_iam_role.process_puzzle_import.id
+  policy = data.aws_iam_policy_document.process_puzzle_import.json
 }
 
-resource "aws_lambda_function" "create_puzzle" {
-  function_name = "crossword-solver-${var.environment}-create-puzzle"
+resource "aws_lambda_function" "process_puzzle_import" {
+  function_name = "crossword-solver-${var.environment}-process-puzzle-import"
 
-  role = aws_iam_role.create_puzzle.arn
+  role = aws_iam_role.process_puzzle_import.arn
 
   runtime = "python3.14"
-  handler = "crossword_solver_create_puzzle.create_puzzle.create_puzzle_handler.lambda_handler"
+  handler = "crossword_solver_create_puzzle.process_puzzle_import.process_puzzle_import_handler.lambda_handler"
 
   architectures = ["x86_64"]
 
   filename         = data.archive_file.create_puzzle.output_path
   source_code_hash = data.archive_file.create_puzzle.output_base64sha256
 
-  timeout     = 30
+  timeout     = local.puzzle_import_worker_timeout_seconds
   memory_size = 2048
 
   environment {
     variables = {
-      CLUE_EXTRACTOR_MODEL_ID = local.create_puzzle_clue_extractor_model_id
-      LD_LIBRARY_PATH         = "/opt/lib:/var/lang/lib:/lib64:/usr/lib64:/var/runtime:/var/task"
-      OMP_THREAD_LIMIT        = "1"
-      PUZZLES_TABLE_NAME      = aws_dynamodb_table.puzzles.name
-      TESSDATA_PREFIX         = "/opt/share/tessdata"
+      CLUE_EXTRACTOR_MODEL_ID   = local.create_puzzle_clue_extractor_model_id
+      LD_LIBRARY_PATH           = "/opt/lib:/var/lang/lib:/lib64:/usr/lib64:/var/runtime:/var/task"
+      OMP_THREAD_LIMIT          = "1"
+      PUZZLES_TABLE_NAME        = aws_dynamodb_table.puzzles.name
+      PUZZLE_IMPORTS_TABLE_NAME = aws_dynamodb_table.puzzle_imports.name
+      TESSDATA_PREFIX           = "/opt/share/tessdata"
     }
   }
 
@@ -126,23 +142,10 @@ resource "aws_lambda_function" "create_puzzle" {
   ]
 }
 
-resource "aws_lambda_permission" "create_puzzle_api_gateway" {
-  statement_id  = "AllowApiGatewayInvoke"
-  action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.create_puzzle.function_name
-  principal     = "apigateway.amazonaws.com"
-  source_arn    = "${aws_apigatewayv2_api.http.execution_arn}/*/*"
-}
+resource "aws_lambda_event_source_mapping" "process_puzzle_import" {
+  event_source_arn = aws_sqs_queue.puzzle_import.arn
+  function_name    = aws_lambda_function.process_puzzle_import.arn
 
-resource "aws_apigatewayv2_integration" "create_puzzle" {
-  api_id                 = aws_apigatewayv2_api.http.id
-  integration_type       = "AWS_PROXY"
-  integration_uri        = aws_lambda_function.create_puzzle.invoke_arn
-  payload_format_version = "2.0"
-}
-
-resource "aws_apigatewayv2_route" "create_puzzle" {
-  api_id    = aws_apigatewayv2_api.http.id
-  route_key = "POST /v1/puzzles"
-  target    = "integrations/${aws_apigatewayv2_integration.create_puzzle.id}"
+  # Each import is a long running Bedrock call, so one message per invocation keeps the timeout simple.
+  batch_size = 1
 }

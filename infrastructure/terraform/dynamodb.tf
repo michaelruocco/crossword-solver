@@ -23,3 +23,20 @@ resource "aws_dynamodb_table" "puzzles" {
     }
   }
 }
+
+resource "aws_dynamodb_table" "puzzle_imports" {
+  name         = "crossword-solver-${var.environment}-puzzle-imports"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "id"
+
+  attribute {
+    name = "id"
+    type = "S"
+  }
+
+  # Imports are short-lived status records, the puzzle is the long-term data.
+  ttl {
+    attribute_name = "expires_at"
+    enabled        = true
+  }
+}

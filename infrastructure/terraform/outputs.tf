@@ -1,5 +1,9 @@
-output "create_puzzle_function_name" {
-  value = aws_lambda_function.create_puzzle.function_name
+output "process_puzzle_import_function_name" {
+  value = aws_lambda_function.process_puzzle_import.function_name
+}
+
+output "puzzle_api_function_names" {
+  value = { for name, function in aws_lambda_function.puzzle_api : name => function.function_name }
 }
 
 output "create_attempt_function_name" {
@@ -16,4 +20,16 @@ output "api_endpoint" {
 
 output "puzzles_table_name" {
   value = aws_dynamodb_table.puzzles.name
+}
+
+output "puzzle_imports_table_name" {
+  value = aws_dynamodb_table.puzzle_imports.name
+}
+
+output "puzzle_import_queue_url" {
+  value = aws_sqs_queue.puzzle_import.url
+}
+
+output "puzzle_import_dlq_url" {
+  value = aws_sqs_queue.puzzle_import_dlq.url
 }

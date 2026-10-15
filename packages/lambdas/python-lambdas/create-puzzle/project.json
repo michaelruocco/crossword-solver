@@ -14,8 +14,23 @@
     "components": [
       {
         "generator": "py#lambda-function",
-        "path": "crossword_solver_create_puzzle/create_puzzle/create_puzzle_handler.py",
-        "name": "create-puzzle"
+        "path": "crossword_solver_create_puzzle/start_puzzle_import/start_puzzle_import_handler.py",
+        "name": "start-puzzle-import"
+      },
+      {
+        "generator": "py#lambda-function",
+        "path": "crossword_solver_create_puzzle/get_puzzle_import/get_puzzle_import_handler.py",
+        "name": "get-puzzle-import"
+      },
+      {
+        "generator": "py#lambda-function",
+        "path": "crossword_solver_create_puzzle/process_puzzle_import/process_puzzle_import_handler.py",
+        "name": "process-puzzle-import"
+      },
+      {
+        "generator": "py#lambda-function",
+        "path": "crossword_solver_create_puzzle/get_puzzle/get_puzzle_handler.py",
+        "name": "get-puzzle"
       }
     ]
   },

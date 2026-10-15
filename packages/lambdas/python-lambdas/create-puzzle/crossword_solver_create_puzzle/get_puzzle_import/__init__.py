@@ -1,0 +1,1 @@
+"""Get puzzle import Lambda."""

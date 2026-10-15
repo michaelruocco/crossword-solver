@@ -11,6 +11,8 @@ os.environ.setdefault("AWS_DEFAULT_REGION", "eu-west-2")
 os.environ.setdefault("CLUE_EXTRACTOR_MODEL_ID", "test-model-id")
 os.environ.setdefault("TESSDATA_PREFIX", "/opt/share/tessdata")
 os.environ.setdefault("PUZZLES_TABLE_NAME", "puzzles")
+os.environ.setdefault("PUZZLE_IMPORTS_TABLE_NAME", "puzzle-imports")
+os.environ.setdefault("PUZZLE_IMPORT_QUEUE_URL", "https://sqs.eu-west-2.amazonaws.com/123456789012/puzzle-imports")
 
 
 @dataclass
@@ -28,7 +30,7 @@ def lambda_context() -> FakeLambdaContext:
 
 @pytest.fixture
 def build_event():
-    def _build_event(body: dict | None) -> dict:
+    def _build_event(body: dict | None, path_parameters: dict[str, str] | None = None) -> dict:
         event = {
             "version": "2.0",
             "routeKey": "POST /v1/puzzles",
@@ -57,6 +59,36 @@ def build_event():
         }
         if body is not None:
             event["body"] = json.dumps(body)
+        if path_parameters is not None:
+            event["pathParameters"] = path_parameters
         return event
 
     return _build_event
+
+
+@pytest.fixture
+def build_sqs_event():
+    def _build_sqs_event(*bodies: str) -> dict:
+        return {
+            "Records": [
+                {
+                    "messageId": f"message-{index}",
+                    "receiptHandle": "receipt-handle",
+                    "body": body,
+                    "attributes": {
+                        "ApproximateReceiveCount": "1",
+                        "SentTimestamp": "1704067200000",
+                        "SenderId": "sender-id",
+                        "ApproximateFirstReceiveTimestamp": "1704067200001",
+                    },
+                    "messageAttributes": {},
+                    "md5OfBody": "md5",
+                    "eventSource": "aws:sqs",
+                    "eventSourceARN": "arn:aws:sqs:eu-west-2:123456789012:puzzle-imports",
+                    "awsRegion": "eu-west-2",
+                }
+                for index, body in enumerate(bodies)
+            ]
+        }
+
+    return _build_sqs_event

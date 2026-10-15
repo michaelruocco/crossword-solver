@@ -1,0 +1,57 @@
+[tool.coverage.run]
+branch = true
+source = [ "crossword_solver_adapter_queue" ]
+
+[tool.coverage.report]
+exclude_lines = [ "if TYPE_CHECKING:" ]
+show_missing = true
+
+[tool.pytest.ini_options]
+addopts = """
+ --import-mode=importlib
+ --cov
+ --cov-report html:'../../../../../coverage/packages/lambdas/python-lambdas/adapter/queue/html'
+ --cov-report xml:'../../../../../coverage/packages/lambdas/python-lambdas/adapter/queue/coverage.xml'
+ --html='../../../../../reports/packages/lambdas/python-lambdas/adapter/queue/unittests/html/index.html'
+ --junitxml='../../../../../reports/packages/lambdas/python-lambdas/adapter/queue/unittests/junit.xml'
+"""
+
+[tool.hatch.build.targets.wheel]
+packages = [ "crossword_solver_adapter_queue" ]
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.ruff]
+exclude = [ ".ruff_cache", ".svn", ".tox", ".venv", "dist" ]
+line-length = 120
+indent-width = 4
+
+  [tool.ruff.lint]
+  select = [ "E", "F", "UP", "B", "SIM", "I" ]
+  ignore = [ ]
+  fixable = [ "ALL" ]
+  unfixable = [ ]
+
+[project]
+name = "crossword-solver-adapter-queue"
+version = "1.0.0"
+description = "Crossword solver puzzle import queue adapter (SQS)."
+requires-python = ">=3.14"
+readme = "README.md"
+dependencies = [
+  "crossword-solver-domain-use-case",
+]
+
+[tool.uv.sources]
+crossword-solver-domain-use-case = { workspace = true }
+
+[dependency-groups]
+dev = [
+ "boto3>=1.43.109",
+ "moto[sqs]>=5.2.4",
+]
+
+[build-system]
+requires = [ "hatchling" ]
+build-backend = "hatchling.build"
