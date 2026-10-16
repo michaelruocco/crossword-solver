@@ -1,6 +1,7 @@
 from collections.abc import Collection
 
 from .image import Image
+from .image_file import ImageFile
 from .invalid_image_error import InvalidImageError
 
 BYTES_PER_MB = 1024 * 1024
@@ -18,21 +19,29 @@ class ImageValidator:
         self.max_size_in_mb = max_size_in_mb
         self.allowed_formats = [allowed_format.lower() for allowed_format in allowed_formats]
 
+    @property
+    def max_size_in_bytes(self) -> int:
+        return self.max_size_in_mb * BYTES_PER_MB
+
     def validate(self, image: Image) -> None:
-        if not image.name:
+        self._validate(image.name, image.format, len(image.bytes))
+
+    def validate_file(self, file: ImageFile) -> None:
+        self._validate(file.name, file.format, len(file.content))
+
+    def _validate(self, name: str, image_format: str, size_in_bytes: int) -> None:
+        if not name:
             raise InvalidImageError("file name is mandatory")
 
-        image_format = image.format.lstrip(".").lower()
-        if image_format not in self.allowed_formats:
+        normalised_format = image_format.lstrip(".").lower()
+        if normalised_format not in self.allowed_formats:
             raise InvalidImageError(
-                f"image format {image_format} is not an allowed format {','.join(self.allowed_formats)}"
+                f"image format {normalised_format} is not an allowed format {','.join(self.allowed_formats)}"
             )
 
-        if not image.bytes:
+        if size_in_bytes == 0:
             raise InvalidImageError("image file is empty")
 
-        size_in_mb = len(image.bytes) / BYTES_PER_MB
-        if size_in_mb > self.max_size_in_mb:
-            raise InvalidImageError(
-                f"image file size {size_in_mb:.2f} MB is larger than max allowed file size {self.max_size_in_mb} MB"
-            )
+        # No measured size, because a fetcher may stop reading once the limit is passed.
+        if size_in_bytes > self.max_size_in_bytes:
+            raise InvalidImageError(f"image file is larger than max allowed file size {self.max_size_in_mb} MB")

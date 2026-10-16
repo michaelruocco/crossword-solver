@@ -3,6 +3,7 @@ from PIL import Image as PILImage
 
 from crossword_solver_domain_use_case.image import Image
 from crossword_solver_domain_use_case.image_error import ImageError
+from crossword_solver_domain_use_case.image_file import ImageFile
 from crossword_solver_domain_use_case.image_validator import ImageValidator
 from crossword_solver_domain_use_case.invalid_image_error import InvalidImageError
 
@@ -71,7 +72,7 @@ def test_validate_raises_error_when_image_is_larger_than_the_maximum_size():
     validator = ImageValidator(max_size_in_mb=1)
     image = an_image(size_in_bytes=ONE_MB + 1)
 
-    with pytest.raises(InvalidImageError, match="image file size 1.00 MB is larger than max allowed file size 1 MB"):
+    with pytest.raises(InvalidImageError, match="image file is larger than max allowed file size 1 MB"):
         validator.validate(image)
 
 
@@ -91,3 +92,37 @@ def test_validate_uses_given_allowed_formats():
 
 def test_invalid_image_error_is_an_image_error():
     assert issubclass(InvalidImageError, ImageError)
+
+
+def test_max_size_in_bytes_is_the_maximum_size_in_mb_converted():
+    assert ImageValidator(max_size_in_mb=2).max_size_in_bytes == 2 * ONE_MB
+
+
+def test_validate_file_accepts_a_valid_file():
+    ImageValidator().validate_file(ImageFile("puzzle14.JPG", b"image-bytes"))
+
+
+@pytest.mark.parametrize(
+    ("file", "message"),
+    [
+        (ImageFile("", b"image-bytes"), "file name is mandatory"),
+        (ImageFile(".jpg", b"image-bytes"), "is not an allowed format"),
+        (ImageFile("puzzle14.gif", b"image-bytes"), "image format gif is not an allowed format"),
+        (ImageFile("puzzle14", b"image-bytes"), "is not an allowed format"),
+        (ImageFile("puzzle14.jpg", b""), "image file is empty"),
+    ],
+    ids=["no filename", "dotfile", "format not allowed", "no extension", "empty"],
+)
+def test_validate_file_raises_error_for_an_invalid_file(file, message):
+    validator = ImageValidator()
+
+    with pytest.raises(InvalidImageError, match=message):
+        validator.validate_file(file)
+
+
+def test_validate_file_raises_error_when_file_is_larger_than_the_maximum_size():
+    validator = ImageValidator(max_size_in_mb=1)
+    file = ImageFile("puzzle14.jpg", b"x" * (ONE_MB + 1))
+
+    with pytest.raises(InvalidImageError, match="image file is larger than max allowed file size 1 MB"):
+        validator.validate_file(file)

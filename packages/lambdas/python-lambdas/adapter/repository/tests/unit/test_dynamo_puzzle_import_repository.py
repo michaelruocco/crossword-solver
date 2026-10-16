@@ -42,6 +42,14 @@ def test_find_by_id_returns_saved_pending_import(repository):
     assert repository.find_by_id(puzzle_import.id) == puzzle_import
 
 
+def test_find_by_id_returns_saved_import_with_its_source_url(repository):
+    puzzle_import = a_pending_import()
+    puzzle_import.source_url = "https://example.com/original/puzzle24.jpg"
+    repository.save(puzzle_import)
+
+    assert repository.find_by_id(puzzle_import.id) == puzzle_import
+
+
 def test_find_by_id_returns_saved_complete_import(repository):
     puzzle_import = a_pending_import()
     puzzle_import.status = PuzzleImportStatus.COMPLETE
