@@ -16,13 +16,18 @@ from crossword_solver_domain_entities.id import Id
 from crossword_solver_domain_entities.word import Word
 from crossword_solver_domain_entities.words import Words
 
+from crossword_solver_domain_use_case.invalid_image_error import InvalidImageError
 from crossword_solver_domain_use_case.puzzle_creator import PuzzleCreator
 
 NOW = datetime(2026, 10, 15, 9, 30, tzinfo=UTC)
 
 
+def an_image(name: str = "puzzle", image_format: str = ".png", image_hash: str = "hash") -> SimpleNamespace:
+    return SimpleNamespace(name=name, format=image_format, hash=image_hash, bytes=b"image-bytes")
+
+
 def test_create_downloads_image_extracts_clues_and_grid_and_saves_puzzle():
-    image = SimpleNamespace(name="puzzle14", format=".jpg", hash="hash-value")
+    image = an_image(name="puzzle14", image_format=".jpg", image_hash="hash-value")
     clues = Clues([])
     grid = Grid(cells=Cells([]), column_width=10, row_height=10)
     image_downloader = Mock()
@@ -57,9 +62,9 @@ def test_create_downloads_image_extracts_clues_and_grid_and_saves_puzzle():
     assert puzzle.created_at == NOW
 
 
-def a_creator(clues: Clues, grid: Grid, repository: Mock, **kwargs) -> PuzzleCreator:
+def a_creator(clues: Clues, grid: Grid, repository: Mock, image=None, **kwargs) -> PuzzleCreator:
     image_downloader = Mock()
-    image_downloader.download_image.return_value = SimpleNamespace(name="puzzle", format=".png", hash="hash")
+    image_downloader.download_image.return_value = image or an_image()
     clue_extractor = Mock()
     clue_extractor.extract_clues.return_value = clues
     grid_extractor = Mock()
@@ -107,6 +112,41 @@ def test_create_raises_error_and_saves_nothing_when_a_clue_has_no_cell():
     repository.save.assert_not_called()
 
 
+def test_create_validates_the_downloaded_image():
+    image = an_image(name="puzzle14")
+    image_validator = Mock()
+    repository = Mock()
+    repository.find_by_hash.return_value = None
+    creator = a_creator(Clues([]), Grid(Cells([]), 10, 10), repository, image=image, image_validator=image_validator)
+
+    creator.create("https://example.com/puzzle.png")
+
+    image_validator.validate.assert_called_once_with(image)
+
+
+def test_create_looks_up_and_saves_nothing_when_the_image_is_invalid():
+    image_validator = Mock()
+    image_validator.validate.side_effect = InvalidImageError("image format gif is not an allowed format")
+    repository = Mock()
+    creator = a_creator(Clues([]), Grid(Cells([]), 10, 10), repository, image_validator=image_validator)
+
+    with pytest.raises(InvalidImageError, match="image format gif is not an allowed format"):
+        creator.create("https://example.com/puzzle.gif")
+
+    repository.find_by_hash.assert_not_called()
+    repository.save.assert_not_called()
+
+
+def test_create_rejects_an_image_of_a_disallowed_format_by_default():
+    repository = Mock()
+    creator = a_creator(Clues([]), Grid(Cells([]), 10, 10), repository, image=an_image(image_format=".gif"))
+
+    with pytest.raises(InvalidImageError, match="image format gif is not an allowed format"):
+        creator.create("https://example.com/puzzle.gif")
+
+    repository.save.assert_not_called()
+
+
 def test_create_extracts_clues_and_grid_at_the_same_time():
     # Each extractor waits for the other to start, which only succeeds if they run concurrently.
     both_started = threading.Barrier(2, timeout=5)
@@ -122,7 +162,7 @@ def test_create_extracts_clues_and_grid_at_the_same_time():
         return grid
 
     image_downloader = Mock()
-    image_downloader.download_image.return_value = SimpleNamespace(name="puzzle", format=".png", hash="hash")
+    image_downloader.download_image.return_value = an_image()
     clue_extractor = Mock()
     clue_extractor.extract_clues.side_effect = extract_clues
     grid_extractor = Mock()
@@ -141,7 +181,7 @@ def test_create_extracts_clues_and_grid_at_the_same_time():
 def test_create_returns_existing_puzzle_id_without_extracting_when_hash_already_known():
     existing_id = uuid4()
     image_downloader = Mock()
-    image_downloader.download_image.return_value = SimpleNamespace(name="puzzle", format=".png", hash="known-hash")
+    image_downloader.download_image.return_value = an_image(image_hash="known-hash")
     clue_extractor = Mock()
     grid_extractor = Mock()
     repository = Mock()
@@ -159,7 +199,7 @@ def test_create_returns_existing_puzzle_id_without_extracting_when_hash_already_
 
 def test_create_raises_error_from_either_extractor():
     image_downloader = Mock()
-    image_downloader.download_image.return_value = SimpleNamespace(name="puzzle", format=".png", hash="hash")
+    image_downloader.download_image.return_value = an_image()
     clue_extractor = Mock()
     clue_extractor.extract_clues.return_value = Clues([])
     grid_extractor = Mock()
