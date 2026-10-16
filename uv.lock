@@ -486,6 +486,7 @@ version = "1.0.0"
 source = { editable = "packages/lambdas/python-lambdas/adapter/storage" }
 dependencies = [
     { name = "crossword-solver-domain-use-case" },
+    { name = "crossword-solver-image" },
 ]
 
 [package.dev-dependencies]
@@ -495,7 +496,10 @@ dev = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "crossword-solver-domain-use-case", editable = "packages/lambdas/python-lambdas/domain/use-case" }]
+requires-dist = [
+    { name = "crossword-solver-domain-use-case", editable = "packages/lambdas/python-lambdas/domain/use-case" },
+    { name = "crossword-solver-image", editable = "packages/lambdas/python-lambdas/image" },
+]
 
 [package.metadata.requires-dev]
 dev = [
@@ -526,6 +530,8 @@ dependencies = [
     { name = "crossword-solver-adapter-grid-extractor" },
     { name = "crossword-solver-adapter-queue" },
     { name = "crossword-solver-adapter-repository" },
+    { name = "crossword-solver-adapter-storage" },
+    { name = "crossword-solver-adapter-web" },
     { name = "crossword-solver-domain-entities" },
     { name = "crossword-solver-domain-use-case" },
     { name = "crossword-solver-image" },
@@ -547,6 +553,8 @@ requires-dist = [
     { name = "crossword-solver-adapter-grid-extractor", editable = "packages/lambdas/python-lambdas/adapter/grid_extractor" },
     { name = "crossword-solver-adapter-queue", editable = "packages/lambdas/python-lambdas/adapter/queue" },
     { name = "crossword-solver-adapter-repository", editable = "packages/lambdas/python-lambdas/adapter/repository" },
+    { name = "crossword-solver-adapter-storage", editable = "packages/lambdas/python-lambdas/adapter/storage" },
+    { name = "crossword-solver-adapter-web", editable = "packages/lambdas/python-lambdas/adapter/web" },
     { name = "crossword-solver-domain-entities", editable = "packages/lambdas/python-lambdas/domain/entities" },
     { name = "crossword-solver-domain-use-case", editable = "packages/lambdas/python-lambdas/domain/use-case" },
     { name = "crossword-solver-image", editable = "packages/lambdas/python-lambdas/image" },
