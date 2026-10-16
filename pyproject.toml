@@ -7,6 +7,8 @@ dependencies = [
   "crossword-solver-adapter-grid-extractor",
   "crossword-solver-adapter-queue",
   "crossword-solver-adapter-repository",
+  "crossword-solver-adapter-storage",
+  "crossword-solver-adapter-web",
   "crossword-solver-create-puzzle",
   "crossword-solver-domain-entities",
   "crossword-solver-domain-use-case",
@@ -21,6 +23,8 @@ members = [
   "packages/lambdas/python-lambdas/adapter/grid_extractor",
   "packages/lambdas/python-lambdas/adapter/queue",
   "packages/lambdas/python-lambdas/adapter/repository",
+  "packages/lambdas/python-lambdas/adapter/storage",
+  "packages/lambdas/python-lambdas/adapter/web",
   "packages/lambdas/python-lambdas/create-puzzle",
   "packages/lambdas/python-lambdas/domain/entities",
   "packages/lambdas/python-lambdas/domain/use-case",
@@ -41,6 +45,12 @@ workspace = true
 workspace = true
 
 [tool.uv.sources.crossword-solver-adapter-repository]
+workspace = true
+
+[tool.uv.sources.crossword-solver-adapter-storage]
+workspace = true
+
+[tool.uv.sources.crossword-solver-adapter-web]
 workspace = true
 
 [tool.uv.sources.crossword-solver-create-puzzle]
