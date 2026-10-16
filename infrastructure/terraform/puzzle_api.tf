@@ -3,13 +3,17 @@ locals {
     start-puzzle-import = {
       handler   = "crossword_solver_create_puzzle.start_puzzle_import.start_puzzle_import_handler.lambda_handler"
       route_key = "POST /v1/puzzles/imports"
+      # Downloads the image before starting the import, which can take up to ten seconds.
+      timeout = 20
       environment = {
         PUZZLE_IMPORTS_TABLE_NAME = aws_dynamodb_table.puzzle_imports.name
         PUZZLE_IMPORT_QUEUE_URL   = aws_sqs_queue.puzzle_import.url
+        PUZZLE_IMAGES_BUCKET_NAME = aws_s3_bucket.puzzle_images.bucket
       }
       statements = [
         { actions = ["dynamodb:PutItem"], resources = [aws_dynamodb_table.puzzle_imports.arn] },
         { actions = ["sqs:SendMessage"], resources = [aws_sqs_queue.puzzle_import.arn] },
+        { actions = ["s3:PutObject"], resources = ["${aws_s3_bucket.puzzle_images.arn}/images/*"] },
       ]
     }
 
@@ -89,7 +93,7 @@ resource "aws_lambda_function" "puzzle_api" {
   filename         = data.archive_file.create_puzzle.output_path
   source_code_hash = data.archive_file.create_puzzle.output_base64sha256
 
-  timeout     = 10
+  timeout     = try(each.value.timeout, 10)
   memory_size = 512
 
   environment {

@@ -101,6 +101,11 @@ data "aws_iam_policy_document" "process_puzzle_import" {
     actions   = ["sqs:ReceiveMessage", "sqs:DeleteMessage", "sqs:GetQueueAttributes"]
     resources = [aws_sqs_queue.puzzle_import.arn]
   }
+
+  statement {
+    actions   = ["s3:GetObject"]
+    resources = ["${aws_s3_bucket.puzzle_images.arn}/images/*"]
+  }
 }
 
 resource "aws_iam_role_policy" "process_puzzle_import" {
@@ -132,6 +137,7 @@ resource "aws_lambda_function" "process_puzzle_import" {
       OMP_THREAD_LIMIT          = "1"
       PUZZLES_TABLE_NAME        = aws_dynamodb_table.puzzles.name
       PUZZLE_IMPORTS_TABLE_NAME = aws_dynamodb_table.puzzle_imports.name
+      PUZZLE_IMAGES_BUCKET_NAME = aws_s3_bucket.puzzle_images.bucket
       TESSDATA_PREFIX           = "/opt/share/tessdata"
     }
   }

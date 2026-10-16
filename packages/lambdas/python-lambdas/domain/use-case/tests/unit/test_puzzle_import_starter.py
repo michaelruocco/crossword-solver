@@ -21,11 +21,21 @@ def test_start_saves_pending_import_then_queues_its_id():
     puzzle_import = starter.start(IMAGE_URL)
 
     assert puzzle_import.image_url == IMAGE_URL
+    assert puzzle_import.source_url is None
     assert puzzle_import.status == PuzzleImportStatus.PENDING
     assert puzzle_import.puzzle_id is None
     assert puzzle_import.created_at == NOW
     assert puzzle_import.updated_at == NOW
     assert calls == [("save", puzzle_import.id), ("send", puzzle_import.id)]
+
+
+def test_start_keeps_the_source_url_when_given():
+    starter = PuzzleImportStarter(Mock(), Mock(), clock=lambda: NOW)
+
+    puzzle_import = starter.start("s3://bucket/uploads/abc/puzzle.jpg", source_url=IMAGE_URL)
+
+    assert puzzle_import.image_url == "s3://bucket/uploads/abc/puzzle.jpg"
+    assert puzzle_import.source_url == IMAGE_URL
 
 
 def test_start_does_not_queue_when_save_fails():

@@ -9,6 +9,7 @@ from .clock import Clock, system_clock
 from .clue_extractor import ClueExtractor
 from .grid_extractor import GridExtractor
 from .image_downloader import ImageDownloader
+from .image_validator import ImageValidator
 from .puzzle_repository import PuzzleRepository
 
 
@@ -21,6 +22,7 @@ class PuzzleCreator:
         repository: PuzzleRepository,
         clock: Clock = system_clock,
         words_factory: WordsFactory | None = None,
+        image_validator: ImageValidator | None = None,
     ):
         self.image_downloader = image_downloader
         self.clue_extractor = clue_extractor
@@ -28,9 +30,11 @@ class PuzzleCreator:
         self.repository = repository
         self.clock = clock
         self.words_factory = words_factory or WordsFactory()
+        self.image_validator = image_validator or ImageValidator()
 
     def create(self, image_url: str) -> UUID:
         image = self.image_downloader.download_image(image_url)
+        self.image_validator.validate(image)
         existing = self.repository.find_by_hash(image.hash)
         if existing is not None:
             return existing.id

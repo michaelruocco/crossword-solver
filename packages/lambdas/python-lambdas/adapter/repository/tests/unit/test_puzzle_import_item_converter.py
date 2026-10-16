@@ -33,6 +33,25 @@ def test_to_item_expires_after_seven_days_by_default():
     assert item["expires_at"] == int((CREATED_AT + timedelta(days=7)).timestamp())
 
 
+def test_source_url_is_stored_and_restored():
+    converter = PuzzleImportItemConverter()
+    puzzle_import = a_puzzle_import()
+    puzzle_import.source_url = "https://example.com/original/puzzle24.jpg"
+
+    item = converter.to_item(puzzle_import)
+
+    assert item["source_url"] == "https://example.com/original/puzzle24.jpg"
+    assert converter.to_puzzle_import(item).source_url == "https://example.com/original/puzzle24.jpg"
+
+
+def test_source_url_is_empty_for_items_stored_without_one():
+    converter = PuzzleImportItemConverter()
+    item = converter.to_item(a_puzzle_import())
+    del item["source_url"]
+
+    assert converter.to_puzzle_import(item).source_url is None
+
+
 def test_to_puzzle_import_ignores_expiry():
     converter = PuzzleImportItemConverter()
     puzzle_import = a_puzzle_import()

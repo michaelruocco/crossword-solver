@@ -14,7 +14,7 @@ class PuzzleImportStarter:
         self.queue = queue
         self.clock = clock
 
-    def start(self, image_url: str) -> PuzzleImport:
+    def start(self, image_url: str, source_url: str | None = None) -> PuzzleImport:
         now = self.clock()
         puzzle_import = PuzzleImport(
             id=uid.uuid4(),
@@ -22,6 +22,7 @@ class PuzzleImportStarter:
             status=PuzzleImportStatus.PENDING,
             created_at=now,
             updated_at=now,
+            source_url=source_url,
         )
         # Saved before queueing so the worker can always find the import it is sent.
         self.repository.save(puzzle_import)

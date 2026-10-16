@@ -49,6 +49,8 @@ dependencies = [
   "crossword-solver-adapter-grid-extractor",
   "crossword-solver-adapter-queue",
   "crossword-solver-adapter-repository",
+  "crossword-solver-adapter-storage",
+  "crossword-solver-adapter-web",
   "crossword-solver-domain-entities",
   "crossword-solver-domain-use-case",
   "crossword-solver-image",
@@ -60,6 +62,8 @@ crossword-solver-adapter-clue-extractor = { workspace = true }
 crossword-solver-adapter-grid-extractor = { workspace = true }
 crossword-solver-adapter-queue = { workspace = true }
 crossword-solver-adapter-repository = { workspace = true }
+crossword-solver-adapter-storage = { workspace = true }
+crossword-solver-adapter-web = { workspace = true }
 crossword-solver-domain-entities = { workspace = true }
 crossword-solver-domain-use-case = { workspace = true }
 crossword-solver-image = { workspace = true }

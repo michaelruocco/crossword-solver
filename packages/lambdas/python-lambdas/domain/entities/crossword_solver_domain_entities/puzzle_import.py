@@ -14,6 +14,8 @@ class PuzzleImport:
     updated_at: datetime
     puzzle_id: UUID | None = None
     error: str | None = None
+    # The URL the image was fetched from, which is empty for uploaded files.
+    source_url: str | None = None
 
     def complete(self, puzzle_id: UUID, now: datetime) -> None:
         self.status = PuzzleImportStatus.COMPLETE

@@ -12,9 +12,9 @@ from crossword_solver_adapter_grid_extractor.default_grid_extractor import Defau
 from crossword_solver_adapter_grid_extractor.number_detector import NumberDetector
 from crossword_solver_adapter_repository.dynamo_puzzle_import_repository import DynamoPuzzleImportRepository
 from crossword_solver_adapter_repository.dynamo_puzzle_repository import DynamoPuzzleRepository
+from crossword_solver_adapter_storage.s3_image_downloader import S3ImageDownloader
 from crossword_solver_domain_use_case.puzzle_creator import PuzzleCreator
 from crossword_solver_domain_use_case.puzzle_import_processor import PuzzleImportProcessor
-from crossword_solver_image.default_image_downloader import DefaultImageDownloader
 
 logger: Logger = Logger(service="ProcessPuzzleImport")
 metrics: Metrics = Metrics(namespace="PuzzleImport", service="ProcessPuzzleImport")
@@ -36,7 +36,7 @@ puzzle_import_processor = PuzzleImportProcessor(
     creator=PuzzleCreator(
         clue_extractor=BedrockClueExtractor(model_id=os.environ["CLUE_EXTRACTOR_MODEL_ID"]),
         grid_extractor=DefaultGridExtractor(CellFactory(NumberDetector(os.environ["TESSDATA_PREFIX"]))),
-        image_downloader=DefaultImageDownloader(),
+        image_downloader=S3ImageDownloader(os.environ["PUZZLE_IMAGES_BUCKET_NAME"]),
         repository=DynamoPuzzleRepository(os.environ["PUZZLES_TABLE_NAME"]),
     ),
 )

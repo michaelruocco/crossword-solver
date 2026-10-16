@@ -9,6 +9,8 @@ members = [
     "crossword-solver-adapter-grid-extractor",
     "crossword-solver-adapter-queue",
     "crossword-solver-adapter-repository",
+    "crossword-solver-adapter-storage",
+    "crossword-solver-adapter-web",
     "crossword-solver-create-puzzle",
     "crossword-solver-domain-entities",
     "crossword-solver-domain-use-case",
@@ -479,6 +481,44 @@ dev = [
 ]
 
 [[package]]
+name = "crossword-solver-adapter-storage"
+version = "1.0.0"
+source = { editable = "packages/lambdas/python-lambdas/adapter/storage" }
+dependencies = [
+    { name = "crossword-solver-domain-use-case" },
+    { name = "crossword-solver-image" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "boto3" },
+    { name = "moto", extra = ["s3"] },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "crossword-solver-domain-use-case", editable = "packages/lambdas/python-lambdas/domain/use-case" },
+    { name = "crossword-solver-image", editable = "packages/lambdas/python-lambdas/image" },
+]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "boto3", specifier = ">=1.43.111" },
+    { name = "moto", extras = ["s3"], specifier = ">=5.2.4" },
+]
+
+[[package]]
+name = "crossword-solver-adapter-web"
+version = "1.0.0"
+source = { editable = "packages/lambdas/python-lambdas/adapter/web" }
+dependencies = [
+    { name = "crossword-solver-domain-use-case" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "crossword-solver-domain-use-case", editable = "packages/lambdas/python-lambdas/domain/use-case" }]
+
+[[package]]
 name = "crossword-solver-create-puzzle"
 version = "1.0.0"
 source = { editable = "packages/lambdas/python-lambdas/create-puzzle" }
@@ -490,6 +530,8 @@ dependencies = [
     { name = "crossword-solver-adapter-grid-extractor" },
     { name = "crossword-solver-adapter-queue" },
     { name = "crossword-solver-adapter-repository" },
+    { name = "crossword-solver-adapter-storage" },
+    { name = "crossword-solver-adapter-web" },
     { name = "crossword-solver-domain-entities" },
     { name = "crossword-solver-domain-use-case" },
     { name = "crossword-solver-image" },
@@ -511,6 +553,8 @@ requires-dist = [
     { name = "crossword-solver-adapter-grid-extractor", editable = "packages/lambdas/python-lambdas/adapter/grid_extractor" },
     { name = "crossword-solver-adapter-queue", editable = "packages/lambdas/python-lambdas/adapter/queue" },
     { name = "crossword-solver-adapter-repository", editable = "packages/lambdas/python-lambdas/adapter/repository" },
+    { name = "crossword-solver-adapter-storage", editable = "packages/lambdas/python-lambdas/adapter/storage" },
+    { name = "crossword-solver-adapter-web", editable = "packages/lambdas/python-lambdas/adapter/web" },
     { name = "crossword-solver-domain-entities", editable = "packages/lambdas/python-lambdas/domain/entities" },
     { name = "crossword-solver-domain-use-case", editable = "packages/lambdas/python-lambdas/domain/use-case" },
     { name = "crossword-solver-image", editable = "packages/lambdas/python-lambdas/image" },
@@ -794,6 +838,10 @@ dynamodb = [
     { name = "docker" },
     { name = "py-partiql-parser" },
 ]
+s3 = [
+    { name = "py-partiql-parser" },
+    { name = "pyyaml" },
+]
 
 [[package]]
 name = "numpy"
@@ -856,6 +904,8 @@ dependencies = [
     { name = "crossword-solver-adapter-grid-extractor" },
     { name = "crossword-solver-adapter-queue" },
     { name = "crossword-solver-adapter-repository" },
+    { name = "crossword-solver-adapter-storage" },
+    { name = "crossword-solver-adapter-web" },
     { name = "crossword-solver-create-puzzle" },
     { name = "crossword-solver-domain-entities" },
     { name = "crossword-solver-domain-use-case" },
@@ -882,6 +932,8 @@ requires-dist = [
     { name = "crossword-solver-adapter-grid-extractor", editable = "packages/lambdas/python-lambdas/adapter/grid_extractor" },
     { name = "crossword-solver-adapter-queue", editable = "packages/lambdas/python-lambdas/adapter/queue" },
     { name = "crossword-solver-adapter-repository", editable = "packages/lambdas/python-lambdas/adapter/repository" },
+    { name = "crossword-solver-adapter-storage", editable = "packages/lambdas/python-lambdas/adapter/storage" },
+    { name = "crossword-solver-adapter-web", editable = "packages/lambdas/python-lambdas/adapter/web" },
     { name = "crossword-solver-create-puzzle", editable = "packages/lambdas/python-lambdas/create-puzzle" },
     { name = "crossword-solver-domain-entities", editable = "packages/lambdas/python-lambdas/domain/entities" },
     { name = "crossword-solver-domain-use-case", editable = "packages/lambdas/python-lambdas/domain/use-case" },

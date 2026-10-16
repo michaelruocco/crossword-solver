@@ -21,6 +21,7 @@ class PuzzleImportItemConverter:
             "status": puzzle_import.status.value,
             "puzzle_id": str(puzzle_import.puzzle_id) if puzzle_import.puzzle_id else None,
             "error": puzzle_import.error,
+            "source_url": puzzle_import.source_url,
             "created_at": puzzle_import.created_at.isoformat(),
             "updated_at": puzzle_import.updated_at.isoformat(),
             # Epoch seconds, which the table's TTL setting reads to expire the item.
@@ -34,6 +35,7 @@ class PuzzleImportItemConverter:
             status=PuzzleImportStatus(item["status"]),
             puzzle_id=UUID(item["puzzle_id"]) if item.get("puzzle_id") else None,
             error=item.get("error"),
+            source_url=item.get("source_url"),
             created_at=datetime.fromisoformat(item["created_at"]),
             updated_at=datetime.fromisoformat(item["updated_at"]),
         )
