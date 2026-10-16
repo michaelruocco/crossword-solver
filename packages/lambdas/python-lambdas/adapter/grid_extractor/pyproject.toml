@@ -43,7 +43,7 @@ description = "Crossword solver grid extraction adapter (OpenCV and Tesseract)."
 requires-python = ">=3.14"
 readme = "README.md"
 dependencies = [
-  "numpy>=2.5.3",
+  "numpy>=2.5.4",
   "pytesseract>=0.3.13",
   "crossword-solver-domain-entities",
   "crossword-solver-domain-use-case",

@@ -55,7 +55,7 @@ crossword-solver-domain-entities = { workspace = true }
 crossword-solver-image = { workspace = true }
 
 [dependency-groups]
-dev = [ "boto3>=1.43.111" ]
+dev = [ "boto3>=1.43.112" ]
 
 [build-system]
 requires = [ "hatchling" ]
