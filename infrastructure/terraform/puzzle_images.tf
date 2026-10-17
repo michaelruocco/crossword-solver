@@ -41,4 +41,28 @@ resource "aws_s3_bucket_lifecycle_configuration" "puzzle_images" {
       days_after_initiation = 1
     }
   }
+
+  rule {
+    id     = "expire-uploads"
+    status = "Enabled"
+
+    filter {
+      prefix = "uploads/"
+    }
+
+    expiration {
+      days = 7
+    }
+  }
+}
+
+# Browsers post uploads straight to the bucket, so it needs the same origins as the API.
+resource "aws_s3_bucket_cors_configuration" "puzzle_images" {
+  bucket = aws_s3_bucket.puzzle_images.id
+
+  cors_rule {
+    allowed_methods = ["POST"]
+    allowed_origins = aws_apigatewayv2_api.http.cors_configuration[0].allow_origins
+    max_age_seconds = 3600
+  }
 }

@@ -43,10 +43,12 @@ dependencies = [
   "aws-lambda-powertools[parser]==3.35.0",
   "aws-lambda-typing==2.20.0",
   "crossword-solver-domain-entities",
+  "crossword-solver-domain-use-case",
 ]
 
 [tool.uv.sources]
 crossword-solver-domain-entities = { workspace = true }
+crossword-solver-domain-use-case = { workspace = true }
 crossword-solver-test-utils = { workspace = true }
 
 [dependency-groups]

@@ -15,7 +15,6 @@ from crossword_solver_adapter_storage.s3_image_store import S3ImageStore
 from crossword_solver_adapter_web.web_image_fetcher import WebImageFetcher
 from crossword_solver_domain_use_case.image_error import ImageError
 from crossword_solver_domain_use_case.invalid_image_error import InvalidImageError
-from crossword_solver_domain_use_case.puzzle_import_starter import PuzzleImportStarter
 from crossword_solver_domain_use_case.puzzle_url_import_starter import PuzzleUrlImportStarter
 
 logger: Logger = Logger(service="StartPuzzleImport")
@@ -25,10 +24,8 @@ tracer: Tracer = Tracer(service="StartPuzzleImport")
 puzzle_url_import_starter = PuzzleUrlImportStarter(
     fetcher=WebImageFetcher(),
     store=S3ImageStore(os.environ["PUZZLE_IMAGES_BUCKET_NAME"]),
-    starter=PuzzleImportStarter(
-        repository=DynamoPuzzleImportRepository(os.environ["PUZZLE_IMPORTS_TABLE_NAME"]),
-        queue=SqsPuzzleImportQueue(os.environ["PUZZLE_IMPORT_QUEUE_URL"]),
-    ),
+    repository=DynamoPuzzleImportRepository(os.environ["PUZZLE_IMPORTS_TABLE_NAME"]),
+    queue=SqsPuzzleImportQueue(os.environ["PUZZLE_IMPORT_QUEUE_URL"]),
 )
 
 event_converter = ApiGatewayEventConverter()

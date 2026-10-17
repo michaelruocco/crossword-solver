@@ -1,6 +1,6 @@
 import pytest
 
-from crossword_solver_domain_use_case.image_file import ImageFile
+from crossword_solver_domain_entities.image_file import ImageFile
 
 
 @pytest.mark.parametrize(

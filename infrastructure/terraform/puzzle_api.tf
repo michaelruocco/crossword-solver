@@ -17,6 +17,20 @@ locals {
       ]
     }
 
+    start-puzzle-upload = {
+      handler   = "crossword_solver_create_puzzle.start_puzzle_upload.start_puzzle_upload_handler.lambda_handler"
+      route_key = "POST /v1/puzzles/uploads"
+      environment = {
+        PUZZLE_IMPORTS_TABLE_NAME = aws_dynamodb_table.puzzle_imports.name
+        PUZZLE_IMAGES_BUCKET_NAME = aws_s3_bucket.puzzle_images.bucket
+      }
+      statements = [
+        { actions = ["dynamodb:PutItem"], resources = [aws_dynamodb_table.puzzle_imports.arn] },
+        # Signs the upload form, which lets the client put the file itself.
+        { actions = ["s3:PutObject"], resources = ["${aws_s3_bucket.puzzle_images.arn}/uploads/*"] },
+      ]
+    }
+
     get-puzzle-import = {
       handler   = "crossword_solver_create_puzzle.get_puzzle_import.get_puzzle_import_handler.lambda_handler"
       route_key = "GET /v1/puzzles/imports/{importId}"

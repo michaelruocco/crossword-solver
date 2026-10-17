@@ -81,3 +81,35 @@ def build_sqs_event():
         }
 
     return _build_sqs_event
+
+
+@pytest.fixture
+def build_s3_event():
+    def _build_s3_event(*keys: str) -> dict:
+        return {
+            "Records": [
+                {
+                    "eventVersion": "2.1",
+                    "eventSource": "aws:s3",
+                    "awsRegion": "eu-west-2",
+                    "eventTime": "2024-01-01T00:00:00.000Z",
+                    "eventName": "ObjectCreated:Post",
+                    "userIdentity": {"principalId": "principal-id"},
+                    "requestParameters": {"sourceIPAddress": "127.0.0.1"},
+                    "responseElements": {"x-amz-request-id": "request-id", "x-amz-id-2": "id-2"},
+                    "s3": {
+                        "s3SchemaVersion": "1.0",
+                        "configurationId": "configuration-id",
+                        "bucket": {
+                            "name": "puzzle-images",
+                            "ownerIdentity": {"principalId": "principal-id"},
+                            "arn": "arn:aws:s3:::puzzle-images",
+                        },
+                        "object": {"key": key, "size": 1024, "eTag": "etag", "sequencer": "sequencer"},
+                    },
+                }
+                for key in keys
+            ]
+        }
+
+    return _build_s3_event

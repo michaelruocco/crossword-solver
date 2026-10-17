@@ -1,9 +1,9 @@
 import pytest
+from crossword_solver_domain_entities.image_file import ImageFile
 from PIL import Image as PILImage
 
 from crossword_solver_domain_use_case.image import Image
 from crossword_solver_domain_use_case.image_error import ImageError
-from crossword_solver_domain_use_case.image_file import ImageFile
 from crossword_solver_domain_use_case.image_validator import ImageValidator
 from crossword_solver_domain_use_case.invalid_image_error import InvalidImageError
 
@@ -23,6 +23,21 @@ def an_image(name: str = "puzzle14", image_format: str = ".jpg", size_in_bytes: 
 @pytest.mark.parametrize("image_format", [".jpg", ".jpeg", ".png", ".JPG", ".PNG", "jpg"])
 def test_validate_accepts_default_allowed_formats(image_format):
     ImageValidator().validate(an_image(image_format=image_format))
+
+
+def test_validate_filename_accepts_an_allowed_format_without_any_content():
+    ImageValidator().validate_filename("puzzle14.png")
+
+
+@pytest.mark.parametrize(
+    ("filename", "message"),
+    [("puzzle14.gif", "image format gif is not an allowed format"), ("", "file name is mandatory")],
+)
+def test_validate_filename_rejects_invalid_filenames(filename, message):
+    validator = ImageValidator()
+
+    with pytest.raises(InvalidImageError, match=message):
+        validator.validate_filename(filename)
 
 
 def test_validate_accepts_an_image_of_exactly_the_maximum_size():

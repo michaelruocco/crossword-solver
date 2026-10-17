@@ -1,6 +1,6 @@
 import json
 
-from aws_lambda_powertools.utilities.parser.models import APIGatewayProxyEventV2Model, SqsModel
+from aws_lambda_powertools.utilities.parser.models import APIGatewayProxyEventV2Model, S3Model, SqsModel
 
 
 def test_build_event_creates_valid_api_gateway_event(build_event):
@@ -25,6 +25,12 @@ def test_build_sqs_event_creates_a_record_per_body(build_sqs_event):
     event = SqsModel.model_validate(build_sqs_event("first", "second"))
 
     assert [record.body for record in event.Records] == ["first", "second"]
+
+
+def test_build_s3_event_creates_a_record_per_key(build_s3_event):
+    event = S3Model.model_validate(build_s3_event("first", "second"))
+
+    assert [record.s3.object.key for record in event.Records if record.s3.object] == ["first", "second"]
 
 
 def test_lambda_context_provides_lambda_details(lambda_context):
