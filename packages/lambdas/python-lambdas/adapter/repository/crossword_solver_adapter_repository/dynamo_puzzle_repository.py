@@ -1,5 +1,4 @@
 import base64
-import binascii
 import json
 from uuid import UUID
 
@@ -75,5 +74,5 @@ def _decode_cursor(cursor: str) -> dict[str, str]:
             raise ValueError
         UUID(key["id"])
         return key
-    except (ValueError, TypeError, binascii.Error, json.JSONDecodeError) as e:
+    except (ValueError, TypeError) as e:
         raise InvalidPuzzleSummaryCursorError("Invalid puzzle summary cursor") from e
