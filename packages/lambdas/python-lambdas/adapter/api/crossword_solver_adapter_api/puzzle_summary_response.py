@@ -9,3 +9,8 @@ class PuzzleSummaryResponse(BaseModel):
     name: str
     created_at: datetime = Field(alias="createdAt")
     clue_count: int = Field(alias="clueCount")
+
+
+class PuzzleSummaryPageResponse(BaseModel):
+    summaries: list[PuzzleSummaryResponse]
+    next_cursor: str | None = Field(alias="nextCursor")
