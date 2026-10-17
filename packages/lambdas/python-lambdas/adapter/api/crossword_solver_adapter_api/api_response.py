@@ -16,6 +16,10 @@ def message_response(status_code: int, message: str) -> APIGatewayProxyResponseV
     return json_response(status_code, json.dumps({"message": message}))
 
 
+def no_content_response() -> APIGatewayProxyResponseV2:
+    return {"statusCode": 204, "headers": {}, "body": ""}
+
+
 def binary_response(status_code: int, body: bytes, content_type: str) -> APIGatewayProxyResponseV2:
     return {
         "statusCode": status_code,
