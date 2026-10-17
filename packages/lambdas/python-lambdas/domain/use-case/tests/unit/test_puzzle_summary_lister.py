@@ -38,8 +38,9 @@ def test_list_page_returns_an_empty_page_when_no_puzzles_exist():
 
 def test_list_page_rejects_a_limit_outside_the_supported_range():
     repository = Mock()
+    lister = PuzzleSummaryLister(repository)
 
     with pytest.raises(ValueError, match="limit must be between 1 and 100"):
-        PuzzleSummaryLister(repository).list_page(limit=101)
+        lister.list_page(limit=101)
 
     repository.find_page.assert_not_called()
