@@ -8,6 +8,7 @@ import pytest
 from crossword_solver_domain_entities.puzzle import Puzzle
 from crossword_solver_domain_entities.puzzle_summary import PuzzleSummary
 
+from crossword_solver_domain_use_case.invalid_puzzle_summary_cursor_error import InvalidPuzzleSummaryCursorError
 from crossword_solver_domain_use_case.puzzle_summary_lister import PuzzleSummaryLister
 
 
@@ -44,3 +45,14 @@ def test_list_page_rejects_a_limit_outside_the_supported_range():
         lister.list_page(limit=101)
 
     repository.find_page.assert_not_called()
+
+
+def test_list_page_propagates_an_invalid_cursor_error():
+    repository = Mock()
+    repository.find_page.side_effect = InvalidPuzzleSummaryCursorError("Invalid puzzle summary cursor")
+    lister = PuzzleSummaryLister(repository)
+
+    with pytest.raises(InvalidPuzzleSummaryCursorError, match="Invalid puzzle summary cursor"):
+        lister.list_page(cursor="invalid")
+
+    repository.find_page.assert_called_once_with(20, "invalid")
