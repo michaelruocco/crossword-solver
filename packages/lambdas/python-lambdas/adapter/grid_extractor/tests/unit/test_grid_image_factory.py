@@ -35,21 +35,19 @@ def test_to_png_renders_a_grid_with_black_cells_and_white_cells():
 
 def test_to_png_rejects_a_grid_with_a_missing_coordinate():
     grid = Grid(cells=Cells([Cell(Coordinates(1, 1), black=False)]), column_width=10, row_height=8)
-
-    try:
-        GridImageFactory().to_png(grid)
-    except ValueError as error:
-        assert str(error) == "Grid is missing cell at (0, 1)"
-    else:
-        raise AssertionError("Expected ValueError for a missing cell")
+    imageFactory = GridImageFactory()
+    
+    with pytest.raises(ValueError, match=r"Grid is missing cell at \(0, 1\)"):
+        imageFactory.to_png(grid)
 
 
 def test_to_png_raises_when_opencv_fails_to_encode(monkeypatch):
     grid = Grid(cells=Cells([Cell(Coordinates(0, 0), black=False)]), column_width=10, row_height=8)
+    imageFactory = GridImageFactory()
     monkeypatch.setattr(
         "crossword_solver_adapter_grid_extractor.grid_image_factory.cv2.imencode",
         lambda extension, image: (False, np.array([], dtype=np.uint8)),
     )
 
     with pytest.raises(ValueError, match="Failed to encode puzzle image"):
-        GridImageFactory().to_png(grid)
+        imageFactory.to_png(grid)
