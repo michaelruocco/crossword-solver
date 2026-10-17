@@ -3,7 +3,7 @@ from uuid import UUID, uuid4
 
 from aws_lambda_powertools.utilities.parser.models import APIGatewayProxyEventV2Model
 
-from crossword_solver_adapter_api.api_response import json_response, message_response
+from crossword_solver_adapter_api.api_response import binary_response, json_response, message_response
 from crossword_solver_adapter_api.path_parameters import uuid_path_parameter
 
 
@@ -20,6 +20,15 @@ def test_message_response_wraps_message_in_json():
         "statusCode": 404,
         "headers": {"content-type": "application/json"},
         "body": json.dumps({"message": "Not found"}),
+    }
+
+
+def test_binary_response_base64_encodes_body_and_sets_content_type():
+    assert binary_response(200, b"binary", "image/png") == {
+        "statusCode": 200,
+        "headers": {"content-type": "image/png"},
+        "body": "YmluYXJ5",
+        "isBase64Encoded": True,
     }
 
 
