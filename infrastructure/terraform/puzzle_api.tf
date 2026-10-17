@@ -53,6 +53,17 @@ locals {
       ]
     }
 
+    delete-puzzle = {
+      handler   = "crossword_solver_create_puzzle.delete_puzzle.delete_puzzle_handler.lambda_handler"
+      route_key = "DELETE /v1/puzzles/{puzzleId}"
+      environment = {
+        PUZZLES_TABLE_NAME = aws_dynamodb_table.puzzles.name
+      }
+      statements = [
+        { actions = ["dynamodb:DeleteItem"], resources = [aws_dynamodb_table.puzzles.arn] },
+      ]
+    }
+
     get-puzzle-image = {
       handler   = "crossword_solver_create_puzzle.get_puzzle_image.get_puzzle_image_handler.lambda_handler"
       route_key = "GET /v1/puzzles/{puzzleId}/grid-images"
