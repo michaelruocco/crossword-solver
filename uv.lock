@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 5
 requires-python = ">=3.14"
 
 [manifest]
@@ -359,6 +359,7 @@ dependencies = [
     { name = "aws-lambda-powertools", extra = ["parser"] },
     { name = "aws-lambda-typing" },
     { name = "crossword-solver-domain-entities" },
+    { name = "crossword-solver-domain-use-case" },
 ]
 
 [package.dev-dependencies]
@@ -371,6 +372,7 @@ requires-dist = [
     { name = "aws-lambda-powertools", extras = ["parser"], specifier = "==3.35.0" },
     { name = "aws-lambda-typing", specifier = "==2.20.0" },
     { name = "crossword-solver-domain-entities", editable = "packages/lambdas/python-lambdas/domain/entities" },
+    { name = "crossword-solver-domain-use-case", editable = "packages/lambdas/python-lambdas/domain/use-case" },
 ]
 
 [package.metadata.requires-dev]
@@ -485,6 +487,7 @@ name = "crossword-solver-adapter-storage"
 version = "1.0.0"
 source = { editable = "packages/lambdas/python-lambdas/adapter/storage" }
 dependencies = [
+    { name = "crossword-solver-domain-entities" },
     { name = "crossword-solver-domain-use-case" },
     { name = "crossword-solver-image" },
 ]
@@ -497,6 +500,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
+    { name = "crossword-solver-domain-entities", editable = "packages/lambdas/python-lambdas/domain/entities" },
     { name = "crossword-solver-domain-use-case", editable = "packages/lambdas/python-lambdas/domain/use-case" },
     { name = "crossword-solver-image", editable = "packages/lambdas/python-lambdas/image" },
 ]
@@ -512,11 +516,15 @@ name = "crossword-solver-adapter-web"
 version = "1.0.0"
 source = { editable = "packages/lambdas/python-lambdas/adapter/web" }
 dependencies = [
+    { name = "crossword-solver-domain-entities" },
     { name = "crossword-solver-domain-use-case" },
 ]
 
 [package.metadata]
-requires-dist = [{ name = "crossword-solver-domain-use-case", editable = "packages/lambdas/python-lambdas/domain/use-case" }]
+requires-dist = [
+    { name = "crossword-solver-domain-entities", editable = "packages/lambdas/python-lambdas/domain/entities" },
+    { name = "crossword-solver-domain-use-case", editable = "packages/lambdas/python-lambdas/domain/use-case" },
+]
 
 [[package]]
 name = "crossword-solver-create-puzzle"

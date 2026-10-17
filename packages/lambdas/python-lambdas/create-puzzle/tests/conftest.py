@@ -2,7 +2,7 @@
 
 import os
 
-from crossword_solver_test_utils.fixtures import build_event, build_sqs_event, lambda_context  # noqa: F401
+from crossword_solver_test_utils.fixtures import build_event, build_s3_event, build_sqs_event, lambda_context  # noqa: F401
 
 # The handler module builds a boto3 client at import time, which needs a region.
 os.environ.setdefault("AWS_DEFAULT_REGION", "eu-west-2")

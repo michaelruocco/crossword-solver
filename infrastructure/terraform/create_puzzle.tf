@@ -103,8 +103,11 @@ data "aws_iam_policy_document" "process_puzzle_import" {
   }
 
   statement {
-    actions   = ["s3:GetObject"]
-    resources = ["${aws_s3_bucket.puzzle_images.arn}/images/*"]
+    actions = ["s3:GetObject"]
+    resources = [
+      "${aws_s3_bucket.puzzle_images.arn}/images/*",
+      "${aws_s3_bucket.puzzle_images.arn}/uploads/*",
+    ]
   }
 }
 

@@ -1,6 +1,6 @@
 from typing import Protocol
 
-from .image_file import ImageFile
+from crossword_solver_domain_entities.image_file import ImageFile
 
 
 class ImageStore(Protocol):

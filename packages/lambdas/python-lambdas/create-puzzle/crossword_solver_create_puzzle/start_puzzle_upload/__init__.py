@@ -1,0 +1,1 @@
+"""Start puzzle upload Lambda."""

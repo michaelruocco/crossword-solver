@@ -40,10 +40,12 @@ description = "Crossword solver web adapter (fetches images over HTTP)."
 requires-python = ">=3.14"
 readme = "README.md"
 dependencies = [
+  "crossword-solver-domain-entities",
   "crossword-solver-domain-use-case",
 ]
 
 [tool.uv.sources]
+crossword-solver-domain-entities = { workspace = true }
 crossword-solver-domain-use-case = { workspace = true }
 
 [build-system]

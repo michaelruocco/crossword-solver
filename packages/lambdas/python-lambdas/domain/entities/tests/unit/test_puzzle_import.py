@@ -18,6 +18,17 @@ def a_pending_import() -> PuzzleImport:
     )
 
 
+def test_upload_received_sets_status_pending_and_updated_at():
+    puzzle_import = a_pending_import()
+    puzzle_import.status = PuzzleImportStatus.AWAITING_UPLOAD
+
+    puzzle_import.upload_received(LATER)
+
+    assert puzzle_import.status == PuzzleImportStatus.PENDING
+    assert puzzle_import.updated_at == LATER
+    assert puzzle_import.created_at == CREATED_AT
+
+
 def test_complete_sets_status_puzzle_id_and_updated_at():
     puzzle_import = a_pending_import()
     puzzle_id = uuid4()

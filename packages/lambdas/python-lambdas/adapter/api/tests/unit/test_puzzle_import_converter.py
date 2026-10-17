@@ -4,6 +4,8 @@ from uuid import uuid4
 import pytest
 from crossword_solver_domain_entities.puzzle_import import PuzzleImport
 from crossword_solver_domain_entities.puzzle_import_status import PuzzleImportStatus
+from crossword_solver_domain_use_case.image_upload import ImageUpload
+from crossword_solver_domain_use_case.puzzle_upload import PuzzleUpload
 
 from crossword_solver_adapter_api.puzzle_import_converter import PuzzleImportConverter
 
@@ -58,6 +60,19 @@ def test_to_response_for_failed_import_hides_stored_error(converter):
     assert response.status == "FAILED"
     assert response.error == "Failed to import puzzle"
     assert response.puzzle_uri is None
+
+
+def test_to_upload_response_includes_the_import_and_upload_form(converter):
+    puzzle_import = an_import(PuzzleImportStatus.AWAITING_UPLOAD)
+    upload = ImageUpload(image_url="s3://bucket/key", url="https://bucket.s3.amazonaws.com/", fields={"key": "key"})
+
+    response = converter.to_upload_response(PuzzleUpload(puzzle_import, upload))
+
+    assert response.id == puzzle_import.id
+    assert response.status == "AWAITING_UPLOAD"
+    assert response.created_at == NOW
+    assert response.upload.url == "https://bucket.s3.amazonaws.com/"
+    assert response.upload.fields == {"key": "key"}
 
 
 def test_to_location_is_uri_of_import(converter):

@@ -17,6 +17,10 @@ class PuzzleImport:
     # The URL the image was fetched from, which is empty for uploaded files.
     source_url: str | None = None
 
+    def upload_received(self, now: datetime) -> None:
+        self.status = PuzzleImportStatus.PENDING
+        self.updated_at = now
+
     def complete(self, puzzle_id: UUID, now: datetime) -> None:
         self.status = PuzzleImportStatus.COMPLETE
         self.puzzle_id = puzzle_id

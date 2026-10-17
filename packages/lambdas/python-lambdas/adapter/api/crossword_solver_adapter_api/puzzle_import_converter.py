@@ -1,7 +1,9 @@
 from crossword_solver_domain_entities.puzzle_import import PuzzleImport
 from crossword_solver_domain_entities.puzzle_import_status import PuzzleImportStatus
+from crossword_solver_domain_use_case.puzzle_upload import PuzzleUpload
 
 from .puzzle_import_response import PuzzleImportResponse
+from .puzzle_upload_response import PuzzleUploadResponse, UploadResponse
 
 FAILED_MESSAGE = "Failed to import puzzle"
 
@@ -17,6 +19,12 @@ class PuzzleImportConverter:
             error=FAILED_MESSAGE if puzzle_import.status == PuzzleImportStatus.FAILED else None,
             createdAt=puzzle_import.created_at,
             updatedAt=puzzle_import.updated_at,
+        )
+
+    def to_upload_response(self, puzzle_upload: PuzzleUpload) -> PuzzleUploadResponse:
+        return PuzzleUploadResponse(
+            **self.to_response(puzzle_upload.puzzle_import).model_dump(by_alias=True),
+            upload=UploadResponse(url=puzzle_upload.upload.url, fields=puzzle_upload.upload.fields),
         )
 
     def to_location(self, puzzle_import: PuzzleImport) -> str:

@@ -8,10 +8,10 @@ from collections.abc import Callable
 from pathlib import PurePosixPath
 from urllib.parse import urlparse
 
+from crossword_solver_domain_entities.image_file import ImageFile
 from crossword_solver_domain_use_case.address_policy import IpAddress, is_public_address
 from crossword_solver_domain_use_case.image_error import ImageError
 from crossword_solver_domain_use_case.image_fetcher import ImageFetcher
-from crossword_solver_domain_use_case.image_file import ImageFile
 
 AddressPolicy = Callable[[IpAddress], bool]
 
@@ -73,11 +73,11 @@ class _AllowedHTTPSHandler(urllib.request.HTTPSHandler):
 
 
 class WebImageFetcher(ImageFetcher):
-    TIMEOUT_SECONDS = 10
+    DEFAULT_TIMEOUT_SECONDS = 10
 
     def __init__(
         self,
-        timeout_seconds: float = TIMEOUT_SECONDS,
+        timeout_seconds: float = DEFAULT_TIMEOUT_SECONDS,
         is_allowed: AddressPolicy = is_public_address,
         monotonic: Callable[[], float] = time.monotonic,
     ):
