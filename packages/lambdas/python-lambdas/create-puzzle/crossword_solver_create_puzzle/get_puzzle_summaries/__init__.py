@@ -1,0 +1,1 @@
+"""List puzzle summaries Lambda."""

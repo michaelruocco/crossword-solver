@@ -31,6 +31,11 @@
         "generator": "py#lambda-function",
         "path": "crossword_solver_create_puzzle/get_puzzle/get_puzzle_handler.py",
         "name": "get-puzzle"
+      },
+      {
+        "generator": "py#lambda-function",
+        "path": "crossword_solver_create_puzzle/get_puzzle_summaries/get_puzzle_summaries_handler.py",
+        "name": "get-puzzle-summaries"
       }
     ]
   },

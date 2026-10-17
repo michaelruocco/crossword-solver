@@ -1,3 +1,5 @@
+import base64
+import json
 from datetime import UTC, datetime
 from unittest.mock import MagicMock
 from uuid import UUID, uuid4
@@ -15,6 +17,7 @@ from crossword_solver_domain_entities.id import Id
 from crossword_solver_domain_entities.puzzle import Puzzle
 from crossword_solver_domain_entities.word import Word
 from crossword_solver_domain_entities.words import Words
+from crossword_solver_domain_use_case.invalid_puzzle_summary_cursor_error import InvalidPuzzleSummaryCursorError
 from moto import mock_aws
 
 from crossword_solver_adapter_repository.dynamo_puzzle_repository import DynamoPuzzleRepository
@@ -136,6 +139,46 @@ def test_find_all_reads_every_page():
 
     assert [puzzle.id for puzzle in repository.find_all()] == [first.id, second.id]
     dynamodb.Table.return_value.scan.assert_called_with(ExclusiveStartKey={"id": str(first.id)})
+
+
+def test_find_page_returns_a_cursor_and_continues_from_it(repository):
+    puzzles = [a_puzzle(), a_puzzle(), a_puzzle()]
+    for puzzle in puzzles:
+        repository.save(puzzle)
+
+    first_page, cursor = repository.find_page(limit=2)
+
+    assert len(first_page) == 2
+    assert cursor is not None
+
+    second_page, next_cursor = repository.find_page(limit=2, cursor=cursor)
+
+    assert len(second_page) == 1
+    assert next_cursor is None
+    assert {puzzle.id for puzzle in [*first_page, *second_page]} == {puzzle.id for puzzle in puzzles}
+
+
+def test_find_page_rejects_an_invalid_cursor(repository):
+    with pytest.raises(InvalidPuzzleSummaryCursorError, match="Invalid puzzle summary cursor"):
+        repository.find_page(limit=10, cursor="not-a-cursor")
+
+
+@pytest.mark.parametrize("cursor", ["", "x" * 257], ids=["empty", "too long"])
+def test_find_page_rejects_a_cursor_outside_the_size_bounds(repository, cursor):
+    with pytest.raises(InvalidPuzzleSummaryCursorError, match="Invalid puzzle summary cursor"):
+        repository.find_page(limit=10, cursor=cursor)
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [{"unexpected": "value"}, {"id": "not-a-uuid"}],
+    ids=["invalid shape", "invalid UUID"],
+)
+def test_find_page_rejects_a_cursor_with_invalid_decoded_data(repository, payload):
+    cursor = base64.urlsafe_b64encode(json.dumps(payload).encode()).decode().rstrip("=")
+
+    with pytest.raises(InvalidPuzzleSummaryCursorError, match="Invalid puzzle summary cursor"):
+        repository.find_page(limit=10, cursor=cursor)
 
 
 def test_save_overwrites_puzzle_with_same_id(repository):
