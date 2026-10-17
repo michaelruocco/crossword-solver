@@ -53,6 +53,18 @@ locals {
       ]
     }
 
+    get-puzzle-image = {
+      handler   = "crossword_solver_create_puzzle.get_puzzle_image.get_puzzle_image_handler.lambda_handler"
+      route_key = "GET /v1/puzzles/{puzzleId}/grid-images"
+      layers    = [aws_lambda_layer_version.opencv.arn]
+      environment = {
+        PUZZLES_TABLE_NAME = aws_dynamodb_table.puzzles.name
+      }
+      statements = [
+        { actions = ["dynamodb:GetItem"], resources = [aws_dynamodb_table.puzzles.arn] },
+      ]
+    }
+
     get-puzzle-summaries = {
       handler   = "crossword_solver_create_puzzle.get_puzzle_summaries.get_puzzle_summaries_handler.lambda_handler"
       route_key = "GET /v1/puzzle-summaries"
@@ -124,6 +136,8 @@ resource "aws_lambda_function" "puzzle_api" {
   environment {
     variables = each.value.environment
   }
+
+  layers = try(each.value.layers, [])
 }
 
 resource "aws_lambda_permission" "puzzle_api_api_gateway" {
