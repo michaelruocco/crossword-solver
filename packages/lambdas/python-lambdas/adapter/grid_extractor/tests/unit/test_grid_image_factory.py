@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+import pytest
 from crossword_solver_domain_entities.cell import Cell
 from crossword_solver_domain_entities.cells import Cells
 from crossword_solver_domain_entities.coordinates import Coordinates
@@ -41,3 +42,14 @@ def test_to_png_rejects_a_grid_with_a_missing_coordinate():
         assert str(error) == "Grid is missing cell at (0, 1)"
     else:
         raise AssertionError("Expected ValueError for a missing cell")
+
+
+def test_to_png_raises_when_opencv_fails_to_encode(monkeypatch):
+    grid = Grid(cells=Cells([Cell(Coordinates(0, 0), black=False)]), column_width=10, row_height=8)
+    monkeypatch.setattr(
+        "crossword_solver_adapter_grid_extractor.grid_image_factory.cv2.imencode",
+        lambda extension, image: (False, np.array([], dtype=np.uint8)),
+    )
+
+    with pytest.raises(ValueError, match="Failed to encode puzzle image"):
+        GridImageFactory().to_png(grid)
