@@ -18,6 +18,18 @@ output "api_endpoint" {
   value = aws_apigatewayv2_api.http.api_endpoint
 }
 
+output "ui_bucket_name" {
+  value = aws_s3_bucket.ui.bucket
+}
+
+output "ui_cloudfront_distribution_id" {
+  value = aws_cloudfront_distribution.ui.id
+}
+
+output "ui_url" {
+  value = "https://${aws_cloudfront_distribution.ui.domain_name}"
+}
+
 output "puzzles_table_name" {
   value = aws_dynamodb_table.puzzles.name
 }
