@@ -1,5 +1,5 @@
 import { useDeferredValue, useState } from 'react'
-import { ArrowDownWideNarrow, Puzzle, RefreshCw, Search } from 'lucide-react'
+import { ArrowDownWideNarrow, Puzzle, RefreshCw, Search, Upload } from 'lucide-react'
 import type { PuzzleSummary } from '../apiClient'
 import { PuzzleListItem } from './PuzzleListItem'
 
@@ -11,9 +11,11 @@ interface PuzzleListPageProps {
   loadState: PuzzleListLoadState
   errorMessage: string
   onRefresh: () => void
+  onImportClick: () => void
+  onDeletePuzzle: (puzzleId: string) => Promise<void>
 }
 
-export function PuzzleListPage({ puzzles, loadState, errorMessage, onRefresh }: PuzzleListPageProps) {
+export function PuzzleListPage({ puzzles, loadState, errorMessage, onRefresh, onImportClick, onDeletePuzzle }: PuzzleListPageProps) {
   const [search, setSearch] = useState('')
   const [sortOrder, setSortOrder] = useState<SortOrder>('recent')
   const deferredSearch = useDeferredValue(search)
@@ -34,9 +36,15 @@ export function PuzzleListPage({ puzzles, loadState, errorMessage, onRefresh }: 
           <h1 id="page-title">Puzzle library</h1>
           <p className="page-subtitle">Every grid, ready to revisit.</p>
         </div>
-        <div className="collection-stat" aria-live="polite">
-          <span className="stat-number">{loadState === 'ready' ? puzzles.length : '—'}</span>
-          <span className="stat-label">{puzzles.length === 1 ? 'puzzle' : 'puzzles'} in library</span>
+        <div className="heading-actions">
+          <div className="collection-stat" aria-live="polite">
+            <span className="stat-number">{loadState === 'ready' ? puzzles.length : '—'}</span>
+            <span className="stat-label">{puzzles.length === 1 ? 'puzzle' : 'puzzles'} in library</span>
+          </div>
+          <button className="upload-button" type="button" onClick={onImportClick}>
+            <Upload size={16} strokeWidth={2} aria-hidden="true" />
+            <span>Import puzzle</span>
+          </button>
         </div>
       </section>
 
@@ -108,7 +116,7 @@ export function PuzzleListPage({ puzzles, loadState, errorMessage, onRefresh }: 
         {loadState === 'ready' && visiblePuzzles.length > 0 && (
           <div className="puzzle-list">
             {visiblePuzzles.map((puzzle, index) => (
-              <PuzzleListItem key={puzzle.id} puzzle={puzzle} rowIndex={index} />
+              <PuzzleListItem key={puzzle.id} puzzle={puzzle} rowIndex={index} onDelete={onDeletePuzzle} />
             ))}
           </div>
         )}

@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react'
-import { expect, test } from 'vitest'
+import { expect, test, vi } from 'vitest'
 import { PuzzleListItem } from './PuzzleListItem'
 
 const puzzle = {
@@ -10,7 +10,7 @@ const puzzle = {
 }
 
 test('shows the puzzle summary and grid image link', () => {
-  render(<PuzzleListItem puzzle={puzzle} rowIndex={0} />)
+  render(<PuzzleListItem puzzle={puzzle} rowIndex={0} onDelete={vi.fn().mockResolvedValue(undefined)} />)
 
   expect(screen.getByRole('heading', { name: 'Sunday Cryptic' })).toBeTruthy()
   expect(screen.getByText('puzzle-id-1')).toBeTruthy()
@@ -24,9 +24,20 @@ test('shows the puzzle summary and grid image link', () => {
 })
 
 test('shows a fallback when the grid preview fails to load', () => {
-  render(<PuzzleListItem puzzle={puzzle} rowIndex={0} />)
+  render(<PuzzleListItem puzzle={puzzle} rowIndex={0} onDelete={vi.fn().mockResolvedValue(undefined)} />)
 
   fireEvent.error(screen.getByRole('img', { name: 'Grid preview for Sunday Cryptic' }))
 
   expect(screen.getByLabelText('Grid preview unavailable')).toBeTruthy()
+})
+
+test('requires confirmation before deleting a puzzle', () => {
+  const onDelete = vi.fn().mockResolvedValue(undefined)
+  render(<PuzzleListItem puzzle={puzzle} rowIndex={0} onDelete={onDelete} />)
+
+  fireEvent.click(screen.getByRole('button', { name: 'Delete Sunday Cryptic' }))
+  expect(onDelete).not.toHaveBeenCalled()
+
+  fireEvent.click(screen.getByRole('button', { name: 'Confirm delete Sunday Cryptic' }))
+  expect(onDelete).toHaveBeenCalledWith(puzzle.id)
 })

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { apiClient, type PuzzleSummary } from './apiClient'
 import { PuzzleListPage, type PuzzleListLoadState } from './components/PuzzleListPage'
+import { PuzzleUploadDialog } from './components/PuzzleUploadDialog'
 import './App.css'
 
 function App() {
@@ -8,6 +9,7 @@ function App() {
   const [loadState, setLoadState] = useState<PuzzleListLoadState>('loading')
   const [errorMessage, setErrorMessage] = useState('')
   const [reloadKey, setReloadKey] = useState(0)
+  const [uploadDialogOpen, setUploadDialogOpen] = useState(false)
 
   useEffect(() => {
     const controller = new AbortController()
@@ -33,6 +35,11 @@ function App() {
     setReloadKey((key) => key + 1)
   }
 
+  const deletePuzzle = async (puzzleId: string) => {
+    await apiClient.deletePuzzle(puzzleId)
+    setPuzzles((currentPuzzles) => currentPuzzles.filter((puzzle) => puzzle.id !== puzzleId))
+  }
+
   return (
     <div className="app-shell">
       <header className="topbar">
@@ -46,8 +53,18 @@ function App() {
         </div>
       </header>
 
-      <PuzzleListPage puzzles={puzzles} loadState={loadState} errorMessage={errorMessage} onRefresh={refresh} />
+      <PuzzleListPage
+        puzzles={puzzles}
+        loadState={loadState}
+        errorMessage={errorMessage}
+        onRefresh={refresh}
+        onImportClick={() => setUploadDialogOpen(true)}
+        onDeletePuzzle={deletePuzzle}
+      />
       <footer className="app-footer"><span>Crossword Atlas</span><span>PUZZLE ARCHIVE <span className="footer-separator">/</span> 01</span></footer>
+      {uploadDialogOpen && (
+        <PuzzleUploadDialog onClose={() => setUploadDialogOpen(false)} onComplete={refresh} />
+      )}
     </div>
   )
 }

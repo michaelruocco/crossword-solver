@@ -9,7 +9,16 @@ const puzzles = [
 ]
 
 test('filters puzzles by name', () => {
-  render(<PuzzleListPage puzzles={puzzles} loadState="ready" errorMessage="" onRefresh={vi.fn()} />)
+  render(
+    <PuzzleListPage
+      puzzles={puzzles}
+      loadState="ready"
+      errorMessage=""
+      onRefresh={vi.fn()}
+      onImportClick={vi.fn()}
+      onDeletePuzzle={vi.fn().mockResolvedValue(undefined)}
+    />,
+  )
 
   fireEvent.change(screen.getByRole('searchbox', { name: 'Search puzzles' }), { target: { value: 'sunday' } })
 
@@ -20,7 +29,16 @@ test('filters puzzles by name', () => {
 })
 
 test('sorts puzzles by clue count', () => {
-  render(<PuzzleListPage puzzles={puzzles} loadState="ready" errorMessage="" onRefresh={vi.fn()} />)
+  render(
+    <PuzzleListPage
+      puzzles={puzzles}
+      loadState="ready"
+      errorMessage=""
+      onRefresh={vi.fn()}
+      onImportClick={vi.fn()}
+      onDeletePuzzle={vi.fn().mockResolvedValue(undefined)}
+    />,
+  )
 
   fireEvent.change(screen.getByRole('combobox', { name: 'Sort puzzles' }), { target: { value: 'most-clues' } })
 
@@ -29,7 +47,34 @@ test('sorts puzzles by clue count', () => {
 })
 
 test('shows an empty-library state when there are no puzzles', () => {
-  render(<PuzzleListPage puzzles={[]} loadState="ready" errorMessage="" onRefresh={vi.fn()} />)
+  render(
+    <PuzzleListPage
+      puzzles={[]}
+      loadState="ready"
+      errorMessage=""
+      onRefresh={vi.fn()}
+      onImportClick={vi.fn()}
+      onDeletePuzzle={vi.fn().mockResolvedValue(undefined)}
+    />,
+  )
 
   expect(screen.getByRole('heading', { name: 'Your library is empty' })).toBeTruthy()
+})
+
+test('opens the import dialog when the import action is selected', () => {
+  const onImportClick = vi.fn()
+  render(
+    <PuzzleListPage
+      puzzles={[]}
+      loadState="ready"
+      errorMessage=""
+      onRefresh={vi.fn()}
+      onImportClick={onImportClick}
+      onDeletePuzzle={vi.fn().mockResolvedValue(undefined)}
+    />,
+  )
+
+  fireEvent.click(screen.getByRole('button', { name: 'Import puzzle' }))
+
+  expect(onImportClick).toHaveBeenCalledOnce()
 })

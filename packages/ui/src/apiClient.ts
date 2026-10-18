@@ -16,6 +16,23 @@ export interface PuzzleSummaryPageOptions {
   signal?: AbortSignal
 }
 
+export interface PuzzleUploadPost {
+  url: string
+  fields: Record<string, string>
+}
+
+export interface PuzzleUploadResponse {
+  id: string
+  upload: PuzzleUploadPost
+}
+
+export interface PuzzleImportStatus {
+  id: string
+  status: 'AWAITING_UPLOAD' | 'PENDING' | 'COMPLETE' | 'FAILED'
+  puzzleId: string | null
+  error: string | null
+}
+
 export class ApiClient {
   private readonly baseUrl: string
 
@@ -50,12 +67,76 @@ export class ApiClient {
     return summaries
   }
 
+  async startPuzzleUpload(fileName: string, signal?: AbortSignal): Promise<{ upload: PuzzleUploadPost; location: string }> {
+    const response = await fetch(this.endpoint('/v1/puzzles/uploads'), {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ fileName }),
+      signal,
+    })
+    const result = await this.readJson<PuzzleUploadResponse>(response, 'Unable to start puzzle upload.')
+
+    return {
+      upload: result.upload,
+      location: response.headers.get('location') ?? `/v1/puzzles/imports/${encodeURIComponent(result.id)}`,
+    }
+  }
+
+  async uploadPuzzleFile(upload: PuzzleUploadPost, file: File, signal?: AbortSignal): Promise<void> {
+    const formData = new FormData()
+    for (const [name, value] of Object.entries(upload.fields)) formData.append(name, value)
+    formData.append('file', file)
+
+    const response = await fetch(upload.url, { method: 'POST', body: formData, signal })
+    if (!response.ok) throw new Error(`S3 rejected the upload with status ${response.status}.`)
+  }
+
+  async getPuzzleImport(location: string, signal?: AbortSignal): Promise<PuzzleImportStatus> {
+    const url = new URL(location, this.baseUrl || window.location.origin)
+    const response = await fetch(url, { signal })
+    return this.readJson<PuzzleImportStatus>(response, 'Unable to read puzzle import status.')
+  }
+
+  async waitForPuzzleImport(location: string, signal?: AbortSignal): Promise<PuzzleImportStatus> {
+    for (let attempt = 0; attempt < 180; attempt += 1) {
+      const result = await this.getPuzzleImport(location, signal)
+      if (result.status === 'COMPLETE') return result
+      if (result.status === 'FAILED') throw new Error(result.error ?? 'Puzzle import failed.')
+      await new Promise((resolve) => window.setTimeout(resolve, 1000))
+    }
+
+    throw new Error('Puzzle import is taking longer than expected. Check the puzzle library again shortly.')
+  }
+
+  async deletePuzzle(puzzleId: string, signal?: AbortSignal): Promise<void> {
+    const response = await fetch(this.endpoint(`/v1/puzzles/${encodeURIComponent(puzzleId)}`), {
+      method: 'DELETE',
+      signal,
+    })
+    if (!response.ok) throw await this.responseError(response, 'Unable to delete puzzle.')
+  }
+
   getPuzzleGridImageUrl(puzzleId: string): string {
     return this.endpoint(`/v1/puzzles/${encodeURIComponent(puzzleId)}/grid-images`)
   }
 
   private endpoint(path: string): string {
     return `${this.baseUrl}${path}`
+  }
+
+  private async readJson<T>(response: Response, fallback: string): Promise<T> {
+    if (!response.ok) throw await this.responseError(response, fallback)
+    return (await response.json()) as T
+  }
+
+  private async responseError(response: Response, fallback: string): Promise<Error> {
+    try {
+      const body = (await response.json()) as { message?: unknown }
+      if (typeof body.message === 'string' && body.message.length > 0) return new Error(body.message)
+    } catch {
+      return new Error(fallback)
+    }
+    return new Error(fallback)
   }
 }
 
