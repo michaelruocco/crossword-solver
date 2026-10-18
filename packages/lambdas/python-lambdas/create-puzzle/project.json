@@ -24,11 +24,6 @@
       },
       {
         "generator": "py#lambda-function",
-        "path": "crossword_solver_create_puzzle/process_puzzle_import/process_puzzle_import_handler.py",
-        "name": "process-puzzle-import"
-      },
-      {
-        "generator": "py#lambda-function",
         "path": "crossword_solver_create_puzzle/get_puzzle/get_puzzle_handler.py",
         "name": "get-puzzle"
       },
