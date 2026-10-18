@@ -53,20 +53,17 @@ export class ApiClient {
   }
 
   async getAllPuzzleSummaries(signal?: AbortSignal): Promise<PuzzleSummary[]> {
-    const summaries: PuzzleSummary[] = []
-    const seenCursors = new Set<string>()
-    let cursor: string | null = null
+    return this.collectPuzzleSummaries(null, new Set<string>(), signal)
+  }
 
-    do {
-      const page = await this.getPuzzleSummaryPage({ limit: 100, cursor, signal })
-      summaries.push(...page.summaries)
-      cursor = page.nextCursor
+  private async collectPuzzleSummaries(cursor: string | null, seenCursors: Set<string>, signal?: AbortSignal): Promise<PuzzleSummary[]> {
+    const page = await this.getPuzzleSummaryPage({ limit: 100, cursor, signal })
+    const next = page.nextCursor
+    if (!next) return page.summaries
 
-      if (cursor && seenCursors.has(cursor)) throw new Error('Puzzle API returned a repeated pagination cursor.')
-      if (cursor) seenCursors.add(cursor)
-    } while (cursor)
-
-    return summaries
+    if (seenCursors.has(next)) throw new Error('Puzzle API returned a repeated pagination cursor.')
+    seenCursors.add(next)
+    return [...page.summaries, ...(await this.collectPuzzleSummaries(next, seenCursors, signal))]
   }
 
   async startPuzzleUpload(fileName: string, signal?: AbortSignal): Promise<{ upload: PuzzleUploadPost; location: string }> {
@@ -99,15 +96,16 @@ export class ApiClient {
     return this.readJson<PuzzleImportStatus>(response, 'Unable to read puzzle import status.')
   }
 
-  async waitForPuzzleImport(location: string, signal?: AbortSignal): Promise<PuzzleImportStatus> {
-    for (let attempt = 0; attempt < 180; attempt += 1) {
-      const result = await this.getPuzzleImport(location, signal)
-      if (result.status === 'COMPLETE') return result
-      if (result.status === 'FAILED') throw new Error(result.error ?? 'Puzzle import failed.')
-      await new Promise((resolve) => window.setTimeout(resolve, 1000))
+  async waitForPuzzleImport(location: string, signal?: AbortSignal, attempt = 0): Promise<PuzzleImportStatus> {
+    if (attempt >= 180) {
+      throw new Error('Puzzle import is taking longer than expected. Check the puzzle library again shortly.')
     }
 
-    throw new Error('Puzzle import is taking longer than expected. Check the puzzle library again shortly.')
+    const result = await this.getPuzzleImport(location, signal)
+    if (result.status === 'COMPLETE') return result
+    if (result.status === 'FAILED') throw new Error(result.error ?? 'Puzzle import failed.')
+    await new Promise((resolve) => window.setTimeout(resolve, 1000))
+    return this.waitForPuzzleImport(location, signal, attempt + 1)
   }
 
   async deletePuzzle(puzzleId: string, signal?: AbortSignal): Promise<void> {

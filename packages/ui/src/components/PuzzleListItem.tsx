@@ -14,7 +14,7 @@ function formatDate(value: string): string {
   return new Intl.DateTimeFormat('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).format(date)
 }
 
-export function PuzzleListItem({ puzzle, rowIndex, onDelete }: PuzzleListItemProps) {
+export function PuzzleListItem({ puzzle, rowIndex, onDelete }: Readonly<PuzzleListItemProps>) {
   const [previewFailed, setPreviewFailed] = useState(false)
   const [confirmingDelete, setConfirmingDelete] = useState(false)
   const [deleting, setDeleting] = useState(false)
@@ -74,7 +74,7 @@ export function PuzzleListItem({ puzzle, rowIndex, onDelete }: PuzzleListItemPro
           <ArrowUpRight size={16} strokeWidth={1.8} aria-hidden="true" />
         </a>
         {confirmingDelete ? (
-          <div className="delete-confirm" role="group" aria-label={`Delete ${puzzle.name}`}>
+          <fieldset className="delete-confirm" aria-label={`Delete ${puzzle.name}`}>
             {deleteError ? <span className="delete-error" role="alert">{deleteError}</span> : <span>Delete puzzle?</span>}
             <button className="delete-cancel" type="button" disabled={deleting} onClick={() => setConfirmingDelete(false)}>
               Cancel
@@ -88,7 +88,7 @@ export function PuzzleListItem({ puzzle, rowIndex, onDelete }: PuzzleListItemPro
             >
               {deleting ? 'Deleting…' : 'Delete'}
             </button>
-          </div>
+          </fieldset>
         ) : (
           <button
             className="delete-puzzle-button"

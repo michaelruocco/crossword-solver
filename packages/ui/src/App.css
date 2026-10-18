@@ -55,7 +55,7 @@
 .row-actions { display:flex; align-items:center; justify-self:end; gap:3px; }
 .delete-puzzle-button { width:34px; height:34px; display:grid; place-items:center; border:0; border-radius:4px; color:#7b8980; background:transparent; cursor:pointer; transition:color .18s, background .18s; }
 .delete-puzzle-button:hover { color:#a23e31; background:#faeee9; }
-.delete-confirm { display:flex; align-items:center; justify-content:flex-end; gap:5px; color:#6e7971; font-size:10px; white-space:nowrap; }
+.delete-confirm { min-width:0; margin:0; padding:0; border:0; display:flex; align-items:center; justify-content:flex-end; gap:5px; color:#6e7971; font-size:10px; white-space:nowrap; }
 .delete-cancel, .delete-confirm-button { min-height:30px; padding:0 7px; border:1px solid var(--line); border-radius:3px; background:white; font:600 10px var(--body); cursor:pointer; }
 .delete-cancel { color:var(--muted); }
 .delete-confirm-button { border-color:#a84a3a; color:white; background:#a84a3a; }

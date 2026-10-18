@@ -15,7 +15,7 @@ interface PuzzleListPageProps {
   onDeletePuzzle: (puzzleId: string) => Promise<void>
 }
 
-export function PuzzleListPage({ puzzles, loadState, errorMessage, onRefresh, onImportClick, onDeletePuzzle }: PuzzleListPageProps) {
+export function PuzzleListPage({ puzzles, loadState, errorMessage, onRefresh, onImportClick, onDeletePuzzle }: Readonly<PuzzleListPageProps>) {
   const [search, setSearch] = useState('')
   const [sortOrder, setSortOrder] = useState<SortOrder>('recent')
   const deferredSearch = useDeferredValue(search)
