@@ -37,7 +37,9 @@ export class ApiClient {
   private readonly baseUrl: string
 
   constructor(baseUrl: string) {
-    this.baseUrl = baseUrl.replace(/\/+$/, '')
+    let end = baseUrl.length
+    while (end > 0 && baseUrl[end - 1] === '/') end--
+    this.baseUrl = baseUrl.slice(0, end)
   }
 
   async getPuzzleSummaryPage({ limit = 100, cursor, signal }: PuzzleSummaryPageOptions = {}): Promise<PuzzleSummaryPage> {

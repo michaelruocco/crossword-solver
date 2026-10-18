@@ -1,0 +1,6 @@
+{
+    "sonarlint.connectedMode.project": {
+        "connectionId": "michaelruocco",
+        "projectKey": "michaelruocco_crossword-solver"
+    }
+}

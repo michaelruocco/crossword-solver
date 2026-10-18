@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ChangeEvent, type DragEvent, type KeyboardEvent } from 'react'
+import { useEffect, useRef, useState, type ChangeEvent, type DragEvent } from 'react'
 import { Check, FileImage, LoaderCircle, Upload, X } from 'lucide-react'
 import { apiClient } from '../apiClient'
 
@@ -24,7 +24,7 @@ function formatFileSize(size: number): string {
   return size >= 1024 * 1024 ? `${(size / (1024 * 1024)).toFixed(1)} MB` : `${Math.max(1, Math.round(size / 1024))} KB`
 }
 
-export function PuzzleUploadDialog({ onClose, onComplete }: PuzzleUploadDialogProps) {
+export function PuzzleUploadDialog({ onClose, onComplete }: Readonly<PuzzleUploadDialogProps>) {
   const [file, setFile] = useState<File | null>(null)
   const [stage, setStage] = useState<UploadStage>('select')
   const [errorMessage, setErrorMessage] = useState('')
@@ -50,17 +50,10 @@ export function PuzzleUploadDialog({ onClose, onComplete }: PuzzleUploadDialogPr
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => chooseFile(event.currentTarget.files?.[0])
 
-  const handleDrop = (event: DragEvent<HTMLDivElement>) => {
+  const handleDrop = (event: DragEvent<HTMLButtonElement>) => {
     event.preventDefault()
     setIsDragging(false)
     chooseFile(event.dataTransfer.files[0])
-  }
-
-  const handleDropKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
-    if (event.key === 'Enter' || event.key === ' ') {
-      event.preventDefault()
-      fileInputRef.current?.click()
-    }
   }
 
   const upload = async () => {
@@ -96,14 +89,22 @@ export function PuzzleUploadDialog({ onClose, onComplete }: PuzzleUploadDialogPr
     error: errorMessage,
   }[stage]
 
+  let primaryLabel = 'Upload puzzle'
+  if (isBusy) primaryLabel = 'Working…'
+  else if (stage === 'error' && file) primaryLabel = 'Try again'
+
   return (
-    <div
-      className="dialog-backdrop"
-      onMouseDown={(event) => {
-        if (event.target === event.currentTarget && !isBusy) close()
-      }}
-    >
-      <section className="upload-dialog" role="dialog" aria-modal="true" aria-labelledby="upload-title">
+    <div className="dialog-backdrop">
+      <button
+        className="dialog-backdrop-dismiss"
+        type="button"
+        tabIndex={-1}
+        aria-label="Close upload dialog"
+        onClick={() => {
+          if (!isBusy) close()
+        }}
+      />
+      <dialog className="upload-dialog" open aria-modal="true" aria-labelledby="upload-title">
         <header className="dialog-header">
           <div className="dialog-heading-icon"><Upload size={18} aria-hidden="true" /></div>
           <div>
@@ -116,20 +117,27 @@ export function PuzzleUploadDialog({ onClose, onComplete }: PuzzleUploadDialogPr
         </header>
 
         {stage === 'complete' ? (
-          <div className="upload-complete" role="status">
+          <output className="upload-complete">
             <span className="complete-mark"><Check size={25} aria-hidden="true" /></span>
             <h3>Puzzle imported</h3>
             <p>{statusMessage}</p>
             <button className="upload-primary" type="button" onClick={close}>Done</button>
-          </div>
+          </output>
         ) : (
           <>
-            <div
+            <input
+              ref={fileInputRef}
+              className="visually-hidden"
+              type="file"
+              accept=".png,.jpg,.jpeg,image/png,image/jpeg"
+              onChange={handleFileChange}
+              tabIndex={-1}
+              aria-label="Choose a puzzle image"
+            />
+            <button
+              type="button"
               className={`upload-dropzone ${isDragging ? 'upload-dropzone-active' : ''} ${file ? 'upload-dropzone-selected' : ''}`}
-              role="button"
-              tabIndex={0}
               onClick={() => fileInputRef.current?.click()}
-              onKeyDown={handleDropKeyDown}
               onDragOver={(event) => {
                 event.preventDefault()
                 setIsDragging(true)
@@ -138,14 +146,6 @@ export function PuzzleUploadDialog({ onClose, onComplete }: PuzzleUploadDialogPr
               onDrop={handleDrop}
               aria-label="Choose or drop a puzzle image"
             >
-              <input
-                ref={fileInputRef}
-                className="visually-hidden"
-                type="file"
-                accept=".png,.jpg,.jpeg,image/png,image/jpeg"
-                onChange={handleFileChange}
-                aria-label="Choose a puzzle image"
-              />
               <span className="dropzone-icon"><FileImage size={23} strokeWidth={1.6} aria-hidden="true" /></span>
               {file ? (
                 <span className="selected-file">
@@ -159,7 +159,7 @@ export function PuzzleUploadDialog({ onClose, onComplete }: PuzzleUploadDialogPr
                 </span>
               )}
               <span className="file-rules">PNG, JPG or JPEG <i /> up to 20 MB</span>
-            </div>
+            </button>
 
             <div className={`upload-status ${stage === 'error' ? 'upload-status-error' : ''}`} aria-live="polite">
               {isBusy && <LoaderCircle size={15} className="spin" aria-hidden="true" />}
@@ -170,12 +170,12 @@ export function PuzzleUploadDialog({ onClose, onComplete }: PuzzleUploadDialogPr
             <div className="upload-actions">
               <button className="upload-cancel" type="button" onClick={close} disabled={isBusy}>Cancel</button>
               <button className="upload-primary" type="button" onClick={upload} disabled={!file || isBusy}>
-                {isBusy ? 'Working…' : stage === 'error' && file ? 'Try again' : 'Upload puzzle'}
+                {primaryLabel}
               </button>
             </div>
           </>
         )}
-      </section>
+      </dialog>
     </div>
   )
 }

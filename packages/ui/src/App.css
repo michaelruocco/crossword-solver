@@ -87,14 +87,15 @@
 .spin { animation:spin .9s linear infinite; }
 
 .dialog-backdrop { position:fixed; z-index:20; inset:0; display:grid; place-items:center; padding:22px; background:rgb(14 28 20 / 48%); backdrop-filter:blur(3px); animation:backdrop-in .18s ease-out; }
-.upload-dialog { width:min(100%, 480px); overflow:hidden; border:1px solid rgb(255 255 255 / 60%); border-radius:9px; background:#fbfcf9; box-shadow:0 25px 80px rgb(10 25 17 / 28%); animation:dialog-in .22s cubic-bezier(.2,.8,.2,1); }
+.dialog-backdrop-dismiss { position:absolute; inset:0; border:0; padding:0; background:transparent; cursor:default; }
+.upload-dialog { position:relative; margin:0; padding:0; color:inherit; width:min(100%, 480px); overflow:hidden; border:1px solid rgb(255 255 255 / 60%); border-radius:9px; background:#fbfcf9; box-shadow:0 25px 80px rgb(10 25 17 / 28%); animation:dialog-in .22s cubic-bezier(.2,.8,.2,1); }
 .dialog-header { display:flex; align-items:center; gap:12px; padding:19px 21px; border-bottom:1px solid var(--line); }
 .dialog-heading-icon { width:36px; height:36px; display:grid; place-items:center; border-radius:5px; color:var(--forest); background:#eaf1e7; }
 .dialog-header h2 { margin:0; color:var(--ink); font:600 16px/1.3 var(--display); }
 .dialog-header p { margin:3px 0 0; color:var(--muted); font-size:11px; }
 .dialog-close { width:34px; height:34px; display:grid; place-items:center; margin-left:auto; border:0; border-radius:4px; color:#768278; background:transparent; cursor:pointer; }
 .dialog-close:hover { color:var(--ink); background:#edf1eb; }
-.upload-dropzone { min-height:190px; display:flex; flex-direction:column; align-items:center; justify-content:center; margin:21px; padding:18px; border:1px dashed #b9c8b9; border-radius:6px; color:var(--muted); background:#f6f8f4; cursor:pointer; transition:background .18s, border-color .18s; }
+.upload-dropzone { box-sizing:border-box; width:calc(100% - 42px); font:inherit; min-height:190px; display:flex; flex-direction:column; align-items:center; justify-content:center; margin:21px; padding:18px; border:1px dashed #b9c8b9; border-radius:6px; color:var(--muted); background:#f6f8f4; cursor:pointer; transition:background .18s, border-color .18s; }
 .upload-dropzone:hover, .upload-dropzone-active { border-color:var(--forest-soft); background:#eff4ec; }
 .upload-dropzone-selected { border-style:solid; }
 .dropzone-icon { width:42px; height:42px; display:grid; place-items:center; margin-bottom:12px; border-radius:50%; color:var(--forest); background:#e7eee3; }
@@ -157,7 +158,7 @@
   .dialog-backdrop { padding:12px; }
   .upload-dialog { border-radius:7px; }
   .dialog-header { padding:15px; }
-  .upload-dropzone { min-height:175px; margin:15px; }
+  .upload-dropzone { width:calc(100% - 30px); min-height:175px; margin:15px; }
   .upload-actions { padding:12px 15px; }
 }
 
