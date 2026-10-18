@@ -20,7 +20,6 @@ logger: Logger = Logger(service="ProcessPuzzleImport")
 metrics: Metrics = Metrics(namespace="PuzzleImport", service="ProcessPuzzleImport")
 tracer: Tracer = Tracer(service="ProcessPuzzleImport")
 
-# Library modules use standard logging, which Lambda doesn't output unless given the Powertools handler.
 copy_config_to_registered_loggers(
     source_logger=logger,
     include={

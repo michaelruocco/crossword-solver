@@ -1,7 +1,7 @@
 locals {
   puzzle_api_lambdas = {
     start-puzzle-import = {
-      handler   = "crossword_solver_create_puzzle.start_puzzle_import.start_puzzle_import_handler.lambda_handler"
+      handler   = "crossword_solver_puzzle_api.start_puzzle_import.start_puzzle_import_handler.lambda_handler"
       route_key = "POST /v1/puzzles/imports"
       # Downloads the image before starting the import, which can take up to ten seconds.
       timeout = 20
@@ -18,7 +18,7 @@ locals {
     }
 
     start-puzzle-upload = {
-      handler   = "crossword_solver_create_puzzle.start_puzzle_upload.start_puzzle_upload_handler.lambda_handler"
+      handler   = "crossword_solver_puzzle_api.start_puzzle_upload.start_puzzle_upload_handler.lambda_handler"
       route_key = "POST /v1/puzzles/uploads"
       environment = {
         PUZZLE_IMPORTS_TABLE_NAME = aws_dynamodb_table.puzzle_imports.name
@@ -32,7 +32,7 @@ locals {
     }
 
     get-puzzle-import = {
-      handler   = "crossword_solver_create_puzzle.get_puzzle_import.get_puzzle_import_handler.lambda_handler"
+      handler   = "crossword_solver_puzzle_api.get_puzzle_import.get_puzzle_import_handler.lambda_handler"
       route_key = "GET /v1/puzzles/imports/{importId}"
       environment = {
         PUZZLE_IMPORTS_TABLE_NAME = aws_dynamodb_table.puzzle_imports.name
@@ -43,7 +43,7 @@ locals {
     }
 
     get-puzzle = {
-      handler   = "crossword_solver_create_puzzle.get_puzzle.get_puzzle_handler.lambda_handler"
+      handler   = "crossword_solver_puzzle_api.get_puzzle.get_puzzle_handler.lambda_handler"
       route_key = "GET /v1/puzzles/{puzzleId}"
       environment = {
         PUZZLES_TABLE_NAME = aws_dynamodb_table.puzzles.name
@@ -54,7 +54,7 @@ locals {
     }
 
     delete-puzzle = {
-      handler   = "crossword_solver_create_puzzle.delete_puzzle.delete_puzzle_handler.lambda_handler"
+      handler   = "crossword_solver_puzzle_api.delete_puzzle.delete_puzzle_handler.lambda_handler"
       route_key = "DELETE /v1/puzzles/{puzzleId}"
       environment = {
         PUZZLES_TABLE_NAME = aws_dynamodb_table.puzzles.name
@@ -65,7 +65,7 @@ locals {
     }
 
     get-puzzle-image = {
-      handler   = "crossword_solver_create_puzzle.get_puzzle_image.get_puzzle_image_handler.lambda_handler"
+      handler   = "crossword_solver_puzzle_api.get_puzzle_image.get_puzzle_image_handler.lambda_handler"
       route_key = "GET /v1/puzzles/{puzzleId}/grid-images"
       layers    = [aws_lambda_layer_version.opencv.arn]
       environment = {
@@ -77,7 +77,7 @@ locals {
     }
 
     get-puzzle-summaries = {
-      handler   = "crossword_solver_create_puzzle.get_puzzle_summaries.get_puzzle_summaries_handler.lambda_handler"
+      handler   = "crossword_solver_puzzle_api.get_puzzle_summaries.get_puzzle_summaries_handler.lambda_handler"
       route_key = "GET /v1/puzzle-summaries"
       environment = {
         PUZZLES_TABLE_NAME = aws_dynamodb_table.puzzles.name
@@ -138,8 +138,8 @@ resource "aws_lambda_function" "puzzle_api" {
 
   architectures = ["x86_64"]
 
-  filename         = data.archive_file.create_puzzle.output_path
-  source_code_hash = data.archive_file.create_puzzle.output_base64sha256
+  filename         = data.archive_file.puzzle_api.output_path
+  source_code_hash = data.archive_file.puzzle_api.output_base64sha256
 
   timeout     = try(each.value.timeout, 10)
   memory_size = 512

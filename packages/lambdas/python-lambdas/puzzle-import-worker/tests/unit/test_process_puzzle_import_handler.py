@@ -5,7 +5,7 @@ from uuid import uuid4
 import pytest
 from pydantic import ValidationError
 
-from crossword_solver_create_puzzle.process_puzzle_import import process_puzzle_import_handler
+from crossword_solver_puzzle_import_worker import process_puzzle_import_handler
 
 
 def test_handler_processes_each_import_in_the_batch(build_sqs_event, lambda_context):

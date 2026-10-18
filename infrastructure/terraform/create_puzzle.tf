@@ -38,12 +38,20 @@ resource "aws_lambda_layer_version" "opencv" {
   compatible_architectures = ["x86_64"]
 }
 
-data "archive_file" "create_puzzle" {
+data "archive_file" "puzzle_api" {
   type = "zip"
 
-  source_dir = "${path.module}/../../dist/packages/lambdas/python-lambdas/create-puzzle/bundle-x86"
+  source_dir = "${path.module}/../../dist/packages/lambdas/python-lambdas/puzzle-api/bundle-x86"
 
-  output_path = "${path.module}/.terraform/create-puzzle.zip"
+  output_path = "${path.module}/.terraform/puzzle-api.zip"
+}
+
+data "archive_file" "puzzle_import_worker" {
+  type = "zip"
+
+  source_dir = "${path.module}/../../dist/packages/lambdas/python-lambdas/puzzle-import-worker/bundle-x86"
+
+  output_path = "${path.module}/.terraform/puzzle-import-worker.zip"
 }
 
 data "aws_caller_identity" "current" {}
@@ -123,12 +131,12 @@ resource "aws_lambda_function" "process_puzzle_import" {
   role = aws_iam_role.process_puzzle_import.arn
 
   runtime = "python3.14"
-  handler = "crossword_solver_create_puzzle.process_puzzle_import.process_puzzle_import_handler.lambda_handler"
+  handler = "crossword_solver_puzzle_import_worker.process_puzzle_import_handler.lambda_handler"
 
   architectures = ["x86_64"]
 
-  filename         = data.archive_file.create_puzzle.output_path
-  source_code_hash = data.archive_file.create_puzzle.output_base64sha256
+  filename         = data.archive_file.puzzle_import_worker.output_path
+  source_code_hash = data.archive_file.puzzle_import_worker.output_base64sha256
 
   timeout     = local.puzzle_import_worker_timeout_seconds
   memory_size = 2048

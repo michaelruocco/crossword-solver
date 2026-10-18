@@ -1,1 +1,0 @@
-"""Process puzzle import Lambda."""

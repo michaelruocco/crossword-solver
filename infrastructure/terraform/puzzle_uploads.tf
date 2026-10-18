@@ -33,12 +33,12 @@ resource "aws_lambda_function" "complete_puzzle_upload" {
   role = aws_iam_role.complete_puzzle_upload.arn
 
   runtime = "python3.14"
-  handler = "crossword_solver_create_puzzle.complete_puzzle_upload.complete_puzzle_upload_handler.lambda_handler"
+  handler = "crossword_solver_puzzle_api.complete_puzzle_upload.complete_puzzle_upload_handler.lambda_handler"
 
   architectures = ["x86_64"]
 
-  filename         = data.archive_file.create_puzzle.output_path
-  source_code_hash = data.archive_file.create_puzzle.output_base64sha256
+  filename         = data.archive_file.puzzle_api.output_path
+  source_code_hash = data.archive_file.puzzle_api.output_base64sha256
 
   timeout     = 10
   memory_size = 512

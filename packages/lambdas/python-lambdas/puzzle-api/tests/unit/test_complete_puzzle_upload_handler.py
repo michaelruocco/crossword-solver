@@ -3,7 +3,7 @@ from uuid import uuid4
 
 import pytest
 
-from crossword_solver_create_puzzle.complete_puzzle_upload import complete_puzzle_upload_handler
+from crossword_solver_puzzle_api.complete_puzzle_upload import complete_puzzle_upload_handler
 
 
 def test_handler_completes_the_import_for_each_uploaded_file(build_s3_event, lambda_context):
