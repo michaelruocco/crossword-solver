@@ -1,8 +1,8 @@
 {
-  "name": "crossword_solver.create_puzzle",
+  "name": "crossword_solver.puzzle_api",
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
   "projectType": "application",
-  "sourceRoot": "packages/lambdas/python-lambdas/create-puzzle/crossword_solver_create_puzzle",
+  "sourceRoot": "packages/lambdas/python-lambdas/puzzle-api/crossword_solver_puzzle_api",
   "release": {
     "version": {
       "versionActions": "@nxlv/python/release/version-actions"
@@ -14,32 +14,32 @@
     "components": [
       {
         "generator": "py#lambda-function",
-        "path": "crossword_solver_create_puzzle/start_puzzle_import/start_puzzle_import_handler.py",
+        "path": "crossword_solver_puzzle_api/start_puzzle_import/start_puzzle_import_handler.py",
         "name": "start-puzzle-import"
       },
       {
         "generator": "py#lambda-function",
-        "path": "crossword_solver_create_puzzle/get_puzzle_import/get_puzzle_import_handler.py",
+        "path": "crossword_solver_puzzle_api/get_puzzle_import/get_puzzle_import_handler.py",
         "name": "get-puzzle-import"
       },
       {
         "generator": "py#lambda-function",
-        "path": "crossword_solver_create_puzzle/get_puzzle/get_puzzle_handler.py",
+        "path": "crossword_solver_puzzle_api/get_puzzle/get_puzzle_handler.py",
         "name": "get-puzzle"
       },
       {
         "generator": "py#lambda-function",
-        "path": "crossword_solver_create_puzzle/get_puzzle_summaries/get_puzzle_summaries_handler.py",
+        "path": "crossword_solver_puzzle_api/get_puzzle_summaries/get_puzzle_summaries_handler.py",
         "name": "get-puzzle-summaries"
       },
       {
         "generator": "py#lambda-function",
-        "path": "crossword_solver_create_puzzle/get_puzzle_image/get_puzzle_image_handler.py",
+        "path": "crossword_solver_puzzle_api/get_puzzle_image/get_puzzle_image_handler.py",
         "name": "get-puzzle-image"
       },
       {
         "generator": "py#lambda-function",
-        "path": "crossword_solver_create_puzzle/delete_puzzle/delete_puzzle_handler.py",
+        "path": "crossword_solver_puzzle_api/delete_puzzle/delete_puzzle_handler.py",
         "name": "delete-puzzle"
       }
     ]
@@ -71,7 +71,7 @@
       "options": {
         "commands": [
           "rm -rf dist/{projectRoot}/bundle-x86",
-          "uv export --frozen --no-dev --no-editable --project {projectRoot} --package crossword_solver.create_puzzle -o dist/{projectRoot}/bundle-x86/requirements.txt",
+          "uv export --frozen --no-dev --no-editable --project {projectRoot} --package crossword_solver.puzzle_api -o dist/{projectRoot}/bundle-x86/requirements.txt",
           "uv pip install -n --no-deps --no-installer-metadata --no-compile-bytecode --python-platform x86_64-manylinux_2_28 --python-version 3.14 --target dist/{projectRoot}/bundle-x86 -r dist/{projectRoot}/bundle-x86/requirements.txt"
         ],
         "parallel": false
@@ -106,7 +106,7 @@
       "cache": true,
       "inputs": ["default", "^production"],
       "options": {
-        "filePatterns": ["crossword_solver_create_puzzle", "tests"],
+        "filePatterns": ["crossword_solver_puzzle_api", "tests"],
         "check": true
       },
       "configurations": {
@@ -134,7 +134,7 @@
       "inputs": ["default", "^production"],
       "outputs": [],
       "options": {
-        "lintFilePatterns": ["crossword_solver_create_puzzle", "tests"]
+        "lintFilePatterns": ["crossword_solver_puzzle_api", "tests"]
       },
       "configurations": {
         "fix": {

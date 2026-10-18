@@ -9,7 +9,7 @@ from crossword_solver_domain_use_case.image_error import ImageError
 from crossword_solver_domain_use_case.invalid_image_error import InvalidImageError
 from crossword_solver_test_utils.responses import response_headers, response_json, response_status
 
-from crossword_solver_create_puzzle.start_puzzle_import import start_puzzle_import_handler
+from crossword_solver_puzzle_api.start_puzzle_import import start_puzzle_import_handler
 
 IMAGE_URL = "https://example.com/puzzle14.jpg"
 NOW = datetime(2026, 10, 15, 9, 30, tzinfo=UTC)

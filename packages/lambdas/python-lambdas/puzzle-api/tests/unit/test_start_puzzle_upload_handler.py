@@ -10,7 +10,7 @@ from crossword_solver_domain_use_case.invalid_image_error import InvalidImageErr
 from crossword_solver_domain_use_case.puzzle_upload import PuzzleUpload
 from crossword_solver_test_utils.responses import response_headers, response_json, response_status
 
-from crossword_solver_create_puzzle.start_puzzle_upload import start_puzzle_upload_handler
+from crossword_solver_puzzle_api.start_puzzle_upload import start_puzzle_upload_handler
 
 NOW = datetime(2026, 10, 16, 9, 30, tzinfo=UTC)
 

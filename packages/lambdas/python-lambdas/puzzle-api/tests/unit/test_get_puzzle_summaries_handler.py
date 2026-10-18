@@ -7,7 +7,7 @@ from crossword_solver_domain_use_case.invalid_puzzle_summary_cursor_error import
 from crossword_solver_domain_use_case.puzzle_summary_page import PuzzleSummaryPage
 from crossword_solver_test_utils.responses import response_json, response_status
 
-from crossword_solver_create_puzzle.get_puzzle_summaries import get_puzzle_summaries_handler
+from crossword_solver_puzzle_api.get_puzzle_summaries import get_puzzle_summaries_handler
 
 
 def test_handler_returns_a_page_of_puzzle_summaries(build_event, lambda_context):

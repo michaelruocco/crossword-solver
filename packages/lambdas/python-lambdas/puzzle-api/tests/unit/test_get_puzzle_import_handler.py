@@ -8,7 +8,7 @@ from crossword_solver_domain_entities.puzzle_import_status import PuzzleImportSt
 from crossword_solver_domain_use_case.puzzle_import_not_found_error import PuzzleImportNotFoundError
 from crossword_solver_test_utils.responses import response_body, response_headers, response_json, response_status
 
-from crossword_solver_create_puzzle.get_puzzle_import import get_puzzle_import_handler
+from crossword_solver_puzzle_api.get_puzzle_import import get_puzzle_import_handler
 
 NOW = datetime(2026, 10, 15, 9, 30, tzinfo=UTC)
 

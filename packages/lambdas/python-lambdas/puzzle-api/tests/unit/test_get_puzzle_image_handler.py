@@ -6,7 +6,7 @@ import pytest
 from crossword_solver_domain_use_case.puzzle_not_found_error import PuzzleNotFoundError
 from crossword_solver_test_utils.responses import response_json, response_status
 
-from crossword_solver_create_puzzle.get_puzzle_image import get_puzzle_image_handler
+from crossword_solver_puzzle_api.get_puzzle_image import get_puzzle_image_handler
 
 
 def test_handler_returns_the_rendered_png(build_event, lambda_context):

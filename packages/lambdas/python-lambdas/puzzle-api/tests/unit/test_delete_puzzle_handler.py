@@ -3,7 +3,7 @@ from uuid import uuid4
 
 from crossword_solver_test_utils.responses import response_json, response_status
 
-from crossword_solver_create_puzzle.delete_puzzle import delete_puzzle_handler
+from crossword_solver_puzzle_api.delete_puzzle import delete_puzzle_handler
 
 
 def test_handler_deletes_puzzle_and_returns_no_content(build_event, lambda_context):

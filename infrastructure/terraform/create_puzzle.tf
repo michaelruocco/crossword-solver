@@ -38,12 +38,12 @@ resource "aws_lambda_layer_version" "opencv" {
   compatible_architectures = ["x86_64"]
 }
 
-data "archive_file" "create_puzzle" {
+data "archive_file" "puzzle_api" {
   type = "zip"
 
-  source_dir = "${path.module}/../../dist/packages/lambdas/python-lambdas/create-puzzle/bundle-x86"
+  source_dir = "${path.module}/../../dist/packages/lambdas/python-lambdas/puzzle-api/bundle-x86"
 
-  output_path = "${path.module}/.terraform/create-puzzle.zip"
+  output_path = "${path.module}/.terraform/puzzle-api.zip"
 }
 
 data "archive_file" "puzzle_import_worker" {
