@@ -21,6 +21,7 @@ export default defineConfig(({ mode }) => {
       coverage: {
         enabled: true,
         include: ['src/**/*.{ts,tsx}'],
+        exclude: ['src/main.tsx', 'src/testSetup.ts', 'src/**/*.test.ts', 'src/**/*.test.tsx'],
         reportsDirectory: '../../coverage/packages/ui',
         reporter: ['text', ['lcov', { projectRoot: '../..' }]],
         provider: 'v8',
