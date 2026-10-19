@@ -11,16 +11,16 @@ const puzzle = {
 
 test('shows the puzzle summary and grid image link', () => {
   render(<PuzzleListItem puzzle={puzzle} rowIndex={0} onDelete={vi.fn().mockResolvedValue(undefined)} />)
+  const expectedGridUrl = new URL(
+    '/v1/puzzles/puzzle-id-1/grid-images',
+    import.meta.env.VITE_API_BASE_URL || window.location.origin,
+  ).toString()
 
   expect(screen.getByRole('heading', { name: 'Sunday Cryptic' })).toBeTruthy()
   expect(screen.getByText('puzzle-id-1')).toBeTruthy()
   expect(screen.getByText('27', { exact: true })).toBeTruthy()
-  expect(screen.getByRole('img', { name: 'Grid preview for Sunday Cryptic' }).getAttribute('src')).toBe(
-    '/v1/puzzles/puzzle-id-1/grid-images',
-  )
-  expect(screen.getByRole('link', { name: 'Open grid image for Sunday Cryptic' }).getAttribute('href')).toBe(
-    '/v1/puzzles/puzzle-id-1/grid-images',
-  )
+  expect(screen.getByRole('img', { name: 'Grid preview for Sunday Cryptic' }).getAttribute('src')).toBe(expectedGridUrl)
+  expect(screen.getByRole('link', { name: 'Open grid image for Sunday Cryptic' }).getAttribute('href')).toBe(expectedGridUrl)
 })
 
 test('shows a fallback when the grid preview fails to load', () => {

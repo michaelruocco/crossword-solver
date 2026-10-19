@@ -127,11 +127,17 @@ test('uses API error messages and falls back when an error response is not JSON'
     .fn()
     .mockResolvedValueOnce(new Response(JSON.stringify({ message: 'Not available' }), { status: 503 }))
     .mockResolvedValueOnce(new Response('not json', { status: 502 }))
+    .mockResolvedValueOnce(new Response(JSON.stringify({}), { status: 502 }))
+    .mockResolvedValueOnce(new Response(JSON.stringify({ message: '' }), { status: 502 }))
+    .mockResolvedValueOnce(new Response(JSON.stringify({ message: 42 }), { status: 502 }))
   vi.stubGlobal('fetch', fetchMock)
   const client = new ApiClient('https://api.test')
 
   await expect(client.getPuzzleSummaryPage()).rejects.toThrow('Puzzle API returned 503 while loading summaries.')
   await expect(client.getPuzzleImport('/v1/imports/one')).rejects.toThrow('Unable to read puzzle import status.')
+  await expect(client.getPuzzleImport('/v1/imports/two')).rejects.toThrow('Unable to read puzzle import status.')
+  await expect(client.getPuzzleImport('/v1/imports/three')).rejects.toThrow('Unable to read puzzle import status.')
+  await expect(client.getPuzzleImport('/v1/imports/four')).rejects.toThrow('Unable to read puzzle import status.')
 })
 
 test('rejects failed storage uploads and failed imports', async () => {
@@ -139,12 +145,14 @@ test('rejects failed storage uploads and failed imports', async () => {
     .fn()
     .mockResolvedValueOnce(new Response(null, { status: 403 }))
     .mockResolvedValueOnce(new Response(JSON.stringify({ status: 'FAILED', error: 'Bad grid' }), { status: 200 }))
+    .mockResolvedValueOnce(new Response(JSON.stringify({ status: 'FAILED', error: null }), { status: 200 }))
   vi.stubGlobal('fetch', fetchMock)
   const client = new ApiClient('https://api.test')
 
   await expect(client.uploadPuzzleFile({ url: 'https://bucket.test', fields: {} }, new File(['x'], 'p.png')))
     .rejects.toThrow('S3 rejected the upload with status 403.')
   await expect(client.waitForPuzzleImport('/v1/imports/one')).rejects.toThrow('Bad grid')
+  await expect(client.waitForPuzzleImport('/v1/imports/two')).rejects.toThrow('Puzzle import failed.')
 })
 
 test('stops polling when the import attempt limit is reached', async () => {

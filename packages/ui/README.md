@@ -4,7 +4,7 @@ React and TypeScript frontend for browsing puzzle summaries.
 
 ## Local development
 
-Set `VITE_API_BASE_URL` in `.env.local` to the deployed API Gateway base URL. In development, Vite proxies `/v1` requests to that host so the browser does not need direct API CORS access.
+Set `VITE_API_BASE_URL` in `.env.local` to the API Gateway base URL. The browser sends API requests directly to that host in development and production; the API and image bucket allow the local UI origins through CORS.
 
 Start the app with:
 
