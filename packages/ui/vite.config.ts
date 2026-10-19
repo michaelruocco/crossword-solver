@@ -18,6 +18,13 @@ export default defineConfig(({ mode }) => {
       environment: 'jsdom',
       setupFiles: ['./src/testSetup.ts'],
       include: ['src/**/*.test.{ts,tsx}'],
+      coverage: {
+        enabled: true,
+        include: ['src/**/*.{ts,tsx}'],
+        reportsDirectory: '../../coverage/packages/ui',
+        reporter: ['text', ['lcov', { projectRoot: '../..' }]],
+        provider: 'v8',
+      },
     },
     server: {
       proxy: apiBaseUrl ? { '/v1': { target: apiBaseUrl, changeOrigin: true } } : undefined,
