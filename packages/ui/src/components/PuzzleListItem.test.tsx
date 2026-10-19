@@ -11,10 +11,10 @@ const puzzle = {
 
 test('shows the puzzle summary and grid image link', () => {
   render(<PuzzleListItem puzzle={puzzle} rowIndex={0} onDelete={vi.fn().mockResolvedValue(undefined)} />)
-  const expectedGridUrl = new URL(
-    '/v1/puzzles/puzzle-id-1/grid-images',
-    import.meta.env.VITE_API_BASE_URL || window.location.origin,
-  ).toString()
+  const gridPath = '/v1/puzzles/puzzle-id-1/grid-images'
+  const expectedGridUrl = import.meta.env.VITE_API_BASE_URL
+    ? new URL(gridPath, import.meta.env.VITE_API_BASE_URL).toString()
+    : gridPath
 
   expect(screen.getByRole('heading', { name: 'Sunday Cryptic' })).toBeTruthy()
   expect(screen.getByText('puzzle-id-1')).toBeTruthy()
