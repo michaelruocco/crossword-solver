@@ -24,7 +24,7 @@
 .upload-button:hover { background:#24513c; transform:translateY(-1px); }
 .library { overflow:hidden; border:1px solid var(--line); border-radius:8px; background:rgb(255 255 255 / 86%); box-shadow:0 15px 45px rgb(31 53 43 / 5%); }
 .library-toolbar { min-height:78px; padding:14px 20px; display:flex; align-items:center; justify-content:space-between; gap:18px; border-bottom:1px solid var(--line); }
-.search-box { width:min(420px, 100%); min-height:42px; display:flex; align-items:center; gap:10px; padding:0 12px; border:1px solid #dfe5df; border-radius:5px; color:#7e8981; background:white; }
+.search-box { width:min(420px, 100%); min-height:42px; display:flex; align-items:center; gap:10px; padding:0 12px; border:1px solid #dfe5df; border-radius:5px; color:#5f6d63; background:white; }
 .search-box:focus-within { border-color:var(--forest-soft); box-shadow:0 0 0 3px rgb(42 92 70 / 10%); }
 .search-box input { width:100%; min-width:0; border:0; outline:0; color:var(--ink); background:transparent; font:400 13px var(--body); }
 .search-box input::placeholder { color:#929a94; }
@@ -37,7 +37,7 @@
 .icon-button:hover:not(:disabled) { border-color:#b8c8bb; background:#f4f7f3; }
 .icon-button:disabled { cursor:wait; opacity:.6; }
 .list-heading, .puzzle-row { display:grid; grid-template-columns:minmax(260px, 1fr) 140px 170px 180px; align-items:center; column-gap:20px; }
-.list-heading { min-height:42px; padding:0 22px; color:#829087; background:#f5f7f3; font-size:9px; font-weight:700; letter-spacing:1.05px; }
+.list-heading { min-height:42px; padding:0 22px; color:#5f6d63; background:#f5f7f3; font-size:9px; font-weight:700; letter-spacing:1.05px; }
 .puzzle-row { min-height:98px; padding:13px 22px; border-bottom:1px solid #edf0eb; animation:row-in .32s both; animation-delay:calc(min(var(--row-index), 8) * 28ms); }
 .puzzle-row:last-child { border-bottom:0; }
 .puzzle-row:hover { background:#fbfcfa; }
@@ -163,5 +163,5 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation-duration:.01ms !important; animation-iteration-count:1 !important; scroll-behavior:auto !important; }
+  .puzzle-row, .skeleton-thumb, .skeleton-title, .skeleton-meta, .spin, .dialog-backdrop, .upload-dialog { animation-duration:.01ms; animation-iteration-count:1; }
 }

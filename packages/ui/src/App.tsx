@@ -10,6 +10,11 @@ function App() {
   const [errorMessage, setErrorMessage] = useState('')
   const [reloadKey, setReloadKey] = useState(0)
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false)
+  const connectionLabel = {
+    error: 'Connection issue',
+    loading: 'Connecting',
+    ready: 'Library synced',
+  }[loadState]
 
   useEffect(() => {
     const controller = new AbortController()
@@ -49,7 +54,7 @@ function App() {
         </a>
         <div className={`connection-state ${loadState === 'error' ? 'connection-error' : ''}`}>
           <span className="connection-dot" />
-          <span>{loadState === 'error' ? 'Connection issue' : loadState === 'loading' ? 'Connecting' : 'Library synced'}</span>
+          <span>{connectionLabel}</span>
         </div>
       </header>
 
