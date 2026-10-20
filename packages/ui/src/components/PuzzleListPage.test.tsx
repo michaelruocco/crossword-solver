@@ -46,6 +46,24 @@ test('sorts puzzles by clue count', () => {
   expect(names).toEqual(['Sunday Special', 'Sunday Cryptic', 'Quick Grid'])
 })
 
+test('sorts puzzles oldest first', () => {
+  render(
+    <PuzzleListPage
+      puzzles={puzzles}
+      loadState="ready"
+      errorMessage=""
+      onRefresh={vi.fn()}
+      onImportClick={vi.fn()}
+      onDeletePuzzle={vi.fn().mockResolvedValue(undefined)}
+    />,
+  )
+
+  fireEvent.change(screen.getByRole('combobox', { name: 'Sort puzzles' }), { target: { value: 'oldest' } })
+
+  const names = screen.getAllByRole('heading', { level: 2 }).map((heading) => heading.textContent)
+  expect(names).toEqual(['Sunday Special', 'Sunday Cryptic', 'Quick Grid'])
+})
+
 test('shows an empty-library state when there are no puzzles', () => {
   render(
     <PuzzleListPage
@@ -59,6 +77,27 @@ test('shows an empty-library state when there are no puzzles', () => {
   )
 
   expect(screen.getByRole('heading', { name: 'Your library is empty' })).toBeTruthy()
+})
+
+test('shows no-results copy and clears the search', () => {
+  render(
+    <PuzzleListPage
+      puzzles={puzzles}
+      loadState="ready"
+      errorMessage=""
+      onRefresh={vi.fn()}
+      onImportClick={vi.fn()}
+      onDeletePuzzle={vi.fn().mockResolvedValue(undefined)}
+    />,
+  )
+
+  fireEvent.change(screen.getByRole('searchbox', { name: 'Search puzzles' }), { target: { value: 'missing' } })
+
+  expect(screen.getByRole('heading', { name: 'No matching puzzles' })).toBeTruthy()
+  expect(screen.getByText('Try a different name or clear your search.')).toBeTruthy()
+  fireEvent.click(screen.getByRole('button', { name: 'Clear search' }))
+
+  expect(screen.getByRole('heading', { name: 'Sunday Cryptic' })).toBeTruthy()
 })
 
 test('opens the import dialog when the import action is selected', () => {

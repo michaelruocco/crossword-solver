@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from '@testing-library/react'
+import { act, fireEvent, render, screen, within } from '@testing-library/react'
 import { beforeEach, expect, test, vi } from 'vitest'
 
 const { apiClientMock } = vi.hoisted(() => ({
@@ -44,6 +44,30 @@ test('shows a fallback load error and retries successfully', async () => {
 
   expect(await screen.findByRole('heading', { name: 'Sunday Cryptic' })).toBeTruthy()
   expect(apiClientMock.getAllPuzzleSummaries).toHaveBeenCalledTimes(2)
+})
+
+test('shows the API error message when loading rejects with an Error', async () => {
+  apiClientMock.getAllPuzzleSummaries.mockRejectedValueOnce(new Error('API unavailable'))
+  render(<App />)
+
+  expect(await screen.findByText('API unavailable')).toBeTruthy()
+})
+
+test('ignores a load rejection after the request has been aborted', async () => {
+  let rejectLoad: (error: Error) => void = () => undefined
+  apiClientMock.getAllPuzzleSummaries.mockImplementationOnce(
+    () => new Promise((_resolve, reject) => { rejectLoad = reject }),
+  )
+  const { unmount } = render(<App />)
+  const signal = apiClientMock.getAllPuzzleSummaries.mock.calls[0][0] as AbortSignal
+
+  unmount()
+  expect(signal.aborted).toBe(true)
+
+  await act(async () => {
+    rejectLoad(new Error('Request aborted'))
+    await Promise.resolve()
+  })
 })
 
 test('opens and closes the upload dialog', async () => {
