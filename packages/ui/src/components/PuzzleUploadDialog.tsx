@@ -13,7 +13,7 @@ const MAX_FILE_SIZE_BYTES = 20 * 1024 * 1024
 const ALLOWED_EXTENSIONS = new Set(['png', 'jpg', 'jpeg'])
 
 function validateFile(file: File): string | null {
-  const extension = file.name.split('.').pop()?.toLocaleLowerCase() ?? ''
+  const extension = file.name.slice(file.name.lastIndexOf('.') + 1).toLocaleLowerCase()
   if (!ALLOWED_EXTENSIONS.has(extension)) return 'Choose a PNG, JPG, or JPEG file.'
   if (file.size === 0) return 'The selected file is empty.'
   if (file.size > MAX_FILE_SIZE_BYTES) return 'The file must be 20 MB or smaller.'
