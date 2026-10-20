@@ -63,6 +63,7 @@ resource "aws_s3_bucket_cors_configuration" "puzzle_images" {
   cors_rule {
     allowed_methods = ["POST"]
     allowed_origins = aws_apigatewayv2_api.http.cors_configuration[0].allow_origins
+    allowed_headers = ["content-type"]
     max_age_seconds = 3600
   }
 }

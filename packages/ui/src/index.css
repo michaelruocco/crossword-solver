@@ -1,0 +1,30 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
+:root {
+  --ink:#1b2b22;
+  --forest:#183b2d;
+  --forest-soft:#446955;
+  --citron:#d5f36a;
+  --coral:#dc6b4d;
+  --paper:#f2f5f0;
+  --muted:#718076;
+  --line:#e4e9e2;
+  --body:'DM Sans', 'Avenir Next', sans-serif;
+  --display:'Space Grotesk', 'Avenir Next', sans-serif;
+  --mono:'DM Mono', ui-monospace, monospace;
+
+  color:var(--ink);
+  background:var(--paper);
+  font-family:var(--body);
+  font-synthesis:none;
+  text-rendering:optimizeLegibility;
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+  font-optical-sizing:auto;
+}
+
+* { box-sizing:border-box; }
+body { min-height:100vh; margin:0; background-color:var(--paper); background-image:linear-gradient(rgb(31 66 47 / 2.5%) 1px, transparent 1px),linear-gradient(90deg,rgb(31 66 47 / 2.5%) 1px,transparent 1px); background-size:28px 28px; }
+button, input, select { font:inherit; }
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible { outline:3px solid rgb(220 107 77 / 52%); outline-offset:3px; }
+#root { min-height:100vh; }

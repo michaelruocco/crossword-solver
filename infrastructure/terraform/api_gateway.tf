@@ -5,6 +5,8 @@ resource "aws_apigatewayv2_api" "http" {
   cors_configuration {
     allow_origins = [
       "http://localhost:5173",
+      "http://127.0.0.1:5173",
+      "https://${aws_cloudfront_distribution.ui.domain_name}",
     ]
 
     allow_methods = [
