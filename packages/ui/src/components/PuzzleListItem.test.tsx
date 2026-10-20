@@ -31,6 +31,18 @@ test('shows a fallback when the grid preview fails to load', () => {
   expect(screen.getByLabelText('Grid preview unavailable')).toBeTruthy()
 })
 
+test('shows a fallback when the puzzle date is invalid', () => {
+  render(
+    <PuzzleListItem
+      puzzle={{ ...puzzle, createdAt: 'not-a-date' }}
+      rowIndex={0}
+      onDelete={vi.fn().mockResolvedValue(undefined)}
+    />,
+  )
+
+  expect(screen.getByText('Date unavailable')).toBeTruthy()
+})
+
 test('requires confirmation before deleting a puzzle', () => {
   const onDelete = vi.fn().mockResolvedValue(undefined)
   render(<PuzzleListItem puzzle={puzzle} rowIndex={0} onDelete={onDelete} />)
@@ -40,4 +52,34 @@ test('requires confirmation before deleting a puzzle', () => {
 
   fireEvent.click(screen.getByRole('button', { name: 'Confirm delete Sunday Cryptic' }))
   expect(onDelete).toHaveBeenCalledWith(puzzle.id)
+})
+
+test('allows cancelling a delete confirmation', () => {
+  render(<PuzzleListItem puzzle={puzzle} rowIndex={0} onDelete={vi.fn().mockResolvedValue(undefined)} />)
+
+  fireEvent.click(screen.getByRole('button', { name: 'Delete Sunday Cryptic' }))
+  fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+
+  expect(screen.getByRole('button', { name: 'Delete Sunday Cryptic' })).toBeTruthy()
+})
+
+test('shows the delete error returned by the handler and allows retry', async () => {
+  const onDelete = vi.fn().mockRejectedValue(new Error('Delete service unavailable'))
+  render(<PuzzleListItem puzzle={puzzle} rowIndex={0} onDelete={onDelete} />)
+
+  fireEvent.click(screen.getByRole('button', { name: 'Delete Sunday Cryptic' }))
+  fireEvent.click(screen.getByRole('button', { name: 'Confirm delete Sunday Cryptic' }))
+
+  expect((await screen.findByRole('alert')).textContent).toBe('Delete service unavailable')
+  expect(screen.getByRole('button', { name: 'Confirm delete Sunday Cryptic' }).textContent).toBe('Delete')
+})
+
+test('shows a fallback when deletion rejects with a non-Error value', async () => {
+  const onDelete = vi.fn().mockRejectedValue('offline')
+  render(<PuzzleListItem puzzle={puzzle} rowIndex={0} onDelete={onDelete} />)
+
+  fireEvent.click(screen.getByRole('button', { name: 'Delete Sunday Cryptic' }))
+  fireEvent.click(screen.getByRole('button', { name: 'Confirm delete Sunday Cryptic' }))
+
+  expect((await screen.findByRole('alert')).textContent).toBe('Unable to delete this puzzle.')
 })
