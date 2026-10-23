@@ -56,6 +56,6 @@ build-backend = "hatchling.build"
 
 [dependency-groups]
 dev = [
-    "boto3>=1.43.111",
+    "boto3>=1.43.115",
     "moto[s3]>=5.2.4",
 ]
