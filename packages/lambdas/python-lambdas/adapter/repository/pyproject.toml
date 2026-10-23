@@ -50,7 +50,7 @@ crossword-solver-domain-entities = { workspace = true }
 
 [dependency-groups]
 dev = [
- "boto3>=1.43.112",
+ "boto3>=1.43.115",
  "moto[dynamodb]>=5.2.4",
 ]
 
