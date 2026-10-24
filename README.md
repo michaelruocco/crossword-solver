@@ -39,9 +39,8 @@ an application environment does not delete its state bucket. Do not delete the b
 state is still needed.
 
 Subsequent deployments and additional environments in the same account reuse the existing bucket;
-do not rerun the bucket creation script. For a future GitHub Actions deployment, configure the
-same `TF_STATE_BUCKET` value and bootstrap the AWS OIDC provider and deployment role before the
-first pipeline run. The deployment workflow is not yet included in this repository.
+do not rerun the bucket creation script. For GitHub Actions deployments, configure the same
+`TF_STATE_BUCKET` value and bootstrap AWS authentication as described below before the first run.
 
 ### 2. Initialize a new environment
 
@@ -75,8 +74,7 @@ Build the Lambda packages and native layers before planning, since Terraform rea
 local artifacts:
 
 ```
-pnpm exec nx run-many -t assemble
-docker build --platform linux/amd64 -t crossword-solver-opencv-layer infrastructure/opencv
+pnpm exec nx run-many -t bundle
 ./infrastructure/opencv/build-layer.sh
 ./infrastructure/tesseract/build-layer.sh
 
@@ -93,6 +91,87 @@ print its URL:
 pnpm nx run crossword_solver.ui:deploy
 terraform -chdir=infrastructure/terraform output -raw ui_url
 ```
+
+### Deploying with GitHub Actions
+
+The [Deploy workflow](.github/workflows/deploy.yml) is manually triggered and accepts branch or tag
+refs. It builds every Lambda package and both native layers, applies a saved Terraform plan,
+then builds and uploads the UI using the deployed API URL. Runs for the same environment are
+serialized and do not cancel an active deployment. An apply is automatic after planning; use
+GitHub environment approval rules if a deployment requires approval before it starts.
+
+#### One-time AWS and GitHub setup
+
+1. Create the state bucket using the bootstrap instructions above. If deploying an existing
+   environment, ensure its state has been migrated to the matching S3 key first.
+2. In AWS IAM, register GitHub's OIDC provider, `https://token.actions.githubusercontent.com`,
+   with audience `sts.amazonaws.com`, if the account does not already have it.
+3. Create an IAM deployment role with a trust policy like the following, replacing
+   `<aws-account-id>` and using the target GitHub environment name in the subject:
+
+   ```json
+   {
+     "Version": "2012-10-17",
+     "Statement": [
+       {
+         "Effect": "Allow",
+         "Principal": {
+           "Federated": "arn:aws:iam::<aws-account-id>:oidc-provider/token.actions.githubusercontent.com"
+         },
+         "Action": "sts:AssumeRoleWithWebIdentity",
+         "Condition": {
+           "StringEquals": {
+             "token.actions.githubusercontent.com:aud": "sts.amazonaws.com",
+             "token.actions.githubusercontent.com:sub": "repo:michaelruocco/crossword-solver:environment:dev"
+           }
+         }
+       }
+     ]
+   }
+   ```
+
+   Grant this role the permissions required to manage the resources in `infrastructure/terraform`
+   (including the Lambda IAM roles and `iam:PassRole`), upload UI files, and invalidate CloudFront.
+   It also needs `s3:ListBucket` on the state bucket, `s3:GetObject` and `s3:PutObject` on the
+   environment's state object, and `s3:GetObject`, `s3:PutObject`, and `s3:DeleteObject` on its
+   `.tflock` object. Scope state access to the environment's key and lock file. No AWS access keys
+   are stored in GitHub.
+4. Under **Settings > Environments**, create the target environment (for example, `dev`).
+   Use lowercase letters, digits, and hyphens, starting with a letter. Configure deployment
+   protection rules to allow only trusted branches and tags and add required reviewers where needed.
+   The workflow's environment-based OIDC subject relies on these rules to restrict which code
+   can assume the role.
+5. Add these GitHub Actions variables at repository level, or override them in each environment:
+
+   | Variable | Value |
+   | --- | --- |
+   | `AWS_ROLE_ARN` | ARN of the environment's OIDC deployment role |
+   | `TF_STATE_BUCKET` | Name of the existing shared state bucket |
+   | `AWS_REGION` | Deployment region; defaults to `eu-west-2` |
+   | `TF_STATE_REGION` | State bucket region; defaults to `AWS_REGION` |
+
+Each environment uses `crossword-solver/<environment>/terraform.tfstate` in the shared bucket.
+The state bucket and OIDC resources are bootstrap prerequisites; this workflow does not create them.
+
+#### Run a deployment
+
+Merge the workflow into the default branch before using it. The selected branch or tag must also
+contain the workflow and the code to deploy; older tags without the workflow cannot run it.
+Deploy only commits that have passed CI.
+
+In **Actions > Deploy > Run workflow**, select a branch or tag in the native ref selector and
+choose the target environment.
+GitHub cannot dynamically populate a custom workflow input with repository tags; the native ref
+selector avoids maintaining a separate tag list.
+
+Alternatively, dispatch an existing branch or tag explicitly with GitHub CLI:
+
+```sh
+gh workflow run deploy.yml --ref <branch-or-tag> -f environment=dev
+```
+
+The selected commit is checked out by SHA. The run summary and GitHub environment deployment
+show the deployed UI URL. The workflow is not run automatically when a branch or tag is pushed.
 
 ## Scaffolding New Projects
 
