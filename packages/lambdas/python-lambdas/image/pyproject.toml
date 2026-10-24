@@ -40,7 +40,7 @@ description = "Crossword solver image downloading and processing."
 requires-python = ">=3.14"
 readme = "README.md"
 dependencies = [
-  "pillow>=12.3.0",
+  "pillow>=13.0.0",
   "crossword-solver-domain-use-case",
 ]
 
