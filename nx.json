@@ -9,7 +9,11 @@
       "!{projectRoot}/tsconfig.spec.json",
       "!{projectRoot}/tests/**/*"
     ],
-    "sharedGlobals": []
+    "sharedGlobals": [
+      "{workspaceRoot}/pyproject.toml",
+      "{workspaceRoot}/uv.lock",
+      "{workspaceRoot}/.python-version"
+    ]
   },
   "plugins": [
     {
