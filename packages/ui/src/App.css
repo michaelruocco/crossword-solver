@@ -164,4 +164,6 @@
 
 @media (prefers-reduced-motion: reduce) {
   .puzzle-row, .skeleton-thumb, .skeleton-title, .skeleton-meta, .spin, .dialog-backdrop, .upload-dialog { animation-duration:.01ms; animation-iteration-count:1; }
+  .upload-button, .icon-button, .open-grid, .delete-puzzle-button, .upload-dropzone { transition:none; }
+  .upload-button:hover { transform:none; }
 }
