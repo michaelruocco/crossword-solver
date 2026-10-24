@@ -3,7 +3,7 @@ from urllib.parse import urlparse
 from pydantic import BaseModel, Field, field_validator
 
 
-class CreatePuzzleRequest(BaseModel):
+class ImportPuzzleRequest(BaseModel):
     image_url: str = Field(alias="imageUrl")
 
     @field_validator("image_url")
