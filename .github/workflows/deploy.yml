@@ -62,6 +62,25 @@ jobs:
           ref: ${{ github.sha }}
           persist-credentials: false
 
+      - name: Download native layers
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          for layer in opencv tesseract; do
+            tag=$(bash infrastructure/layer-release-tag.sh "$layer")
+            echo "Downloading $layer layer from $tag"
+            download_dir="$RUNNER_TEMP/native-layers/$layer"
+            if ! gh release download "$tag" --dir "$download_dir" \
+              --pattern "$layer-layer.zip" --pattern SHA256SUMS; then
+              echo "::error::Unable to download $layer layer. Run publish-$layer-layer.yml for this commit and wait for it to succeed before deploying."
+              exit 1
+            fi
+            (cd "$download_dir" && sha256sum --check SHA256SUMS)
+            mkdir -p "infrastructure/$layer/build"
+            mv "$download_dir/$layer-layer.zip" "infrastructure/$layer/build/"
+          done
+
       - uses: pnpm/action-setup@v6
         with:
           version: 12.9.1
@@ -85,14 +104,6 @@ jobs:
 
       - name: Bundle all Lambda packages
         run: pnpm nx run-many -t bundle
-
-      - name: Build OpenCV layer
-        run: |
-          docker build --platform linux/amd64 -t crossword-solver-opencv-layer infrastructure/opencv
-          ./infrastructure/opencv/build-layer.sh
-
-      - name: Build Tesseract layer
-        run: ./infrastructure/tesseract/build-layer.sh
 
       - name: Authenticate to AWS
         uses: aws-actions/configure-aws-credentials@v6

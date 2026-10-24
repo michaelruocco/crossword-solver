@@ -75,6 +75,7 @@ local artifacts:
 
 ```
 pnpm exec nx run-many -t bundle
+docker build --platform linux/amd64 -t crossword-solver-opencv-layer infrastructure/opencv
 ./infrastructure/opencv/build-layer.sh
 ./infrastructure/tesseract/build-layer.sh
 
@@ -95,10 +96,44 @@ terraform -chdir=infrastructure/terraform output -raw ui_url
 ### Deploying with GitHub Actions
 
 The [Deploy workflow](.github/workflows/deploy.yml) is manually triggered and accepts branch or tag
-refs. It builds every Lambda package and both native layers, applies a saved Terraform plan,
+refs. It builds every Lambda package, downloads prebuilt native layers, applies a saved Terraform plan,
 then builds and uploads the UI using the deployed API URL. Runs for the same environment are
 serialized and do not cancel an active deployment. An apply is automatic after planning; use
 GitHub environment approval rules if a deployment requires approval before it starts.
+
+#### Publishing native layers
+
+The [Publish OpenCV layer](.github/workflows/publish-opencv-layer.yml) and
+[Publish Tesseract layer](.github/workflows/publish-tesseract-layer.yml) workflows build and
+publish independently, separately from deployment. Each runs when its own inputs change on `main`,
+or manually against a branch or tag. Both can run in parallel:
+
+```sh
+gh workflow run publish-opencv-layer.yml --ref <branch-or-tag>
+gh workflow run publish-tesseract-layer.yml --ref <branch-or-tag>
+```
+
+Run both once after adding these workflows, and wait for them to finish before the first deployment.
+For a branch with layer changes, publish only the changed layer before deploying it.
+
+Each ZIP and its `SHA256SUMS` file are published as GitHub release assets under an
+`opencv-layer-<hash>` or `tesseract-layer-<hash>` tag. The
+[version script](infrastructure/layer-release-tag.sh) takes `opencv` or `tesseract` and derives
+the hash from that layer's committed Dockerfile, build script, data, and publishing workflow,
+plus the shared version script. Changing one layer does not change the other's release version;
+changing the shared version script rebuilds both. Application-only changes reuse existing releases,
+and rerunning publication skips a release that already exists. Releases
+are not marked as the repository's latest release.
+
+Deployment resolves each layer's version from its selected commit, downloads the matching assets, and
+verifies their SHA-256 checksums before Terraform runs. It never falls back to another version or
+rebuilds layers. If assets are missing, deployment fails with instructions to publish them first.
+Keep these releases for old-commit deployments; do not replace their assets. Rebuilds after base
+image or upstream dependency updates can be requested by changing a committed build input.
+
+Publishing uses `GITHUB_TOKEN` with `contents: write`; deployment only needs `contents: read`.
+No registry, additional credentials, or separate repository is required. Local Docker builds
+remain available using the commands above.
 
 #### One-time AWS and GitHub setup
 
