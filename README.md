@@ -95,6 +95,15 @@ terraform -chdir=infrastructure/terraform output -raw ui_url
 
 ### Deploying with GitHub Actions
 
+The committed Terraform provider lock file includes checksums for Linux AMD64 (GitHub Actions)
+and macOS ARM64 (local development). After updating provider versions, refresh both platforms
+and commit the updated lock file:
+
+```sh
+terraform -chdir=infrastructure/terraform providers lock \
+  -platform=linux_amd64 -platform=darwin_arm64
+```
+
 The [Deploy workflow](.github/workflows/deploy.yml) is manually triggered and accepts branch or tag
 refs. It builds every Lambda package, downloads prebuilt native layers, applies a saved Terraform plan,
 then builds and uploads the UI using the deployed API URL. Runs for the same environment are
