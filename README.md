@@ -104,11 +104,22 @@ terraform -chdir=infrastructure/terraform providers lock \
   -platform=linux_amd64 -platform=darwin_arm64
 ```
 
-The [Deploy workflow](.github/workflows/deploy.yml) is manually triggered and accepts branch or tag
-refs. It builds every Lambda package, downloads prebuilt native layers, applies a saved Terraform plan,
+The [CI workflow](.github/workflows/ci.yml) automatically calls the reusable
+[Deploy workflow](.github/workflows/deploy.yml) for `dev` after all CI steps succeed on a push
+to `main`. Pull requests do not deploy. The same deployment workflow can also be manually
+triggered for a branch or tag and target environment, so deployment steps are maintained in one place.
+It builds every Lambda package, downloads prebuilt native layers, applies a saved Terraform plan,
 then builds and uploads the UI using the deployed API URL. Runs for the same environment are
 serialized and do not cancel an active deployment. An apply is automatic after planning; use
 GitHub environment approval rules if a deployment requires approval before it starts.
+Deployment does not rerun lint or tests. Automatic deployments download the Lambda bundles
+produced by CI in the same workflow run, rather than rebuilding them. CI packages the bundles
+in a tar archive to preserve permissions and symlinks, and retains the artifact for seven days.
+A missing artifact fails deployment rather than silently rebuilding; after it expires, start a
+new CI run or use a manual deployment. Manual deployments build their own Lambda bundles.
+Both paths build the UI with the deployed environment's API URL.
+New pushes do not cancel an active main-branch
+CI/deployment run; superseded pull-request CI runs can still be cancelled.
 
 #### Publishing native layers
 
@@ -215,7 +226,8 @@ gh workflow run deploy.yml --ref <branch-or-tag> -f environment=dev
 ```
 
 The selected commit is checked out by SHA. The run summary and GitHub environment deployment
-show the deployed UI URL. The workflow is not run automatically when a branch or tag is pushed.
+show the deployed UI URL. Pushes to `main` deploy to `dev` after successful CI; other branch
+and tag deployments remain manual.
 
 ## Scaffolding New Projects
 
