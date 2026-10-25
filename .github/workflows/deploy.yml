@@ -2,6 +2,17 @@ name: Deploy
 run-name: Deploy ${{ github.ref_name }} to ${{ inputs.environment }}
 
 on:
+  workflow_call:
+    inputs:
+      environment:
+        description: Environment to deploy to
+        type: string
+        required: true
+      lambda-bundles-artifact:
+        description: Lambda bundles artifact from this workflow run; omit to build bundles
+        type: string
+        required: false
+        default: ''
   workflow_dispatch:
     inputs:
       environment:
@@ -100,9 +111,22 @@ jobs:
           terraform_wrapper: false
 
       - run: pnpm install --frozen-lockfile
-      - run: uv sync --all-packages --frozen
+      - if: inputs.lambda-bundles-artifact == ''
+        run: uv sync --all-packages --frozen
+
+      - name: Download CI Lambda bundles
+        if: inputs.lambda-bundles-artifact != ''
+        uses: actions/download-artifact@v8
+        with:
+          name: ${{ inputs.lambda-bundles-artifact }}
+          path: ${{ runner.temp }}/lambda-bundles
+
+      - name: Restore CI Lambda bundles
+        if: inputs.lambda-bundles-artifact != ''
+        run: tar -xzf "$RUNNER_TEMP/lambda-bundles/lambda-bundles.tar.gz"
 
       - name: Bundle all Lambda packages
+        if: inputs.lambda-bundles-artifact == ''
         run: pnpm nx run-many -t bundle
 
       - name: Authenticate to AWS
