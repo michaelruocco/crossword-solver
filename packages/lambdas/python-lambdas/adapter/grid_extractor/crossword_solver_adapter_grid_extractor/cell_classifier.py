@@ -1,14 +1,8 @@
-from typing import Protocol
-
 import numpy as np
 from crossword_solver_domain_entities.cell import Cell
 from crossword_solver_domain_entities.coordinates import Coordinates
 
 from .mat_converter import MatConverter
-
-
-class CellReader(Protocol):
-    def to_cell(self, image: np.ndarray, x: int, y: int) -> Cell: ...
 
 
 class CellClassifier:

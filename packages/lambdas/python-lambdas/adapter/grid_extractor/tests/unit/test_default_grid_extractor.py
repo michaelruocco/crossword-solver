@@ -39,15 +39,15 @@ def calculator(dimensions) -> MagicMock:
 
 
 @pytest.fixture
-def cell_factory() -> MagicMock:
-    cell_factory = MagicMock()
-    cell_factory.to_cell.side_effect = lambda image, x, y: Cell(Coordinates(x, y), black=False)
-    return cell_factory
+def cell_classifier() -> MagicMock:
+    cell_classifier = MagicMock()
+    cell_classifier.to_cell.side_effect = lambda image, x, y: Cell(Coordinates(x, y), black=False)
+    return cell_classifier
 
 
 @pytest.fixture
-def extractor(cell_factory, finder, calculator) -> DefaultGridExtractor:
-    return DefaultGridExtractor(cell_factory, finder, calculator)
+def extractor(cell_classifier, finder, calculator) -> DefaultGridExtractor:
+    return DefaultGridExtractor(cell_classifier=cell_classifier, finder=finder, calculator=calculator)
 
 
 def test_lists_cells_top_row_first_left_to_right(extractor):
@@ -70,18 +70,18 @@ def test_uses_average_cell_size(extractor):
     assert grid.row_height == 50
 
 
-def test_builds_each_cell_from_its_image_in_the_found_grid(extractor, calculator, dimensions, cell_factory):
+def test_builds_each_cell_from_its_image_in_the_found_grid(extractor, calculator, dimensions, cell_classifier):
     extractor.extract_grid(to_image(PILImage.new("RGB", (4, 4))))
 
     calculator.calculate_dimensions.assert_called_once_with(FOUND_GRID)
     dimensions.to_cell.assert_any_call(FOUND_GRID, 2, 1)
-    cell_factory.to_cell.assert_any_call("cell image 2,1", 2, 1)
+    cell_classifier.to_cell.assert_any_call("cell image 2,1", 2, 1)
 
 
-def test_applies_explicit_grid_numberer(cell_factory, finder, calculator):
+def test_applies_explicit_grid_numberer(cell_classifier, finder, calculator):
     numberer = MagicMock()
     numberer.number.return_value = [Cell(Coordinates(0, 1), black=False, id=42)]
-    extractor = DefaultGridExtractor(cell_factory, finder, calculator, numberer=numberer)
+    extractor = DefaultGridExtractor(cell_classifier, finder, calculator, numberer=numberer)
 
     grid = extractor.extract_grid(to_image(PILImage.new("RGB", (4, 4))))
 
@@ -89,10 +89,10 @@ def test_applies_explicit_grid_numberer(cell_factory, finder, calculator):
     assert len(numberer.number.call_args.args[0]) == 6
 
 
-def test_defaults_workers_to_twice_cpu_count(cell_factory, finder, calculator, monkeypatch):
+def test_defaults_workers_to_twice_cpu_count(cell_classifier, finder, calculator, monkeypatch):
     monkeypatch.setattr("os.cpu_count", lambda: 3)
 
-    extractor = DefaultGridExtractor(cell_factory, finder, calculator)
+    extractor = DefaultGridExtractor(cell_classifier, finder, calculator)
 
     assert extractor.max_workers == 6
 

@@ -1,15 +1,10 @@
 from dataclasses import replace
-from typing import Protocol
 
 from crossword_solver_domain_entities.cell import Cell
 from crossword_solver_domain_entities.coordinates import Coordinates
 
 
-class GridNumberer(Protocol):
-    def number(self, cells: list[Cell]) -> list[Cell]: ...
-
-
-class StructuralGridNumberer:
+class GridNumberer:
     """Conventional blocked-grid numbering, with answers at least two cells long."""
 
     def number(self, cells: list[Cell]) -> list[Cell]:

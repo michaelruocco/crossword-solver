@@ -11,7 +11,7 @@ from crossword_solver_domain_entities.grid import Grid
 from crossword_solver_domain_use_case.grid_extractor import GridExtractor
 from crossword_solver_domain_use_case.image import Image
 
-from .cell_classifier import CellReader
+from .cell_classifier import CellClassifier
 from .grid_dimensions import GridDimensions
 from .grid_dimensions_calculator import GridDimensionsCalculator
 from .grid_finder import GridFinder
@@ -26,13 +26,13 @@ class DefaultGridExtractor(GridExtractor):
 
     def __init__(
         self,
-        cell_factory: CellReader,
+        cell_classifier: CellClassifier,
         finder: GridFinder | None = None,
         calculator: GridDimensionsCalculator | None = None,
         max_workers: int | None = None,
         numberer: GridNumberer | None = None,
     ):
-        self.cell_factory = cell_factory
+        self.cell_classifier = cell_classifier
         self.finder = finder or GridFinder()
         self.calculator = calculator or GridDimensionsCalculator()
         self.max_workers = max_workers or (os.cpu_count() or 1) * self.WORKERS_PER_CPU
@@ -73,7 +73,7 @@ class DefaultGridExtractor(GridExtractor):
         with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
             return list(
                 executor.map(
-                    lambda position: self.cell_factory.to_cell(dimensions.to_cell(grid, *position), *position),
+                    lambda position: self.cell_classifier.to_cell(dimensions.to_cell(grid, *position), *position),
                     positions,
                 )
             )

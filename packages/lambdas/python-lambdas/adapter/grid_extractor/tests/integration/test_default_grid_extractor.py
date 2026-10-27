@@ -10,7 +10,7 @@ from PIL import Image as PILImage
 
 from crossword_solver_adapter_grid_extractor.cell_classifier import CellClassifier
 from crossword_solver_adapter_grid_extractor.default_grid_extractor import DefaultGridExtractor
-from crossword_solver_adapter_grid_extractor.grid_numberer import StructuralGridNumberer
+from crossword_solver_adapter_grid_extractor.grid_numberer import GridNumberer
 
 pytestmark = [
     pytest.mark.integration,
@@ -34,7 +34,7 @@ EXPECTED_SIZES = {
 
 @pytest.fixture(scope="module")
 def extract_cells() -> Callable[[str], list[Cell]]:
-    extractor = DefaultGridExtractor(CellClassifier(), numberer=StructuralGridNumberer())
+    extractor = DefaultGridExtractor(CellClassifier(), numberer=GridNumberer())
     extracted: dict[str, list[Cell]] = {}
 
     def extract(name: str) -> list[Cell]:
