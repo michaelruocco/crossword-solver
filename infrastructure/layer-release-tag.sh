@@ -2,8 +2,8 @@
 
 set -euo pipefail
 
-if [[ $# -ne 1 || ( "$1" != "opencv" && "$1" != "tesseract" ) ]]; then
-  echo "Usage: $0 <opencv|tesseract>" >&2
+if [[ $# -ne 1 || "$1" != "opencv" ]]; then
+  echo "Usage: $0 opencv" >&2
   exit 2
 fi
 

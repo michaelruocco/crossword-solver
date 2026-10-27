@@ -1,19 +1,19 @@
-import shutil
+import json
 from collections.abc import Callable
 from pathlib import Path
 
 import pytest
 from crossword_solver_domain_entities.cell import Cell
+from crossword_solver_domain_entities.coordinates import Coordinates
 from crossword_solver_domain_use_case.image import Image
 from PIL import Image as PILImage
 
-from crossword_solver_adapter_grid_extractor.cell_factory import CellFactory
+from crossword_solver_adapter_grid_extractor.cell_classifier import CellClassifier
 from crossword_solver_adapter_grid_extractor.default_grid_extractor import DefaultGridExtractor
-from crossword_solver_adapter_grid_extractor.number_detector import NumberDetector
+from crossword_solver_adapter_grid_extractor.grid_numberer import GridNumberer
 
 pytestmark = [
     pytest.mark.integration,
-    pytest.mark.skipif(shutil.which("tesseract") is None, reason="tesseract is not installed"),
 ]
 
 PUZZLES_DIR = Path(__file__).parent.parent / "resources" / "puzzles"
@@ -28,13 +28,13 @@ EXPECTED_SIZES = {
     "puzzle9.jpg": (29, 13),
     "puzzle14.jpg": (23, 11),
     "puzzle24.jpg": (15, 15),
+    "web-puzzle.jpg": (15, 15),
 }
 
 
 @pytest.fixture(scope="module")
-def extract_cells(tessdata_dir) -> Callable[[str], list[Cell]]:
-    # Extraction takes around 10 seconds per puzzle, so each puzzle is only extracted once.
-    extractor = DefaultGridExtractor(CellFactory(NumberDetector(tessdata_dir)))
+def extract_cells() -> Callable[[str], list[Cell]]:
+    extractor = DefaultGridExtractor(CellClassifier(), numberer=GridNumberer())
     extracted: dict[str, list[Cell]] = {}
 
     def extract(name: str) -> list[Cell]:
@@ -68,3 +68,19 @@ def test_reads_ids_in_order_from_top_left(extract_cells, name):
 
     ids = [cell.id for cell in cells if cell.id is not None]
     assert ids == list(range(1, len(ids) + 1))
+
+
+@pytest.mark.parametrize("name", EXPECTED_SIZES.keys())
+def test_extracts_expected_cells(extract_cells, name):
+    assert_expected_cells(extract_cells(name), name)
+
+
+def assert_expected_cells(cells: list[Cell], name: str) -> None:
+    expected_json = json.loads((PUZZLES_DIR / "expected_cells" / Path(name).with_suffix(".json")).read_text())
+    expected = [
+        Cell(coordinates=Coordinates(**cell["coordinates"]), black=cell["black"], id=cell.get("id"))
+        for cell in expected_json
+    ]
+
+    assert len(cells) == len(expected)
+    assert {cell.coordinates: cell for cell in cells} == {cell.coordinates: cell for cell in expected}

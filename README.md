@@ -70,14 +70,13 @@ just to move state into S3.
 
 ### 3. Build and deploy
 
-Build the Lambda packages and native layers before planning, since Terraform reads their
+Build the Lambda packages and OpenCV layer before planning, since Terraform reads their
 local artifacts:
 
 ```
 pnpm exec nx run-many -t bundle
 docker build --platform linux/amd64 -t crossword-solver-opencv-layer infrastructure/opencv
 ./infrastructure/opencv/build-layer.sh
-./infrastructure/tesseract/build-layer.sh
 
 terraform -chdir=infrastructure/terraform plan \
   -var="environment=$DEPLOY_ENV" -var="aws_region=$AWS_REGION"
@@ -108,7 +107,7 @@ The [CI workflow](.github/workflows/ci.yml) automatically calls the reusable
 [Deploy workflow](.github/workflows/deploy.yml) for `dev` after all CI steps succeed on a push
 to `main`. Pull requests do not deploy. The same deployment workflow can also be manually
 triggered for a branch or tag and target environment, so deployment steps are maintained in one place.
-It builds every Lambda package, downloads prebuilt native layers, applies a saved Terraform plan,
+It builds every Lambda package, downloads the prebuilt OpenCV layer, applies a saved Terraform plan,
 then builds and uploads the UI using the deployed API URL. Runs for the same environment are
 serialized and do not cancel an active deployment. An apply is automatic after planning; use
 GitHub environment approval rules if a deployment requires approval before it starts.
@@ -121,33 +120,31 @@ Both paths build the UI with the deployed environment's API URL.
 New pushes do not cancel an active main-branch
 CI/deployment run; superseded pull-request CI runs can still be cancelled.
 
-#### Publishing native layers
+#### Publishing the OpenCV layer
 
-The [Publish OpenCV layer](.github/workflows/publish-opencv-layer.yml) and
-[Publish Tesseract layer](.github/workflows/publish-tesseract-layer.yml) workflows build and
-publish independently, separately from deployment. Each runs when its own inputs change on `main`,
-or manually against a branch or tag. Both can run in parallel:
+The [Publish OpenCV layer](.github/workflows/publish-opencv-layer.yml) workflow builds and
+publishes separately from deployment. It runs when its inputs change on `main`,
+or manually against a branch or tag:
 
 ```sh
 gh workflow run publish-opencv-layer.yml --ref <branch-or-tag>
-gh workflow run publish-tesseract-layer.yml --ref <branch-or-tag>
 ```
 
-Run both once after adding these workflows, and wait for them to finish before the first deployment.
-For a branch with layer changes, publish only the changed layer before deploying it.
+Run it once and wait for it to finish before the first deployment.
+For a branch with layer changes, publish the updated layer before deploying it.
 
-Each ZIP and its `SHA256SUMS` file are published as GitHub release assets under an
-`opencv-layer-<hash>` or `tesseract-layer-<hash>` tag. The
-[version script](infrastructure/layer-release-tag.sh) takes `opencv` or `tesseract` and derives
-the hash from that layer's committed Dockerfile, build script, data, and publishing workflow,
-plus the shared version script. Changing one layer does not change the other's release version;
-changing the shared version script rebuilds both. Application-only changes reuse existing releases,
+The ZIP and its `SHA256SUMS` file are published as GitHub release assets under an
+`opencv-layer-<hash>` tag. The
+[version script](infrastructure/layer-release-tag.sh) takes `opencv` and derives
+the hash from the layer's committed Dockerfile, build script, and publishing workflow,
+plus the version script itself. Changing the version script requires a new layer release.
+Application-only changes reuse existing releases,
 and rerunning publication skips a release that already exists. Releases
 are not marked as the repository's latest release.
 
-Deployment resolves each layer's version from its selected commit, downloads the matching assets, and
+Deployment resolves the layer's version from its selected commit, downloads the matching assets, and
 verifies their SHA-256 checksums before Terraform runs. It never falls back to another version or
-rebuilds layers. If assets are missing, deployment fails with instructions to publish them first.
+rebuilds the layer. If assets are missing, deployment fails with instructions to publish them first.
 Keep these releases for old-commit deployments; do not replace their assets. Rebuilds after base
 image or upstream dependency updates can be requested by changing a committed build input.
 
@@ -191,6 +188,7 @@ remain available using the commands above.
    environment's state object, and `s3:GetObject`, `s3:PutObject`, and `s3:DeleteObject` on its
    `.tflock` object. Scope state access to the environment's key and lock file. No AWS access keys
    are stored in GitHub.
+
 4. Under **Settings > Environments**, create the target environment (for example, `dev`).
    Use lowercase letters, digits, and hyphens, starting with a letter. Configure deployment
    protection rules to allow only trusted branches and tags and add required reviewers where needed.
@@ -198,11 +196,11 @@ remain available using the commands above.
    can assume the role.
 5. Add these GitHub Actions variables at repository level, or override them in each environment:
 
-   | Variable | Value |
-   | --- | --- |
-   | `AWS_ROLE_ARN` | ARN of the environment's OIDC deployment role |
-   | `TF_STATE_BUCKET` | Name of the existing shared state bucket |
-   | `AWS_REGION` | Deployment region; defaults to `eu-west-2` |
+   | Variable          | Value                                         |
+   | ----------------- | --------------------------------------------- |
+   | `AWS_ROLE_ARN`    | ARN of the environment's OIDC deployment role |
+   | `TF_STATE_BUCKET` | Name of the existing shared state bucket      |
+   | `AWS_REGION`      | Deployment region; defaults to `eu-west-2`    |
    | `TF_STATE_REGION` | State bucket region; defaults to `AWS_REGION` |
 
 Each environment uses `crossword-solver/<environment>/terraform.tfstate` in the shared bucket.

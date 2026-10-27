@@ -7,9 +7,9 @@ from aws_lambda_powertools.utilities.parser import envelopes, event_parser
 from aws_lambda_powertools.utilities.typing import LambdaContext
 from crossword_solver_adapter_api.puzzle_import_message import PuzzleImportMessage
 from crossword_solver_adapter_clue_extractor.bedrock_clue_extractor import BedrockClueExtractor
-from crossword_solver_adapter_grid_extractor.cell_factory import CellFactory
+from crossword_solver_adapter_grid_extractor.cell_classifier import CellClassifier
 from crossword_solver_adapter_grid_extractor.default_grid_extractor import DefaultGridExtractor
-from crossword_solver_adapter_grid_extractor.number_detector import NumberDetector
+from crossword_solver_adapter_grid_extractor.grid_numberer import GridNumberer
 from crossword_solver_adapter_repository.dynamo_puzzle_import_repository import DynamoPuzzleImportRepository
 from crossword_solver_adapter_repository.dynamo_puzzle_repository import DynamoPuzzleRepository
 from crossword_solver_adapter_storage.s3_image_downloader import S3ImageDownloader
@@ -34,7 +34,7 @@ puzzle_import_processor = PuzzleImportProcessor(
     repository=DynamoPuzzleImportRepository(os.environ["PUZZLE_IMPORTS_TABLE_NAME"]),
     creator=PuzzleCreator(
         clue_extractor=BedrockClueExtractor(model_id=os.environ["CLUE_EXTRACTOR_MODEL_ID"]),
-        grid_extractor=DefaultGridExtractor(CellFactory(NumberDetector(os.environ["TESSDATA_PREFIX"]))),
+        grid_extractor=DefaultGridExtractor(CellClassifier(), numberer=GridNumberer()),
         image_downloader=S3ImageDownloader(os.environ["PUZZLE_IMAGES_BUCKET_NAME"]),
         repository=DynamoPuzzleRepository(os.environ["PUZZLES_TABLE_NAME"]),
     ),
