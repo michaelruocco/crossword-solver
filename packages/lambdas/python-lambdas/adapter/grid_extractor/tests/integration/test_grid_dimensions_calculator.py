@@ -19,6 +19,8 @@ EXPECTED_DIMENSIONS = {
     "puzzle9": (29, 13),
     "puzzle14": (23, 11),
     "puzzle24": (15, 15),
+    "math-puzzle": (10, 10),
+    "zen-puzzle": (13, 13),
 }
 
 

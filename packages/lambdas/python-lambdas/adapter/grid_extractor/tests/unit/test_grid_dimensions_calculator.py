@@ -102,3 +102,48 @@ def test_raises_error_when_too_few_intersections_found():
 
     with pytest.raises(ValueError, match="Found 1 grid intersections but expected 36"):
         calculator.calculate_dimensions(image)
+
+
+def test_matches_intersections_geometrically_regardless_of_input_order():
+    points = [(10.0, 10.0), (110.0, 40.0), (10.0, 130.0), (110.0, 110.0)]
+
+    result = GridDimensionsCalculator()._to_point_rows(list(reversed(points)), [0, 100], [0, 100])
+
+    assert result == [[(10.0, 130.0), (110.0, 110.0)], [(10.0, 10.0), (110.0, 40.0)]]
+
+
+def test_extra_candidates_do_not_shift_other_rows():
+    points = [(10.0, 10.0), (110.0, 10.0), (10.0, 110.0), (110.0, 110.0)]
+    points.extend([(80.0, 110.0), (300.0, 300.0)])
+
+    result = GridDimensionsCalculator()._to_point_rows(points, [0, 100], [0, 100])
+
+    assert result == [[(10.0, 110.0), (110.0, 110.0)], [(10.0, 10.0), (110.0, 10.0)]]
+
+
+def test_missing_intersection_is_not_hidden_by_surplus_candidates():
+    points = [(10.0, 10.0), (110.0, 10.0), (10.0, 110.0), (20.0, 110.0)]
+
+    with pytest.raises(ValueError, match="Missing grid intersection at row 1, column 1"):
+        GridDimensionsCalculator()._to_point_rows(points, [0, 100], [0, 100])
+
+
+def test_distant_candidate_cannot_stand_in_for_missing_intersection():
+    points = [(10.0, 10.0), (110.0, 10.0), (10.0, 110.0), (300.0, 300.0)]
+
+    with pytest.raises(ValueError, match="Missing grid intersection at row 1, column 1"):
+        GridDimensionsCalculator()._to_point_rows(points, [0, 100], [0, 100])
+
+
+def test_equally_plausible_candidates_are_reported_as_ambiguous():
+    points = [(10.0, 10.0), (110.0, 10.0), (10.0, 110.0), (105.0, 110.0), (115.0, 110.0)]
+
+    with pytest.raises(ValueError, match="Ambiguous grid intersection at row 1, column 1"):
+        GridDimensionsCalculator()._to_point_rows(points, [0, 100], [0, 100])
+
+
+def test_requires_some_unambiguous_intersections_to_resolve_duplicates():
+    points = [(x + dx, y + 10.0) for y in (0, 100) for x in (0, 100) for dx in (5.0, 15.0)]
+
+    with pytest.raises(ValueError, match="No unambiguous grid intersections"):
+        GridDimensionsCalculator()._to_point_rows(points, [0, 100], [0, 100])
