@@ -1,5 +1,4 @@
 import json
-import shutil
 from collections.abc import Callable
 from pathlib import Path
 
@@ -10,10 +9,8 @@ from crossword_solver_domain_use_case.image import Image
 from PIL import Image as PILImage
 
 from crossword_solver_adapter_grid_extractor.cell_classifier import CellClassifier
-from crossword_solver_adapter_grid_extractor.cell_factory import CellFactory
 from crossword_solver_adapter_grid_extractor.default_grid_extractor import DefaultGridExtractor
 from crossword_solver_adapter_grid_extractor.grid_numberer import StructuralGridNumberer
-from crossword_solver_adapter_grid_extractor.number_detector import NumberDetector
 
 pytestmark = [
     pytest.mark.integration,
@@ -87,11 +84,3 @@ def assert_expected_cells(cells: list[Cell], name: str) -> None:
 
     assert len(cells) == len(expected)
     assert {cell.coordinates: cell for cell in cells} == {cell.coordinates: cell for cell in expected}
-
-
-@pytest.mark.skipif(shutil.which("tesseract") is None, reason="tesseract is not installed")
-@pytest.mark.parametrize("name", [name for name in EXPECTED_SIZES if name != "web-puzzle.jpg"])
-def test_original_puzzles_still_work_with_ocr(tessdata_dir, name):
-    extractor = DefaultGridExtractor(CellFactory(NumberDetector(tessdata_dir)))
-
-    assert_expected_cells(extractor.extract_grid(load(name)).cells.values, name)

@@ -73,24 +73,22 @@ jobs:
           ref: ${{ github.sha }}
           persist-credentials: false
 
-      - name: Download native layers
+      - name: Download OpenCV layer
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
         run: |
-          for layer in opencv tesseract; do
-            tag=$(bash infrastructure/layer-release-tag.sh "$layer")
-            echo "Downloading $layer layer from $tag"
-            download_dir="$RUNNER_TEMP/native-layers/$layer"
-            if ! gh release download "$tag" --dir "$download_dir" \
-              --pattern "$layer-layer.zip" --pattern SHA256SUMS; then
-              echo "::error::Unable to download $layer layer. Run publish-$layer-layer.yml for this commit and wait for it to succeed before deploying."
-              exit 1
-            fi
-            (cd "$download_dir" && sha256sum --check SHA256SUMS)
-            mkdir -p "infrastructure/$layer/build"
-            mv "$download_dir/$layer-layer.zip" "infrastructure/$layer/build/"
-          done
+          tag=$(bash infrastructure/layer-release-tag.sh opencv)
+          echo "Downloading OpenCV layer from $tag"
+          download_dir="$RUNNER_TEMP/native-layers/opencv"
+          if ! gh release download "$tag" --dir "$download_dir" \
+            --pattern opencv-layer.zip --pattern SHA256SUMS; then
+            echo "::error::Unable to download OpenCV layer. Run publish-opencv-layer.yml for this commit and wait for it to succeed before deploying."
+            exit 1
+          fi
+          (cd "$download_dir" && sha256sum --check SHA256SUMS)
+          mkdir -p infrastructure/opencv/build
+          mv "$download_dir/opencv-layer.zip" infrastructure/opencv/build/
 
       - uses: pnpm/action-setup@v6
         with:

@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 
 class DefaultGridExtractor(GridExtractor):
-    # Tesseract runs as a subprocess, so extra workers overlap its startup and file I/O.
+    # OpenCV cell operations can execute concurrently outside Python's GIL.
     WORKERS_PER_CPU = 2
 
     def __init__(

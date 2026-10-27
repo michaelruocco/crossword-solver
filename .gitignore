@@ -52,4 +52,3 @@ vitest.config.*.timestamp*
 
 # Lambda layers built by infrastructure/*/build-layer.sh
 infrastructure/opencv/build/
-infrastructure/tesseract/build/

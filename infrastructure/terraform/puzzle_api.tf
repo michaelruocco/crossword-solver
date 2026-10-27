@@ -125,7 +125,7 @@ resource "aws_iam_role_policy" "puzzle_api" {
   policy = data.aws_iam_policy_document.puzzle_api[each.key].json
 }
 
-# These share the create puzzle bundle but don't need the OpenCV and Tesseract layers.
+# These share the create puzzle bundle but don't need the OpenCV layer.
 resource "aws_lambda_function" "puzzle_api" {
   for_each = local.puzzle_api_lambdas
 

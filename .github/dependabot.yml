@@ -47,7 +47,6 @@ updates:
   - package-ecosystem: docker
     directories:
       - /infrastructure/opencv
-      - /infrastructure/tesseract
     schedule:
       interval: weekly
 
