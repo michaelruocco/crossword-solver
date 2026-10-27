@@ -1,9 +1,11 @@
+import json
 import shutil
 from collections.abc import Callable
 from pathlib import Path
 
 import pytest
 from crossword_solver_domain_entities.cell import Cell
+from crossword_solver_domain_entities.coordinates import Coordinates
 from crossword_solver_domain_use_case.image import Image
 from PIL import Image as PILImage
 
@@ -28,6 +30,7 @@ EXPECTED_SIZES = {
     "puzzle9.jpg": (29, 13),
     "puzzle14.jpg": (23, 11),
     "puzzle24.jpg": (15, 15),
+    "web-puzzle.jpg": (15, 15)
 }
 
 
@@ -68,3 +71,17 @@ def test_reads_ids_in_order_from_top_left(extract_cells, name):
 
     ids = [cell.id for cell in cells if cell.id is not None]
     assert ids == list(range(1, len(ids) + 1))
+
+
+@pytest.mark.parametrize("name", EXPECTED_SIZES.keys())
+def test_extracts_expected_cells(extract_cells, name):
+    expected_json = json.loads((PUZZLES_DIR / "expected_cells" / Path(name).with_suffix(".json")).read_text())
+    expected = [
+        Cell(coordinates=Coordinates(**cell["coordinates"]), black=cell["black"], id=cell.get("id"))
+        for cell in expected_json
+    ]
+
+    cells = extract_cells(name)
+
+    assert len(cells) == len(expected)
+    assert {cell.coordinates: cell for cell in cells} == {cell.coordinates: cell for cell in expected}
