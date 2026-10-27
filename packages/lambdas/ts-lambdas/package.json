@@ -15,6 +15,6 @@
   },
   "devDependencies": {
     "@types/aws-lambda": "catalog:",
-    "rolldown": "^1.2.14"
+    "rolldown": "^1.2.15"
   }
 }
