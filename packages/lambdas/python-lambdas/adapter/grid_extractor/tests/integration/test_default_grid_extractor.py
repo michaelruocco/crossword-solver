@@ -9,13 +9,14 @@ from crossword_solver_domain_entities.coordinates import Coordinates
 from crossword_solver_domain_use_case.image import Image
 from PIL import Image as PILImage
 
+from crossword_solver_adapter_grid_extractor.cell_classifier import CellClassifier
 from crossword_solver_adapter_grid_extractor.cell_factory import CellFactory
 from crossword_solver_adapter_grid_extractor.default_grid_extractor import DefaultGridExtractor
+from crossword_solver_adapter_grid_extractor.grid_numberer import StructuralGridNumberer
 from crossword_solver_adapter_grid_extractor.number_detector import NumberDetector
 
 pytestmark = [
     pytest.mark.integration,
-    pytest.mark.skipif(shutil.which("tesseract") is None, reason="tesseract is not installed"),
 ]
 
 PUZZLES_DIR = Path(__file__).parent.parent / "resources" / "puzzles"
@@ -30,14 +31,13 @@ EXPECTED_SIZES = {
     "puzzle9.jpg": (29, 13),
     "puzzle14.jpg": (23, 11),
     "puzzle24.jpg": (15, 15),
-    "web-puzzle.jpg": (15, 15)
+    "web-puzzle.jpg": (15, 15),
 }
 
 
 @pytest.fixture(scope="module")
-def extract_cells(tessdata_dir) -> Callable[[str], list[Cell]]:
-    # Extraction takes around 10 seconds per puzzle, so each puzzle is only extracted once.
-    extractor = DefaultGridExtractor(CellFactory(NumberDetector(tessdata_dir)))
+def extract_cells() -> Callable[[str], list[Cell]]:
+    extractor = DefaultGridExtractor(CellClassifier(), numberer=StructuralGridNumberer())
     extracted: dict[str, list[Cell]] = {}
 
     def extract(name: str) -> list[Cell]:
@@ -75,13 +75,23 @@ def test_reads_ids_in_order_from_top_left(extract_cells, name):
 
 @pytest.mark.parametrize("name", EXPECTED_SIZES.keys())
 def test_extracts_expected_cells(extract_cells, name):
+    assert_expected_cells(extract_cells(name), name)
+
+
+def assert_expected_cells(cells: list[Cell], name: str) -> None:
     expected_json = json.loads((PUZZLES_DIR / "expected_cells" / Path(name).with_suffix(".json")).read_text())
     expected = [
         Cell(coordinates=Coordinates(**cell["coordinates"]), black=cell["black"], id=cell.get("id"))
         for cell in expected_json
     ]
 
-    cells = extract_cells(name)
-
     assert len(cells) == len(expected)
     assert {cell.coordinates: cell for cell in cells} == {cell.coordinates: cell for cell in expected}
+
+
+@pytest.mark.skipif(shutil.which("tesseract") is None, reason="tesseract is not installed")
+@pytest.mark.parametrize("name", [name for name in EXPECTED_SIZES if name != "web-puzzle.jpg"])
+def test_original_puzzles_still_work_with_ocr(tessdata_dir, name):
+    extractor = DefaultGridExtractor(CellFactory(NumberDetector(tessdata_dir)))
+
+    assert_expected_cells(extractor.extract_grid(load(name)).cells.values, name)

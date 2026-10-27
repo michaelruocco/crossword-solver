@@ -11,10 +11,11 @@ from crossword_solver_domain_entities.grid import Grid
 from crossword_solver_domain_use_case.grid_extractor import GridExtractor
 from crossword_solver_domain_use_case.image import Image
 
-from .cell_factory import CellFactory
+from .cell_classifier import CellReader
 from .grid_dimensions import GridDimensions
 from .grid_dimensions_calculator import GridDimensionsCalculator
 from .grid_finder import GridFinder
+from .grid_numberer import GridNumberer
 
 logger = logging.getLogger(__name__)
 
@@ -25,21 +26,25 @@ class DefaultGridExtractor(GridExtractor):
 
     def __init__(
         self,
-        cell_factory: CellFactory,
+        cell_factory: CellReader,
         finder: GridFinder | None = None,
         calculator: GridDimensionsCalculator | None = None,
         max_workers: int | None = None,
+        numberer: GridNumberer | None = None,
     ):
         self.cell_factory = cell_factory
         self.finder = finder or GridFinder()
         self.calculator = calculator or GridDimensionsCalculator()
         self.max_workers = max_workers or (os.cpu_count() or 1) * self.WORKERS_PER_CPU
+        self.numberer = numberer
 
     def extract_grid(self, image: Image) -> Grid:
         start = time.perf_counter()
         grid = self.finder.find_grid(_to_bgr(image))
         dimensions = self.calculator.calculate_dimensions(grid)
         cells = self._to_cells(grid, dimensions)
+        if self.numberer is not None:
+            cells = self.numberer.number(cells)
         duration_ms = round((time.perf_counter() - start) * 1000)
         logger.info(
             "Extracted %dx%d grid in %d ms using %d workers on %s CPUs",

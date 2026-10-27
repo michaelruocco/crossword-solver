@@ -5,6 +5,7 @@ import numpy as np
 from crossword_solver_domain_entities.cell import Cell
 from crossword_solver_domain_entities.coordinates import Coordinates
 
+from .cell_classifier import CellClassifier
 from .mat_converter import MatConverter
 from .number_detector import NumberDetector
 from .rects import keep_outermost
@@ -14,8 +15,7 @@ logger = logging.getLogger(__name__)
 WHITE = (255, 255, 255)
 
 
-class CellFactory:
-    DARK_INTENSITY = 100
+class CellFactory(CellClassifier):
     BINARY_BLOCK_SIZE = 19
     BINARY_C = 7
     # A digit's contour must cover between these percentages of the cell's area...
@@ -30,19 +30,14 @@ class CellFactory:
     MIN_DIGIT_ASPECT = 0.6
 
     def __init__(self, detector: NumberDetector, converter: MatConverter | None = None):
+        super().__init__(converter)
         self.detector = detector
-        self.converter = converter or MatConverter()
 
     def to_cell(self, image: np.ndarray, x: int, y: int) -> Cell:
         coordinates = Coordinates(x, y)
         if self._is_mostly_dark(image):
             return Cell(coordinates, black=True)
         return Cell(coordinates, black=False, id=self._to_id(self._find_digits(image)))
-
-    def _is_mostly_dark(self, image: np.ndarray) -> bool:
-        gray = self.converter.to_grayscale(image)
-        dark_pixels = int(np.count_nonzero(gray < self.DARK_INTENSITY))
-        return dark_pixels > gray.size // 2
 
     def _find_digits(self, image: np.ndarray) -> list[np.ndarray]:
         binary = self.converter.to_binary(

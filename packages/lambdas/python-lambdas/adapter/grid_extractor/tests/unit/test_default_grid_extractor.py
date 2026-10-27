@@ -78,6 +78,17 @@ def test_builds_each_cell_from_its_image_in_the_found_grid(extractor, calculator
     cell_factory.to_cell.assert_any_call("cell image 2,1", 2, 1)
 
 
+def test_applies_explicit_grid_numberer(cell_factory, finder, calculator):
+    numberer = MagicMock()
+    numberer.number.return_value = [Cell(Coordinates(0, 1), black=False, id=42)]
+    extractor = DefaultGridExtractor(cell_factory, finder, calculator, numberer=numberer)
+
+    grid = extractor.extract_grid(to_image(PILImage.new("RGB", (4, 4))))
+
+    assert grid.cells.values == numberer.number.return_value
+    assert len(numberer.number.call_args.args[0]) == 6
+
+
 def test_defaults_workers_to_twice_cpu_count(cell_factory, finder, calculator, monkeypatch):
     monkeypatch.setattr("os.cpu_count", lambda: 3)
 

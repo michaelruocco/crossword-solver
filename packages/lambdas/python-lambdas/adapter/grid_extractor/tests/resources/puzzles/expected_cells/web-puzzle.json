@@ -278,7 +278,6 @@
     }
   },
   {
-    "id": 31,
     "black": false,
     "coordinates": {
       "x": 9,
@@ -1058,7 +1057,6 @@
     }
   },
   {
-    "id": 17,
     "black": true,
     "coordinates": {
       "x": 13,
@@ -1531,7 +1529,7 @@
   },
   {
     "id": 3,
-    "black": true,
+    "black": false,
     "coordinates": {
       "x": 4,
       "y": 14
