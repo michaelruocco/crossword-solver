@@ -19,5 +19,13 @@ including the web puzzle.
 Grid location searches nested dark contours for multiple enclosed cells, so a
 worksheet's page frame does not hide its crossword. If no such candidate exists,
 the largest external outline is used, preserving support for undivided outlines.
-Grid-location snapshots also cover the Math and Zen images. Their small-cell line
-extraction and intersection assignment are not yet supported end-to-end.
+Grid-location snapshots also cover the Math and Zen images. Dimension detection
+enlarges grids whose shorter side is below 800 pixels for thresholding, denoising,
+and line extraction, then maps boundaries and intersections back to the original
+image coordinates. Larger images and the extracted grid images are unchanged.
+Detected boundaries must span at least half of each axis of the cropped grid,
+so isolated noise cannot be treated as a small grid elsewhere in the image.
+
+Math and Zen have boundary-count regressions at multiple resolutions. This does
+not yet establish end-to-end support: assigning extra intersection candidates to
+the correct rows and columns remains a separate issue, particularly for Zen.

@@ -32,8 +32,8 @@ def test_calculates_rows_and_columns_from_grid_lines():
 
     assert dimensions.number_of_rows == CELLS
     assert dimensions.number_of_columns == CELLS
-    assert dimensions.rows == [17, 77, 137, 197, 257, 317]
-    assert dimensions.columns == [17, 77, 137, 197, 257, 317]
+    assert dimensions.rows == [18, 78, 138, 198, 258, 318]
+    assert dimensions.columns == [18, 78, 138, 198, 258, 318]
     assert dimensions.average_row_height == CELL_SIZE
     assert dimensions.average_column_width == CELL_SIZE
 
@@ -51,12 +51,7 @@ def test_merges_line_positions_within_tolerance():
     cv2.rectangle(lines, (10, 100), (100, 102), 255, -1)
     cv2.rectangle(lines, (150, 104), (250, 106), 255, -1)
     cv2.rectangle(lines, (10, 200), (100, 202), 255, -1)
-    converter = spying_converter()
-    converter.to_horizontal_grid_lines.return_value = lines
-
-    dimensions = GridDimensionsCalculator(converter).calculate_dimensions(drawn_grid())
-
-    assert dimensions.rows == [100, 200]
+    assert GridDimensionsCalculator()._to_line_positions(lines, axis=1) == [100, 200]
 
 
 def test_raises_error_when_no_grid_lines_found():
@@ -65,8 +60,38 @@ def test_raises_error_when_no_grid_lines_found():
         cv2.circle(image, (x, 100), 5, (0, 0, 0), 2)
     calculator = GridDimensionsCalculator()
 
-    with pytest.raises(ValueError, match="No grid lines found"):
+    with pytest.raises(ValueError, match="Grid lines do not span the cropped grid image"):
         calculator.calculate_dimensions(image)
+
+
+def test_raises_error_when_line_mask_is_empty():
+    with pytest.raises(ValueError, match="No grid lines found"):
+        GridDimensionsCalculator()._to_line_positions(np.zeros((200, 200), dtype=np.uint8), axis=1)
+
+
+def test_enlarges_small_grids_for_processing_and_returns_original_coordinates():
+    converter = spying_converter()
+    image = cv2.resize(drawn_grid(), (511, 340))
+
+    dimensions = GridDimensionsCalculator(converter).calculate_dimensions(image)
+
+    working_image = converter.to_grayscale.call_args.args[0]
+    assert working_image.shape == (800, 1202, 3)
+    assert dimensions.number_of_rows == dimensions.number_of_columns == CELLS
+    expected_x = [(MARGIN + i * CELL_SIZE) * 511 / 340 for i in range(CELLS + 1)]
+    expected_y = [MARGIN + i * CELL_SIZE for i in reversed(range(CELLS + 1))]
+    for row, y in zip(dimensions.points, expected_y, strict=True):
+        assert [point[0] for point in row] == pytest.approx(expected_x, abs=1)
+        assert [point[1] for point in row] == pytest.approx([y] * (CELLS + 1), abs=1)
+
+
+def test_leaves_large_grid_resolution_unchanged():
+    converter = spying_converter()
+    image = cv2.resize(drawn_grid(), (1020, 1020))
+
+    GridDimensionsCalculator(converter).calculate_dimensions(image)
+
+    assert converter.to_grayscale.call_args.args[0] is image
 
 
 def test_raises_error_when_too_few_intersections_found():
