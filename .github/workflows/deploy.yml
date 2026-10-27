@@ -44,7 +44,7 @@ jobs:
   deploy:
     needs: validate
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: 180
     environment:
       name: ${{ inputs.environment }}
       url: ${{ steps.deployment.outputs.url }}
@@ -79,6 +79,7 @@ jobs:
           GH_REPO: ${{ github.repository }}
         run: |
           tag=$(bash infrastructure/layer-release-tag.sh opencv)
+          bash infrastructure/wait-for-opencv-release.sh "$tag"
           echo "Downloading OpenCV layer from $tag"
           download_dir="$RUNNER_TEMP/native-layers/opencv"
           if ! gh release download "$tag" --dir "$download_dir" \

@@ -47,3 +47,13 @@ def test_find_grid_matches_expected_image(finder, image_path):
         f"grid differs from {expected_path.name} (shape {grid.shape} vs {expected.shape}, "
         f"mean difference {difference}), actual result written to {OUTPUT_DIR}"
     )
+
+
+def test_math_puzzle_selects_crossword_instead_of_page_border():
+    image = cv2.imread(str(PUZZLES_DIR / "math-puzzle.png"))
+    assert image is not None
+    converter = GridFinder().converter
+
+    cropped = converter.crop(image, 0)
+
+    assert np.array_equal(cropped, image[115:365, 119:369])

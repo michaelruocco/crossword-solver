@@ -15,3 +15,9 @@ language model is required. Without a numberer, the classifier's cells remain un
 
 Integration tests compare all cells against fixed JSON fixtures for nine puzzles,
 including the web puzzle.
+
+Grid location searches nested dark contours for multiple enclosed cells, so a
+worksheet's page frame does not hide its crossword. If no such candidate exists,
+the largest external outline is used, preserving support for undivided outlines.
+Grid-location snapshots also cover the Math and Zen images. Their small-cell line
+extraction and intersection assignment are not yet supported end-to-end.

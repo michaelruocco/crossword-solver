@@ -1,3 +1,4 @@
+from collections import Counter
 from collections.abc import Sequence
 
 import cv2
@@ -128,4 +129,28 @@ class MatConverter:
 
     def _to_grid_contour(self, image: np.ndarray) -> np.ndarray:
         binary = self.to_binary(self.to_grayscale(image), c=self.GRID_BINARY_C)
-        return self.to_largest_contour(binary)
+        contours, hierarchy = cv2.findContours(binary, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+        if hierarchy is None:
+            raise ValueError("No contours found")
+        parents = hierarchy[0, :, 3]
+        child_counts = Counter(int(parent) for parent in parents)
+        candidates = []
+        for index, contour in enumerate(contours):
+            # A 2x2 grid has at least four enclosed cells; a page frame usually has one.
+            if child_counts[index] < 4:
+                continue
+            depth = 0
+            parent = int(parents[index])
+            while parent != -1:
+                depth += 1
+                parent = int(parents[parent])
+            # Odd depths are white holes, which can contain unrelated text and graphics.
+            if depth % 2 == 0:
+                candidates.append(contour)
+        if candidates:
+            return max(candidates, key=cv2.contourArea)
+        # Preserve support for outlines without visible internal divisions.
+        return max(
+            (contour for index, contour in enumerate(contours) if parents[index] == -1),
+            key=cv2.contourArea,
+        )
