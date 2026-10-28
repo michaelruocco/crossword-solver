@@ -72,6 +72,19 @@ def test_letter_is_confined_to_answer_region_below_id():
     assert np.all(image[61:64, 2:64] == 255)
 
 
+def test_to_png_rejects_text_that_cannot_fit_even_at_minimum_scale(monkeypatch):
+    cell = Cell(Coordinates(0, 0), black=False, letter="W")
+    grid = Grid(Cells([cell]), column_width=1, row_height=1)
+    factory = GridImageFactory()
+    monkeypatch.setattr(
+        "crossword_solver_adapter_grid_extractor.grid_image_factory.cv2.getTextSize",
+        lambda text, font, scale, thickness: ((100, 100), 10),
+    )
+
+    with pytest.raises(ValueError, match="Text does not fit in grid cell"):
+        factory.to_png(grid)
+
+
 def test_to_png_rejects_a_grid_with_a_missing_coordinate():
     grid = Grid(cells=Cells([Cell(Coordinates(1, 1), black=False)]), column_width=10, row_height=8)
     imageFactory = GridImageFactory()
