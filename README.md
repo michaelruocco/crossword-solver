@@ -144,7 +144,11 @@ are not marked as the repository's latest release.
 
 Deployment resolves the layer's version from its selected commit, downloads the matching assets, and
 verifies their SHA-256 checksums before Terraform runs. It never falls back to another version or
-rebuilds the layer. If assets are missing, deployment fails with instructions to publish them first.
+rebuilds the layer. An existing complete release is used immediately. If the exact release or
+either asset is missing, deployment checks every 30 seconds for up to two hours, allowing the
+independent publishing workflow to finish. If publication fails, the wait eventually times out
+with instructions to publish the layer and retry; authentication and other API errors fail immediately.
+Manual deployments also wait, but do not trigger publication automatically.
 Keep these releases for old-commit deployments; do not replace their assets. Rebuilds after base
 image or upstream dependency updates can be requested by changing a committed build input.
 

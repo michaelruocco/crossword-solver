@@ -13,5 +13,21 @@ by this strategy; a mistaken black/white classification can affect later IDs.
 The import worker explicitly selects structural numbering. No OCR engine or trained
 language model is required. Without a numberer, the classifier's cells remain unnumbered.
 
-Integration tests compare all cells against fixed JSON fixtures for nine puzzles,
-including the web puzzle.
+Integration tests compare all cells against fixed JSON fixtures for eleven puzzles,
+including the Web, Math, and Zen puzzles.
+
+Grid location searches nested dark contours for multiple enclosed cells, so a
+worksheet's page frame does not hide its crossword. If no such candidate exists,
+the largest external outline is used, preserving support for undivided outlines.
+Grid-location snapshots also cover the Math and Zen images. Dimension detection
+enlarges grids whose shorter side is below 800 pixels for thresholding, denoising,
+and line extraction, then maps boundaries and intersections back to the original
+image coordinates. Larger images and the extracted grid images are unchanged.
+Detected boundaries must span at least half of each axis of the cropped grid,
+so isolated noise cannot be treated as a small grid elsewhere in the image.
+
+Intersections are assigned to their nearest detected row and column within half
+the local line spacing. Extra candidates are ranked using the median offset between
+line bounding-box origins and unambiguous intersection centroids. Missing matches
+and equally plausible candidates raise explicit errors instead of shifting later
+cell crops. Math and Zen also have boundary-count regressions at multiple resolutions.

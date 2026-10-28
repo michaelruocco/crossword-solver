@@ -32,8 +32,8 @@ def test_calculates_rows_and_columns_from_grid_lines():
 
     assert dimensions.number_of_rows == CELLS
     assert dimensions.number_of_columns == CELLS
-    assert dimensions.rows == [17, 77, 137, 197, 257, 317]
-    assert dimensions.columns == [17, 77, 137, 197, 257, 317]
+    assert dimensions.rows == [18, 78, 138, 198, 258, 318]
+    assert dimensions.columns == [18, 78, 138, 198, 258, 318]
     assert dimensions.average_row_height == CELL_SIZE
     assert dimensions.average_column_width == CELL_SIZE
 
@@ -51,12 +51,7 @@ def test_merges_line_positions_within_tolerance():
     cv2.rectangle(lines, (10, 100), (100, 102), 255, -1)
     cv2.rectangle(lines, (150, 104), (250, 106), 255, -1)
     cv2.rectangle(lines, (10, 200), (100, 202), 255, -1)
-    converter = spying_converter()
-    converter.to_horizontal_grid_lines.return_value = lines
-
-    dimensions = GridDimensionsCalculator(converter).calculate_dimensions(drawn_grid())
-
-    assert dimensions.rows == [100, 200]
+    assert GridDimensionsCalculator()._to_line_positions(lines, axis=1) == [100, 200]
 
 
 def test_raises_error_when_no_grid_lines_found():
@@ -65,8 +60,41 @@ def test_raises_error_when_no_grid_lines_found():
         cv2.circle(image, (x, 100), 5, (0, 0, 0), 2)
     calculator = GridDimensionsCalculator()
 
-    with pytest.raises(ValueError, match="No grid lines found"):
+    with pytest.raises(ValueError, match="Grid lines do not span the cropped grid image"):
         calculator.calculate_dimensions(image)
+
+
+def test_raises_error_when_line_mask_is_empty():
+    calculator = GridDimensionsCalculator()
+    lines = np.zeros((200, 200), dtype=np.uint8)
+
+    with pytest.raises(ValueError, match="No grid lines found"):
+        calculator._to_line_positions(lines, axis=1)
+
+
+def test_enlarges_small_grids_for_processing_and_returns_original_coordinates():
+    converter = spying_converter()
+    image = cv2.resize(drawn_grid(), (511, 340))
+
+    dimensions = GridDimensionsCalculator(converter).calculate_dimensions(image)
+
+    working_image = converter.to_grayscale.call_args.args[0]
+    assert working_image.shape == (800, 1202, 3)
+    assert dimensions.number_of_rows == dimensions.number_of_columns == CELLS
+    expected_x = [(MARGIN + i * CELL_SIZE) * 511 / 340 for i in range(CELLS + 1)]
+    expected_y = [MARGIN + i * CELL_SIZE for i in reversed(range(CELLS + 1))]
+    for row, y in zip(dimensions.points, expected_y, strict=True):
+        assert [point[0] for point in row] == pytest.approx(expected_x, abs=1)
+        assert [point[1] for point in row] == pytest.approx([y] * (CELLS + 1), abs=1)
+
+
+def test_leaves_large_grid_resolution_unchanged():
+    converter = spying_converter()
+    image = cv2.resize(drawn_grid(), (1020, 1020))
+
+    GridDimensionsCalculator(converter).calculate_dimensions(image)
+
+    assert converter.to_grayscale.call_args.args[0] is image
 
 
 def test_raises_error_when_too_few_intersections_found():
@@ -77,3 +105,69 @@ def test_raises_error_when_too_few_intersections_found():
 
     with pytest.raises(ValueError, match="Found 1 grid intersections but expected 36"):
         calculator.calculate_dimensions(image)
+
+
+@pytest.mark.parametrize(
+    ("rows", "columns"),
+    [
+        ([], [0, 100]),
+        ([0], [0, 100]),
+        ([0, 100], []),
+        ([0, 100], [0]),
+    ],
+)
+def test_requires_at_least_two_boundaries_on_each_axis(rows, columns):
+    calculator = GridDimensionsCalculator()
+    points = [(0.0, 0.0), (100.0, 100.0)]
+
+    with pytest.raises(ValueError, match="At least two row and column boundaries are required"):
+        calculator._to_point_rows(points, rows, columns)
+
+
+def test_matches_intersections_geometrically_regardless_of_input_order():
+    points = [(10.0, 10.0), (110.0, 40.0), (10.0, 130.0), (110.0, 110.0)]
+
+    result = GridDimensionsCalculator()._to_point_rows(list(reversed(points)), [0, 100], [0, 100])
+
+    assert result == [[(10.0, 130.0), (110.0, 110.0)], [(10.0, 10.0), (110.0, 40.0)]]
+
+
+def test_extra_candidates_do_not_shift_other_rows():
+    points = [(10.0, 10.0), (110.0, 10.0), (10.0, 110.0), (110.0, 110.0)]
+    points.extend([(80.0, 110.0), (300.0, 300.0)])
+
+    result = GridDimensionsCalculator()._to_point_rows(points, [0, 100], [0, 100])
+
+    assert result == [[(10.0, 110.0), (110.0, 110.0)], [(10.0, 10.0), (110.0, 10.0)]]
+
+
+def test_missing_intersection_is_not_hidden_by_surplus_candidates():
+    points = [(10.0, 10.0), (110.0, 10.0), (10.0, 110.0), (20.0, 110.0)]
+    calculator = GridDimensionsCalculator()
+
+    with pytest.raises(ValueError, match="Missing grid intersection at row 1, column 1"):
+        calculator._to_point_rows(points, [0, 100], [0, 100])
+
+
+def test_distant_candidate_cannot_stand_in_for_missing_intersection():
+    points = [(10.0, 10.0), (110.0, 10.0), (10.0, 110.0), (300.0, 300.0)]
+    calculator = GridDimensionsCalculator()
+
+    with pytest.raises(ValueError, match="Missing grid intersection at row 1, column 1"):
+        calculator._to_point_rows(points, [0, 100], [0, 100])
+
+
+def test_equally_plausible_candidates_are_reported_as_ambiguous():
+    points = [(10.0, 10.0), (110.0, 10.0), (10.0, 110.0), (105.0, 110.0), (115.0, 110.0)]
+    calculator = GridDimensionsCalculator()
+
+    with pytest.raises(ValueError, match="Ambiguous grid intersection at row 1, column 1"):
+        calculator._to_point_rows(points, [0, 100], [0, 100])
+
+
+def test_requires_some_unambiguous_intersections_to_resolve_duplicates():
+    points = [(x + dx, y + 10.0) for y in (0, 100) for x in (0, 100) for dx in (5.0, 15.0)]
+    calculator = GridDimensionsCalculator()
+
+    with pytest.raises(ValueError, match="No unambiguous grid intersections"):
+        calculator._to_point_rows(points, [0, 100], [0, 100])

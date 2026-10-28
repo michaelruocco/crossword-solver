@@ -163,6 +163,35 @@ def test_crop_limits_expansion_at_the_edge_the_grid_is_closest_to(converter):
     assert np.array_equal(cropped, image[13:188, 3:200])
 
 
+@pytest.mark.parametrize("frames", [1, 2])
+def test_selects_grid_nested_inside_page_frames(converter, frames):
+    image = np.full((400, 400, 3), 255, dtype=np.uint8)
+    for offset in range(10, 10 + frames * 25, 25):
+        cv2.rectangle(image, (offset, offset), (399 - offset, 399 - offset), (0, 0, 0), 3)
+    for position in range(120, 281, 40):
+        cv2.line(image, (120, position), (280, position), (0, 0, 0), 3)
+        cv2.line(image, (position, 120), (position, 280), (0, 0, 0), 3)
+
+    cropped = converter.crop(image, 0)
+
+    assert np.array_equal(cropped, image[118:283, 118:283])
+
+
+def test_prefers_larger_grid_over_smaller_nested_pattern(converter):
+    image = np.full((400, 400, 3), 255, dtype=np.uint8)
+    for start, stop, spacing in [(20, 100, 20), (150, 350, 50)]:
+        for position in range(start, stop + 1, spacing):
+            cv2.line(image, (start, position), (stop, position), (0, 0, 0), 3)
+            cv2.line(image, (position, start), (position, stop), (0, 0, 0), 3)
+
+    assert np.array_equal(converter.crop(image, 0), image[148:353, 148:353])
+
+
+def test_grid_selection_reports_blank_image(converter):
+    with pytest.raises(ValueError, match="No contours found"):
+        converter.crop(np.full((100, 100, 3), 255, dtype=np.uint8), 0)
+
+
 GRID_LINES = range(50, 351, 75)
 
 
