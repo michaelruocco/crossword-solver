@@ -61,34 +61,51 @@ class GridDimensionsCalculator:
             raise ValueError(f"Found {len(points)} grid intersections but expected {expected}")
         if len(rows) < 2 or len(columns) < 2:
             raise ValueError("At least two row and column boundaries are required")
+        candidates = self._find_intersection_candidates(points, rows, columns)
+        offset_x, offset_y = self._intersection_offset(candidates, rows, columns)
+        return [
+            [
+                self._select_intersection(
+                    candidates[row, column], (columns[column] + offset_x, rows[row] + offset_y), row, column
+                )
+                for column in range(len(columns))
+            ]
+            for row in reversed(range(len(rows)))
+        ]
+
+    def _find_intersection_candidates(
+        self, points: list[Point], rows: list[int], columns: list[int]
+    ) -> dict[tuple[int, int], list[Point]]:
         candidates: dict[tuple[int, int], list[Point]] = defaultdict(list)
         for x, y in points:
-            row = min(range(len(rows)), key=lambda index: abs(rows[index] - y))
-            column = min(range(len(columns)), key=lambda index: abs(columns[index] - x))
+            row = min(range(len(rows)), key=lambda index, y=y: abs(rows[index] - y))
+            column = min(range(len(columns)), key=lambda index, x=x: abs(columns[index] - x))
             if self._near_line(x, column, columns) and self._near_line(y, row, rows):
                 candidates[row, column].append((x, y))
         for row in range(len(rows)):
             for column in range(len(columns)):
                 if not candidates[row, column]:
                     raise ValueError(f"Missing grid intersection at row {row}, column {column}")
+        return candidates
 
+    @staticmethod
+    def _intersection_offset(
+        candidates: dict[tuple[int, int], list[Point]], rows: list[int], columns: list[int]
+    ) -> Point:
         # Line positions are bounding-box origins, while intersections are centroids.
         anchors = [(row, column, values[0]) for (row, column), values in candidates.items() if len(values) == 1]
         if not anchors:
             raise ValueError("No unambiguous grid intersections available for geometric matching")
         offset_x = statistics.median(point[0] - columns[column] for row, column, point in anchors)
         offset_y = statistics.median(point[1] - rows[row] for row, column, point in anchors)
-        point_rows = []
-        for row in reversed(range(len(rows))):
-            point_row = []
-            for column in range(len(columns)):
-                target = (columns[column] + offset_x, rows[row] + offset_y)
-                ranked = sorted(candidates[row, column], key=lambda point: math.dist(point, target))
-                if len(ranked) > 1 and math.isclose(math.dist(ranked[0], target), math.dist(ranked[1], target)):
-                    raise ValueError(f"Ambiguous grid intersection at row {row}, column {column}")
-                point_row.append(ranked[0])
-            point_rows.append(point_row)
-        return point_rows
+        return offset_x, offset_y
+
+    @staticmethod
+    def _select_intersection(candidates: list[Point], target: Point, row: int, column: int) -> Point:
+        ranked = sorted(candidates, key=lambda point: math.dist(point, target))
+        if len(ranked) > 1 and math.isclose(math.dist(ranked[0], target), math.dist(ranked[1], target)):
+            raise ValueError(f"Ambiguous grid intersection at row {row}, column {column}")
+        return ranked[0]
 
     @staticmethod
     def _near_line(position: float, index: int, lines: list[int]) -> bool:
