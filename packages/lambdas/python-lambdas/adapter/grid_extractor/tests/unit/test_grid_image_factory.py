@@ -28,9 +28,61 @@ def test_to_png_renders_a_grid_with_black_cells_and_white_cells():
 
     assert image is not None
     assert encoded.startswith(b"\x89PNG\r\n\x1a\n")
-    assert image.shape == (2 * (8 * 4 + 14), 2 * (10 * 4 + 14))
-    assert image[10, 10] == 255
-    assert image[10, 10 + 10 * 4 + 14] == 0
+    assert image.shape == (132, 132)
+    assert image[80, 10] == 255
+    assert image[80, 76] == 0
+
+
+def test_rendering_is_independent_of_source_cell_dimensions():
+    cells = Cells([Cell(Coordinates(0, 0), black=False, id=123, letter="W")])
+    factory = GridImageFactory()
+
+    assert factory.to_png(Grid(cells, column_width=10, row_height=8)) == factory.to_png(
+        Grid(cells, column_width=200, row_height=150)
+    )
+
+
+@pytest.mark.parametrize("number", [1, 35, 123, 1234567890])
+def test_id_is_confined_to_upper_label_region(number):
+    grid = Grid(Cells([Cell(Coordinates(0, 0), black=False, id=number)]), column_width=1, row_height=1)
+
+    image = cv2.imdecode(np.frombuffer(GridImageFactory().to_png(grid), dtype=np.uint8), cv2.IMREAD_GRAYSCALE)
+
+    assert image is not None
+    assert image.shape == (66, 66)
+    assert np.any(image[4:19, 4:62] < 255)
+    assert np.all(image[20:64, 2:64] == 255)
+
+
+def test_letter_is_confined_to_answer_region_below_id():
+    cells = Cells([Cell(Coordinates(0, 0), black=False, id=123, letter="W")])
+    factory = GridImageFactory()
+    image = cv2.imdecode(np.frombuffer(factory.to_png(Grid(cells, 1, 1)), dtype=np.uint8), cv2.IMREAD_GRAYSCALE)
+    id_only = cv2.imdecode(
+        np.frombuffer(
+            factory.to_png(Grid(Cells([Cell(Coordinates(0, 0), black=False, id=123)]), 1, 1)), dtype=np.uint8
+        ),
+        cv2.IMREAD_GRAYSCALE,
+    )
+
+    assert image is not None
+    assert id_only is not None
+    assert np.array_equal(image[:23], id_only[:23])
+    assert np.any(image[23:61, 4:62] < 255)
+    assert np.all(image[61:64, 2:64] == 255)
+
+
+def test_to_png_rejects_text_that_cannot_fit_even_at_minimum_scale(monkeypatch):
+    cell = Cell(Coordinates(0, 0), black=False, letter="W")
+    grid = Grid(Cells([cell]), column_width=1, row_height=1)
+    factory = GridImageFactory()
+    monkeypatch.setattr(
+        "crossword_solver_adapter_grid_extractor.grid_image_factory.cv2.getTextSize",
+        lambda text, font, scale, thickness: ((100, 100), 10),
+    )
+
+    with pytest.raises(ValueError, match="Text does not fit in grid cell"):
+        factory.to_png(grid)
 
 
 def test_to_png_rejects_a_grid_with_a_missing_coordinate():

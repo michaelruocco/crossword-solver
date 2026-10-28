@@ -2,6 +2,11 @@
 
 Extracts the crossword grid from puzzle images using OpenCV.
 
+Grid PNGs use 64x64-pixel cell interiors with a one-pixel border on each side,
+independent of the source image's cell dimensions. IDs occupy a small upper-left
+label region, with answer letters centred in a separate region below. Text is
+shrunk to fit its region when needed. Stored source dimensions are unchanged.
+
 Puzzle imports use `CellClassifier` to classify black/white cells and
 `GridNumberer` to assign consecutive IDs at across/down answer starts,
 top-to-bottom and left-to-right. This avoids OCR of small, faint printed numbers.
