@@ -7,7 +7,8 @@ from crossword_solver_domain_use_case.grid_image_factory import GridImageFactory
 
 
 class GridImageFactory(GridImageFactoryPort):
-    BORDER_SIZE = 7
+    CELL_SIZE = 64
+    BORDER_SIZE = 1
     FONT_FACE = cv2.FONT_HERSHEY_SIMPLEX
 
     def to_png(self, grid: Grid) -> bytes:
@@ -28,8 +29,8 @@ class GridImageFactory(GridImageFactoryPort):
         if cell is None:
             raise ValueError(f"Grid is missing cell at ({x}, {y})")
 
-        width = grid.column_width * 4
-        height = grid.row_height * 4
+        width = self.CELL_SIZE
+        height = self.CELL_SIZE
         value = 0 if cell.black else 255
         image = np.pad(
             np.full((height, width), value, dtype=np.uint8),
@@ -41,16 +42,29 @@ class GridImageFactory(GridImageFactoryPort):
             return image
 
         if cell.id is not None:
-            self._draw_text(image, str(cell.id), scale=3.0, thickness=15, x=int(image.shape[1] * 0.05), y_offset=0.1)
+            self._draw_text(image, str(cell.id), (5, 4, width - 8, 14), scale=0.45, thickness=1)
         if cell.letter is not None:
-            text = cell.letter
-            text_size = cv2.getTextSize(text, self.FONT_FACE, 7.0, 20)[0]
-            x_position = (image.shape[1] - text_size[0]) // 2
-            y_position = (image.shape[0] + text_size[1]) // 2
-            cv2.putText(image, text, (x_position, y_position), self.FONT_FACE, 7.0, 0, 20)
+            self._draw_text(image, cell.letter, (5, 23, width - 8, height - 28), scale=1.0, thickness=2, centred=True)
         return image
 
-    def _draw_text(self, image: np.ndarray, text: str, scale: float, thickness: int, x: int, y_offset: float) -> None:
-        text_height = cv2.getTextSize(text, self.FONT_FACE, scale, thickness)[0][1]
-        y = int(image.shape[0] * y_offset) + text_height
-        cv2.putText(image, text, (x, y), self.FONT_FACE, scale, 0, thickness)
+    def _draw_text(
+        self,
+        image: np.ndarray,
+        text: str,
+        bounds: tuple[int, int, int, int],
+        scale: float,
+        thickness: int,
+        centred: bool = False,
+    ) -> None:
+        x, y, width, height = bounds
+        while True:
+            (text_width, text_height), baseline = cv2.getTextSize(text, self.FONT_FACE, scale, thickness)
+            if text_width <= width and text_height + baseline <= height:
+                break
+            scale *= 0.9
+            if scale < 0.01:
+                raise ValueError(f"Text does not fit in grid cell: {text!r}")
+        if centred:
+            x += (width - text_width) // 2
+            y += (height - text_height - baseline) // 2
+        cv2.putText(image, text, (x, y + text_height), self.FONT_FACE, scale, 0, thickness, cv2.LINE_AA)
