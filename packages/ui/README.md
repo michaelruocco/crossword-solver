@@ -2,6 +2,8 @@
 
 React and TypeScript frontend for browsing puzzle summaries.
 
+Add puzzles using **Upload puzzle** for a local image file or **Import from URL** for a direct HTTP/HTTPS image URL. URL imports use `POST /v1/puzzles/imports` with an `imageUrl` payload. Both flows poll the import status and refresh the library when processing completes.
+
 ## Local development
 
 Set `VITE_API_BASE_URL` in `.env.local` to the API Gateway base URL. The browser sends API requests directly to that host in development and production; the API and image bucket allow the local UI origins through CORS.

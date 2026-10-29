@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { apiClient, type PuzzleSummary } from './apiClient'
 import { PuzzleListPage, type PuzzleListLoadState } from './components/PuzzleListPage'
 import { PuzzleUploadDialog } from './components/PuzzleUploadDialog'
+import { PuzzleImportDialog } from './components/PuzzleImportDialog'
 import './App.css'
 
 function App() {
@@ -9,7 +10,7 @@ function App() {
   const [loadState, setLoadState] = useState<PuzzleListLoadState>('loading')
   const [errorMessage, setErrorMessage] = useState('')
   const [reloadKey, setReloadKey] = useState(0)
-  const [uploadDialogOpen, setUploadDialogOpen] = useState(false)
+  const [activeDialog, setActiveDialog] = useState<'upload' | 'import' | null>(null)
   const connectionLabel = {
     error: 'Connection issue',
     loading: 'Connecting',
@@ -63,12 +64,16 @@ function App() {
         loadState={loadState}
         errorMessage={errorMessage}
         onRefresh={refresh}
-        onImportClick={() => setUploadDialogOpen(true)}
+        onUploadClick={() => setActiveDialog('upload')}
+        onImportClick={() => setActiveDialog('import')}
         onDeletePuzzle={deletePuzzle}
       />
       <footer className="app-footer"><span>Crossword Atlas</span><span>PUZZLE ARCHIVE <span className="footer-separator">/</span> 01</span></footer>
-      {uploadDialogOpen && (
-        <PuzzleUploadDialog onClose={() => setUploadDialogOpen(false)} onComplete={refresh} />
+      {activeDialog === 'upload' && (
+        <PuzzleUploadDialog onClose={() => setActiveDialog(null)} onComplete={refresh} />
+      )}
+      {activeDialog === 'import' && (
+        <PuzzleImportDialog onClose={() => setActiveDialog(null)} onComplete={refresh} />
       )}
     </div>
   )
