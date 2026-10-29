@@ -112,6 +112,55 @@ test.each(['Cancel', 'backdrop', 'Escape'])('closes the idle dialog using %s', (
   expect(onClose).toHaveBeenCalledOnce()
 })
 
+test('does not close the dialog for keys other than Escape', () => {
+  const onClose = vi.fn()
+  render(<PuzzleImportDialog onClose={onClose} onComplete={vi.fn()} />)
+
+  fireEvent.keyDown(screen.getByRole('textbox', { name: 'Image URL' }), { key: 'Tab' })
+
+  expect(onClose).not.toHaveBeenCalled()
+})
+
+test.each(['requesting', 'processing'])(
+  'ignores duplicate submissions and a late successful response while %s after close', async (stage) => {
+    let resolveResponse: (response: Response) => void = () => undefined
+    const pendingResponse = new Promise<Response>((resolve) => { resolveResponse = resolve })
+    const fetchMock = vi.fn()
+    if (stage === 'processing') {
+      fetchMock.mockResolvedValueOnce(new Response(JSON.stringify({ id: 'import-1' }), { status: 202 }))
+    }
+    fetchMock.mockReturnValueOnce(pendingResponse)
+    vi.stubGlobal('fetch', fetchMock)
+    const onClose = vi.fn()
+    const onComplete = vi.fn()
+    render(<PuzzleImportDialog onClose={onClose} onComplete={onComplete} />)
+    enterUrl()
+    submit()
+
+    const statusMessage = stage === 'requesting' ? 'Starting puzzle import...' : 'Preparing your puzzle...'
+    expect(await screen.findByText(statusMessage)).toBeTruthy()
+    const expectedRequests = stage === 'requesting' ? 1 : 2
+    const input = screen.getByRole('textbox', { name: 'Image URL' })
+    fireEvent.submit(input.closest('form') as HTMLFormElement)
+    expect(fetchMock).toHaveBeenCalledTimes(expectedRequests)
+
+    await act(async () => {
+      const dialog = screen.getByRole('dialog', { name: 'Import from URL' })
+      fireEvent.click(within(dialog).getByRole('button', { name: 'Close import dialog' }))
+      resolveResponse(new Response(JSON.stringify(
+        stage === 'requesting' ? { id: 'import-1' } : { status: 'COMPLETE', puzzleId: 'puzzle-1' },
+      )))
+    })
+
+    expect(fetchMock.mock.calls[expectedRequests - 1][1].signal.aborted).toBe(true)
+    expect(fetchMock).toHaveBeenCalledTimes(expectedRequests)
+    expect(onClose).toHaveBeenCalledOnce()
+    expect(onComplete).not.toHaveBeenCalled()
+    expect(screen.queryByRole('heading', { name: 'Puzzle imported' })).toBeNull()
+    expect(screen.queryByText('Unable to import this puzzle.')).toBeNull()
+  },
+)
+
 test.each(['close', 'unmount'])('aborts an in-flight request on %s without reporting an error', async (action) => {
   const fetchMock = vi.fn((_url: string, options: RequestInit) => new Promise<Response>((_resolve, reject) => {
     options.signal?.addEventListener('abort', () => reject(new Error('Aborted')), { once: true })
