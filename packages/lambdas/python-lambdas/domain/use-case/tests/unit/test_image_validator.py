@@ -20,13 +20,14 @@ def an_image(name: str = "puzzle14", image_format: str = ".jpg", size_in_bytes: 
     )
 
 
-@pytest.mark.parametrize("image_format", [".jpg", ".jpeg", ".png", ".JPG", ".PNG", "jpg"])
+@pytest.mark.parametrize("image_format", [".jpg", ".jpeg", ".png", ".webp", ".JPG", ".PNG", ".WEBP", "jpg"])
 def test_validate_accepts_default_allowed_formats(image_format):
     ImageValidator().validate(an_image(image_format=image_format))
 
 
-def test_validate_filename_accepts_an_allowed_format_without_any_content():
-    ImageValidator().validate_filename("puzzle14.png")
+@pytest.mark.parametrize("filename", ["puzzle14.png", "puzzle.webp", "puzzle.WEBP"])
+def test_validate_filename_accepts_an_allowed_format_without_any_content(filename):
+    ImageValidator().validate_filename(filename)
 
 
 @pytest.mark.parametrize(
@@ -66,12 +67,12 @@ def test_validate_accepts_an_image_of_one_byte():
     ImageValidator().validate(an_image(size_in_bytes=1))
 
 
-@pytest.mark.parametrize("image_format", [".gif", ".pdf", ".webp", "", "."])
+@pytest.mark.parametrize("image_format", [".gif", ".pdf", "", "."])
 def test_validate_raises_error_when_format_is_not_allowed(image_format):
     validator = ImageValidator()
     image = an_image(image_format=image_format)
 
-    with pytest.raises(InvalidImageError, match="is not an allowed format png,jpg,jpeg"):
+    with pytest.raises(InvalidImageError, match="is not an allowed format png,jpg,jpeg,webp"):
         validator.validate(image)
 
 
@@ -113,8 +114,9 @@ def test_max_size_in_bytes_is_the_maximum_size_in_mb_converted():
     assert ImageValidator(max_size_in_mb=2).max_size_in_bytes == 2 * ONE_MB
 
 
-def test_validate_file_accepts_a_valid_file():
-    ImageValidator().validate_file(ImageFile("puzzle14.JPG", b"image-bytes"))
+@pytest.mark.parametrize("filename", ["puzzle14.JPG", "puzzle.webp", "puzzle.WEBP"])
+def test_validate_file_accepts_a_valid_file(filename):
+    ImageValidator().validate_file(ImageFile(filename, b"image-bytes"))
 
 
 @pytest.mark.parametrize(

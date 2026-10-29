@@ -2,7 +2,11 @@ import { act, fireEvent, render, screen, within } from '@testing-library/react'
 import { expect, test, vi } from 'vitest'
 import { PuzzleUploadDialog } from './PuzzleUploadDialog'
 
-test('uploads a valid image and refreshes after the import completes', async () => {
+test.each([
+  ['png', 'image/png'],
+  ['webp', 'image/webp'],
+  ['WEBP', 'image/webp'],
+])('uploads a valid %s image and refreshes after the import completes', async (extension, contentType) => {
   const fetchMock = vi
     .fn()
     .mockResolvedValueOnce(
@@ -20,7 +24,9 @@ test('uploads a valid image and refreshes after the import completes', async () 
   vi.stubGlobal('fetch', fetchMock)
 
   render(<PuzzleUploadDialog onClose={onClose} onComplete={onComplete} />)
-  const file = new File(['puzzle image'], 'puzzle.png', { type: 'image/png' })
+  const file = new File(['puzzle image'], `puzzle.${extension}`, { type: contentType })
+  expect(screen.getByLabelText('Choose a puzzle image').getAttribute('accept')).toContain('.webp')
+  expect(screen.getByLabelText('Choose a puzzle image').getAttribute('accept')).toContain('image/webp')
   fireEvent.change(screen.getByLabelText('Choose a puzzle image'), { target: { files: [file] } })
   fireEvent.click(screen.getByRole('button', { name: 'Upload puzzle' }))
 
@@ -38,7 +44,7 @@ test('rejects unsupported image types before making an API request', () => {
 
   fireEvent.change(screen.getByLabelText('Choose a puzzle image'), { target: { files: [file] } })
 
-  expect(screen.getByText('Choose a PNG, JPG, or JPEG file.')).toBeTruthy()
+  expect(screen.getByText('Choose a PNG, JPG, JPEG, or WebP file.')).toBeTruthy()
   expect(screen.getByRole('button', { name: 'Upload puzzle' }).hasAttribute('disabled')).toBe(true)
   expect(fetchMock).not.toHaveBeenCalled()
 })
