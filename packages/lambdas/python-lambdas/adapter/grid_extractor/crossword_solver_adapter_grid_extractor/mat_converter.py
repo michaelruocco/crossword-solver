@@ -72,7 +72,11 @@ class MatConverter:
 
     def remove_noise_smaller_than(self, image: np.ndarray, min_area: int) -> np.ndarray:
         cleaned = image.copy()
-        grid_bounds = cv2.boundingRect(self.to_largest_contour(cleaned))
+        grid_bounds = cv2.boundingRect(self.to_largest_contour(image))
+        _, _, grid_width, grid_height = grid_bounds
+        height, width = image.shape[:2]
+        if grid_width < width / 2 or grid_height < height / 2:
+            grid_bounds = (0, 0, width, height)
         noise = [
             contour
             for contour in self.to_contours(image, cv2.RETR_LIST)

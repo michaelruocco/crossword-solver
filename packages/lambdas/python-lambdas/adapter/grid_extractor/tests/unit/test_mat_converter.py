@@ -239,9 +239,36 @@ def test_remove_noise_smaller_than(converter):
     assert cleaned[62, 62] == 0, "small shape inside the grid is noise"
     assert cleaned[105, 150] == 255, "shape wider than the noise size limit is kept"
     assert cleaned[170, 140] == 255, "shape with area above the minimum is kept"
-    assert cleaned[280, 280] == 0, "shape outside the grid bounds is removed"
+    assert cleaned[280, 280] == 0, "small shape outside the grid is noise"
     assert cleaned[20, 100] == 255, "grid outline is kept"
     assert image[62, 62] == 255, "input is not modified"
+
+
+def test_noise_removal_preserves_disconnected_grid_sections(converter):
+    image = np.zeros((300, 300), dtype=np.uint8)
+    cv2.rectangle(image, (20, 20), (120, 120), 255, 3)
+    cv2.rectangle(image, (160, 160), (260, 260), 255, 3)
+    cv2.rectangle(image, (180, 180), (185, 185), 255, -1)
+    cv2.rectangle(image, (270, 270), (280, 280), 255, -1)
+
+    cleaned = converter.remove_noise_smaller_than(image, 1500)
+
+    assert cleaned[20, 60] == 255
+    assert cleaned[160, 200] == 255
+    assert cleaned[182, 182] == 0
+    assert cleaned[275, 275] == 0
+    assert image[182, 182] == 255
+
+
+def test_noise_removal_discards_large_artifacts_outside_a_grid_outline(converter):
+    image = np.zeros((400, 400), dtype=np.uint8)
+    cv2.rectangle(image, (20, 20), (260, 260), 255, 3)
+    cv2.rectangle(image, (300, 300), (390, 390), 255, -1)
+
+    cleaned = converter.remove_noise_smaller_than(image, 1500)
+
+    assert cleaned[20, 100] == 255
+    assert cleaned[345, 345] == 0
 
 
 def test_to_horizontal_grid_lines_keeps_only_horizontal_lines(converter):
