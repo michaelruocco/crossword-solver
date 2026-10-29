@@ -32,6 +32,20 @@ def test_to_image_hashes_the_original_bytes(jpeg_bytes):
     assert factory.to_image(URL, jpeg_bytes).hash == factory.hash_factory.to_hash(jpeg_bytes)
 
 
+def test_to_image_decodes_webp_bytes():
+    buffer = BytesIO()
+    PILImage.new("RGB", (10, 10), "white").save(buffer, format="WEBP")
+    image_bytes = buffer.getvalue()
+
+    image = ImageFactory().to_image("s3://puzzle-images/images/abc/puzzle.webp", image_bytes)
+
+    assert image.name == "puzzle"
+    assert image.format == ".webp"
+    assert image.pil_image.size == (10, 10)
+    assert image.pil_image.getpixel((0, 0)) == (255, 255, 255)
+    assert image.bytes == image_bytes
+
+
 def test_to_image_raises_error_when_bytes_are_not_an_image():
     factory = ImageFactory()
 

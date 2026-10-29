@@ -10,11 +10,11 @@ interface PuzzleUploadDialogProps {
 type UploadStage = 'select' | 'requesting' | 'uploading' | 'processing' | 'complete' | 'error'
 
 const MAX_FILE_SIZE_BYTES = 20 * 1024 * 1024
-const ALLOWED_EXTENSIONS = new Set(['png', 'jpg', 'jpeg'])
+const ALLOWED_EXTENSIONS = new Set(['png', 'jpg', 'jpeg', 'webp'])
 
 function validateFile(file: File): string | null {
   const extension = file.name.slice(file.name.lastIndexOf('.') + 1).toLocaleLowerCase()
-  if (!ALLOWED_EXTENSIONS.has(extension)) return 'Choose a PNG, JPG, or JPEG file.'
+  if (!ALLOWED_EXTENSIONS.has(extension)) return 'Choose a PNG, JPG, JPEG, or WebP file.'
   if (file.size === 0) return 'The selected file is empty.'
   if (file.size > MAX_FILE_SIZE_BYTES) return 'The file must be 20 MB or smaller.'
   return null
@@ -129,7 +129,7 @@ export function PuzzleUploadDialog({ onClose, onComplete }: Readonly<PuzzleUploa
               ref={fileInputRef}
               className="visually-hidden"
               type="file"
-              accept=".png,.jpg,.jpeg,image/png,image/jpeg"
+              accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp"
               onChange={handleFileChange}
               tabIndex={-1}
               aria-label="Choose a puzzle image"
@@ -158,7 +158,7 @@ export function PuzzleUploadDialog({ onClose, onComplete }: Readonly<PuzzleUploa
                   <span>or <span className="browse-link">browse files</span></span>
                 </span>
               )}
-              <span className="file-rules">PNG, JPG or JPEG <i /> up to 20 MB</span>
+              <span className="file-rules">PNG, JPG, JPEG or WebP <i /> up to 20 MB</span>
             </button>
 
             <div className={`upload-status ${stage === 'error' ? 'upload-status-error' : ''}`} aria-live="polite">

@@ -10,7 +10,7 @@ BYTES_PER_MB = 1024 * 1024
 
 class ImageValidator:
     DEFAULT_MAX_SIZE_IN_MB = 20
-    DEFAULT_ALLOWED_FORMATS = ("png", "jpg", "jpeg")
+    DEFAULT_ALLOWED_FORMATS = ("png", "jpg", "jpeg", "webp")
 
     def __init__(
         self,
