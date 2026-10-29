@@ -3,6 +3,41 @@ import { ApiClient } from './apiClient'
 
 afterEach(() => vi.unstubAllGlobals())
 
+test('starts a URL import and returns the import location', async () => {
+  const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ id: 'import-1' }), {
+    status: 202,
+    headers: { location: '/v1/puzzles/imports/import-1' },
+  }))
+  vi.stubGlobal('fetch', fetchMock)
+  const client = new ApiClient('https://api.test')
+  const controller = new AbortController()
+
+  await expect(client.startPuzzleImport('https://images.test/puzzle.png', controller.signal)).resolves.toEqual({
+    location: '/v1/puzzles/imports/import-1',
+  })
+  expect(fetchMock).toHaveBeenCalledWith('https://api.test/v1/puzzles/imports', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ imageUrl: 'https://images.test/puzzle.png' }),
+    signal: controller.signal,
+  })
+})
+
+test('generates a URL import location without a location header and reports request errors', async () => {
+  const fetchMock = vi.fn()
+    .mockResolvedValueOnce(new Response(JSON.stringify({ id: 'import /1' }), { status: 202 }))
+    .mockResolvedValueOnce(new Response(JSON.stringify({ message: 'Invalid image URL' }), { status: 400 }))
+    .mockResolvedValueOnce(new Response('not json', { status: 502 }))
+  vi.stubGlobal('fetch', fetchMock)
+  const client = new ApiClient('https://api.test')
+
+  await expect(client.startPuzzleImport('https://images.test/puzzle.png')).resolves.toEqual({
+    location: '/v1/puzzles/imports/import%20%2F1',
+  })
+  await expect(client.startPuzzleImport('https://images.test/puzzle.png')).rejects.toThrow('Invalid image URL')
+  await expect(client.startPuzzleImport('https://images.test/puzzle.png')).rejects.toThrow('Unable to start puzzle import.')
+})
+
 test('starts an upload and returns the signed form and import location', async () => {
   const fetchMock = vi.fn().mockResolvedValue(
     new Response(JSON.stringify({ id: 'import-1', upload: { url: 'https://bucket.test', fields: { key: 'uploads/key' } } }), {

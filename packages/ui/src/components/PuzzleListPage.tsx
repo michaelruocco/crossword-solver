@@ -1,5 +1,5 @@
 import { useDeferredValue, useState } from 'react'
-import { ArrowDownWideNarrow, Puzzle, RefreshCw, Search, Upload } from 'lucide-react'
+import { ArrowDownWideNarrow, Link2, Puzzle, RefreshCw, Search, Upload } from 'lucide-react'
 import type { PuzzleSummary } from '../apiClient'
 import { PuzzleListItem } from './PuzzleListItem'
 
@@ -11,11 +11,12 @@ interface PuzzleListPageProps {
   loadState: PuzzleListLoadState
   errorMessage: string
   onRefresh: () => void
+  onUploadClick: () => void
   onImportClick: () => void
   onDeletePuzzle: (puzzleId: string) => Promise<void>
 }
 
-export function PuzzleListPage({ puzzles, loadState, errorMessage, onRefresh, onImportClick, onDeletePuzzle }: Readonly<PuzzleListPageProps>) {
+export function PuzzleListPage({ puzzles, loadState, errorMessage, onRefresh, onUploadClick, onImportClick, onDeletePuzzle }: Readonly<PuzzleListPageProps>) {
   const [search, setSearch] = useState('')
   const [sortOrder, setSortOrder] = useState<SortOrder>('recent')
   const deferredSearch = useDeferredValue(search)
@@ -41,10 +42,16 @@ export function PuzzleListPage({ puzzles, loadState, errorMessage, onRefresh, on
             <span className="stat-number">{loadState === 'ready' ? puzzles.length : '—'}</span>
             <span className="stat-label">{puzzles.length === 1 ? 'puzzle' : 'puzzles'} in library</span>
           </div>
-          <button className="upload-button" type="button" onClick={onImportClick}>
-            <Upload size={16} strokeWidth={2} aria-hidden="true" />
-            <span>Import puzzle</span>
-          </button>
+          <div className="puzzle-add-actions">
+            <button className="upload-button" type="button" onClick={onUploadClick}>
+              <Upload size={16} strokeWidth={2} aria-hidden="true" />
+              <span>Upload puzzle</span>
+            </button>
+            <button className="upload-button import-button" type="button" onClick={onImportClick}>
+              <Link2 size={16} strokeWidth={2} aria-hidden="true" />
+              <span>Import from URL</span>
+            </button>
+          </div>
         </div>
       </section>
 

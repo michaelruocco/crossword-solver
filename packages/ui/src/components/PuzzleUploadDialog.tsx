@@ -108,7 +108,7 @@ export function PuzzleUploadDialog({ onClose, onComplete }: Readonly<PuzzleUploa
         <header className="dialog-header">
           <div className="dialog-heading-icon"><Upload size={18} aria-hidden="true" /></div>
           <div>
-            <h2 id="upload-title">Import a puzzle</h2>
+            <h2 id="upload-title">Upload a puzzle</h2>
             <p>Start with a clear image of the grid.</p>
           </div>
           <button className="dialog-close" type="button" onClick={close} aria-label="Close upload dialog">

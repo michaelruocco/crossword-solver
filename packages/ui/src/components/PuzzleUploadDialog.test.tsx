@@ -133,7 +133,7 @@ test('does not close from the backdrop while an upload is busy', async () => {
   fireEvent.click(document.querySelector('.dialog-backdrop-dismiss') as HTMLButtonElement)
   expect(onClose).not.toHaveBeenCalled()
 
-  const dialog = screen.getByRole('dialog', { name: 'Import a puzzle' })
+  const dialog = screen.getByRole('dialog', { name: 'Upload a puzzle' })
   await act(async () => {
     fireEvent.click(within(dialog).getByRole('button', { name: 'Close upload dialog' }))
     await Promise.resolve()
@@ -179,7 +179,7 @@ test('does not show an upload error when the upload is aborted on close', async 
   fireEvent.click(screen.getByRole('button', { name: 'Upload puzzle' }))
 
   await act(async () => {
-    const dialog = screen.getByRole('dialog', { name: 'Import a puzzle' })
+    const dialog = screen.getByRole('dialog', { name: 'Upload a puzzle' })
     fireEvent.click(within(dialog).getByRole('button', { name: 'Close upload dialog' }))
     await Promise.resolve()
   })

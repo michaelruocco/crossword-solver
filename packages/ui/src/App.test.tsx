@@ -1,10 +1,12 @@
-import { act, fireEvent, render, screen, within } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { beforeEach, expect, test, vi } from 'vitest'
 
 const { apiClientMock } = vi.hoisted(() => ({
   apiClientMock: {
     getAllPuzzleSummaries: vi.fn(),
     deletePuzzle: vi.fn(),
+    startPuzzleImport: vi.fn(),
+    waitForPuzzleImport: vi.fn(),
     getPuzzleGridImageUrl: vi.fn((puzzleId: string) => `/v1/puzzles/${puzzleId}/grid-images`),
   },
 }))
@@ -24,6 +26,8 @@ beforeEach(() => {
   vi.clearAllMocks()
   apiClientMock.getAllPuzzleSummaries.mockResolvedValue([puzzle])
   apiClientMock.deletePuzzle.mockResolvedValue(undefined)
+  apiClientMock.startPuzzleImport.mockResolvedValue({ location: '/v1/puzzles/imports/import-1' })
+  apiClientMock.waitForPuzzleImport.mockResolvedValue({ status: 'COMPLETE', puzzleId: puzzle.id })
 })
 
 test('loads the library and shows its connected state', async () => {
@@ -74,11 +78,30 @@ test('opens and closes the upload dialog', async () => {
   render(<App />)
   await screen.findByRole('heading', { name: 'Sunday Cryptic' })
 
-  fireEvent.click(screen.getByRole('button', { name: 'Import puzzle' }))
-  const dialog = screen.getByRole('dialog', { name: 'Import a puzzle' })
+  fireEvent.click(screen.getByRole('button', { name: 'Upload puzzle' }))
+  const dialog = screen.getByRole('dialog', { name: 'Upload a puzzle' })
   fireEvent.click(within(dialog).getByRole('button', { name: 'Close upload dialog' }))
 
-  expect(screen.queryByRole('dialog', { name: 'Import a puzzle' })).toBeNull()
+  expect(screen.queryByRole('dialog', { name: 'Upload a puzzle' })).toBeNull()
+})
+
+test('opens the separate URL import dialog and refreshes the library after completion', async () => {
+  render(<App />)
+  await screen.findByRole('heading', { name: 'Sunday Cryptic' })
+
+  fireEvent.click(screen.getByRole('button', { name: 'Import from URL' }))
+  expect(screen.queryByRole('dialog', { name: 'Upload a puzzle' })).toBeNull()
+  fireEvent.change(screen.getByRole('textbox', { name: 'Image URL' }), {
+    target: { value: 'https://images.test/puzzle.png' },
+  })
+  fireEvent.click(screen.getByRole('button', { name: 'Import puzzle' }))
+
+  expect(await screen.findByRole('heading', { name: 'Puzzle imported' })).toBeTruthy()
+  await waitFor(() => expect(apiClientMock.getAllPuzzleSummaries).toHaveBeenCalledTimes(2))
+  expect(apiClientMock.startPuzzleImport).toHaveBeenCalledWith('https://images.test/puzzle.png', expect.any(AbortSignal))
+  expect(apiClientMock.waitForPuzzleImport).toHaveBeenCalledWith('/v1/puzzles/imports/import-1', expect.any(AbortSignal))
+  fireEvent.click(screen.getByRole('button', { name: 'Done' }))
+  expect(screen.queryByRole('dialog', { name: 'Import from URL' })).toBeNull()
 })
 
 test('deletes a puzzle from the library after confirmation', async () => {

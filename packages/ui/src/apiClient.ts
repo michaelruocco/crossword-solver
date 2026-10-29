@@ -66,6 +66,19 @@ export class ApiClient {
     return [...page.summaries, ...(await this.collectPuzzleSummaries(next, seenCursors, signal))]
   }
 
+  async startPuzzleImport(imageUrl: string, signal?: AbortSignal): Promise<{ location: string }> {
+    const response = await fetch(this.endpoint('/v1/puzzles/imports'), {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ imageUrl }),
+      signal,
+    })
+    const result = await this.readJson<{ id: string }>(response, 'Unable to start puzzle import.')
+    return {
+      location: response.headers.get('location') ?? `/v1/puzzles/imports/${encodeURIComponent(result.id)}`,
+    }
+  }
+
   async startPuzzleUpload(fileName: string, signal?: AbortSignal): Promise<{ upload: PuzzleUploadPost; location: string }> {
     const response = await fetch(this.endpoint('/v1/puzzles/uploads'), {
       method: 'POST',

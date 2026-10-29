@@ -15,6 +15,7 @@ test('filters puzzles by name', () => {
       loadState="ready"
       errorMessage=""
       onRefresh={vi.fn()}
+      onUploadClick={vi.fn()}
       onImportClick={vi.fn()}
       onDeletePuzzle={vi.fn().mockResolvedValue(undefined)}
     />,
@@ -35,6 +36,7 @@ test('sorts puzzles by clue count', () => {
       loadState="ready"
       errorMessage=""
       onRefresh={vi.fn()}
+      onUploadClick={vi.fn()}
       onImportClick={vi.fn()}
       onDeletePuzzle={vi.fn().mockResolvedValue(undefined)}
     />,
@@ -53,6 +55,7 @@ test('sorts puzzles oldest first', () => {
       loadState="ready"
       errorMessage=""
       onRefresh={vi.fn()}
+      onUploadClick={vi.fn()}
       onImportClick={vi.fn()}
       onDeletePuzzle={vi.fn().mockResolvedValue(undefined)}
     />,
@@ -71,6 +74,7 @@ test('shows an empty-library state when there are no puzzles', () => {
       loadState="ready"
       errorMessage=""
       onRefresh={vi.fn()}
+      onUploadClick={vi.fn()}
       onImportClick={vi.fn()}
       onDeletePuzzle={vi.fn().mockResolvedValue(undefined)}
     />,
@@ -86,6 +90,7 @@ test('shows no-results copy and clears the search', () => {
       loadState="ready"
       errorMessage=""
       onRefresh={vi.fn()}
+      onUploadClick={vi.fn()}
       onImportClick={vi.fn()}
       onDeletePuzzle={vi.fn().mockResolvedValue(undefined)}
     />,
@@ -100,20 +105,25 @@ test('shows no-results copy and clears the search', () => {
   expect(screen.getByRole('heading', { name: 'Sunday Cryptic' })).toBeTruthy()
 })
 
-test('opens the import dialog when the import action is selected', () => {
+test('opens the appropriate dialog for each add-puzzle action', () => {
   const onImportClick = vi.fn()
+  const onUploadClick = vi.fn()
   render(
     <PuzzleListPage
       puzzles={[]}
       loadState="ready"
       errorMessage=""
       onRefresh={vi.fn()}
+      onUploadClick={onUploadClick}
       onImportClick={onImportClick}
       onDeletePuzzle={vi.fn().mockResolvedValue(undefined)}
     />,
   )
 
-  fireEvent.click(screen.getByRole('button', { name: 'Import puzzle' }))
+  fireEvent.click(screen.getByRole('button', { name: 'Upload puzzle' }))
+  expect(onUploadClick).toHaveBeenCalledOnce()
+  expect(onImportClick).not.toHaveBeenCalled()
+  fireEvent.click(screen.getByRole('button', { name: 'Import from URL' }))
 
   expect(onImportClick).toHaveBeenCalledOnce()
 })
