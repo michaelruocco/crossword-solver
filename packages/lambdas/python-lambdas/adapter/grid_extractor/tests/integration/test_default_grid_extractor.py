@@ -77,6 +77,37 @@ def test_extracts_expected_cells(extract_cells, name):
     assert_expected_cells(extract_cells(name), name)
 
 
+def test_extracts_web_puzzle2_cells_and_numbers(extract_cells):
+    expected_rows = [
+        "# 1 . 2 . # 3 # 4 # # 5",
+        "6 # # . # # 7 8 . 9 10 .",
+        "11 12 13 . # 14 . . . . . .",
+        "15 . . # 16 . . . # 17 . .",
+        "18 . . 19 . . . . 20 # # .",
+        "# # 21 . . . # # 22 23 . #",
+        "# 24 . . # # 25 26 . . # #",
+        "27 # # 28 29 30 . . . . 31 32",
+        "33 34 35 # 36 . . . # 37 . .",
+        "38 . . 39 . . . # 40 . . .",
+        "41 . . . # . # # . # # .",
+        ". # # . # . # 42 . . . #",
+    ]
+    expected = {}
+    for row_index, row in enumerate(expected_rows):
+        for column, token in enumerate(row.split()):
+            coordinates = Coordinates(x=column, y=len(expected_rows) - row_index - 1)
+            expected[coordinates] = Cell(
+                coordinates=coordinates,
+                black=token == "#",
+                id=int(token) if token.isdigit() else None,
+            )
+
+    cells = extract_cells("web-puzzle2.webp")
+
+    assert len(cells) == 144
+    assert {cell.coordinates: cell for cell in cells} == expected
+
+
 def assert_expected_cells(cells: list[Cell], name: str) -> None:
     expected_json = json.loads((PUZZLES_DIR / "expected_cells" / Path(name).with_suffix(".json")).read_text())
     expected = [
