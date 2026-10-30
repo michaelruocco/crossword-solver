@@ -48,7 +48,7 @@ crossword-solver-domain-use-case = { workspace = true }
 
 [dependency-groups]
 dev = [
- "boto3>=1.43.118",
+ "boto3>=1.43.119",
  "moto[sqs]>=5.2.4",
 ]
 
