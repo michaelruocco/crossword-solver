@@ -1,6 +1,5 @@
 from uuid import UUID
 
-import boto3
 from boto3.dynamodb.conditions import Key
 from boto3.dynamodb.types import TypeSerializer
 from botocore.exceptions import ClientError
@@ -10,6 +9,7 @@ from crossword_solver_domain_use_case.puzzle_not_found_error import PuzzleNotFou
 from crossword_solver_domain_use_case.puzzle_repository import PuzzleRepository
 
 from .attempt_item_converter import AttemptItemConverter
+from .dynamodb_resource import create_dynamodb_resource
 
 
 class DynamoAttemptRepository(AttemptRepository):
@@ -21,7 +21,7 @@ class DynamoAttemptRepository(AttemptRepository):
         dynamodb=None,
         converter: AttemptItemConverter | None = None,
     ):
-        self.dynamodb = dynamodb or boto3.resource("dynamodb")
+        self.dynamodb = dynamodb or create_dynamodb_resource()
         self.table = self.dynamodb.Table(table_name)
         self.puzzle_table_name = puzzle_table_name
         self.puzzle_repository = puzzle_repository

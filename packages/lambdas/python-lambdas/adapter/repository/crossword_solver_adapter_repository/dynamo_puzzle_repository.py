@@ -2,12 +2,12 @@ import base64
 import json
 from uuid import UUID
 
-import boto3
 from boto3.dynamodb.conditions import Key
 from crossword_solver_domain_entities.puzzle import Puzzle
 from crossword_solver_domain_use_case.invalid_puzzle_summary_cursor_error import InvalidPuzzleSummaryCursorError
 from crossword_solver_domain_use_case.puzzle_repository import PuzzleRepository
 
+from .dynamodb_resource import create_dynamodb_resource
 from .puzzle_item_converter import PuzzleItemConverter
 
 
@@ -20,7 +20,7 @@ class DynamoPuzzleRepository(PuzzleRepository):
         dynamodb=None,
         converter: PuzzleItemConverter | None = None,
     ):
-        self.table = (dynamodb or boto3.resource("dynamodb")).Table(table_name)
+        self.table = (dynamodb or create_dynamodb_resource()).Table(table_name)
         self.converter = converter or PuzzleItemConverter()
 
     def find_all(self) -> list[Puzzle]:

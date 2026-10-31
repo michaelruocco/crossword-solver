@@ -1,6 +1,5 @@
 import os
 
-import boto3
 from aws_lambda_powertools import Logger, Tracer
 from aws_lambda_powertools.utilities.parser import event_parser
 from aws_lambda_powertools.utilities.parser.models import APIGatewayProxyEventV2Model
@@ -11,6 +10,7 @@ from crossword_solver_adapter_api.attempt_converter import AttemptConverter
 from crossword_solver_adapter_api.path_parameters import uuid_path_parameter
 from crossword_solver_adapter_repository.dynamo_attempt_repository import DynamoAttemptRepository
 from crossword_solver_adapter_repository.dynamo_puzzle_repository import DynamoPuzzleRepository
+from crossword_solver_adapter_repository.dynamodb_resource import create_dynamodb_resource
 from crossword_solver_domain_use_case.attempt_creator import AttemptCreator
 from crossword_solver_domain_use_case.attempt_finder import AttemptFinder
 from crossword_solver_domain_use_case.attempt_not_found_error import AttemptNotFoundError
@@ -20,7 +20,7 @@ from crossword_solver_domain_use_case.puzzle_not_found_error import PuzzleNotFou
 logger: Logger = Logger(service="CreateAttempt")
 tracer: Tracer = Tracer(service="CreateAttempt")
 
-dynamodb = boto3.resource("dynamodb")
+dynamodb = create_dynamodb_resource()
 puzzle_repository = DynamoPuzzleRepository(os.environ["PUZZLES_TABLE_NAME"], dynamodb=dynamodb)
 attempt_repository = DynamoAttemptRepository(
     os.environ["ATTEMPTS_TABLE_NAME"],
