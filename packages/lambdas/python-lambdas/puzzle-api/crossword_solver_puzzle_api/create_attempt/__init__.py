@@ -1,0 +1,1 @@
+"""Create puzzle attempt Lambda."""

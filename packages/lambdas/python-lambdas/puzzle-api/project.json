@@ -41,6 +41,11 @@
         "generator": "py#lambda-function",
         "path": "crossword_solver_puzzle_api/delete_puzzle/delete_puzzle_handler.py",
         "name": "delete-puzzle"
+      },
+      {
+        "generator": "py#lambda-function",
+        "path": "crossword_solver_puzzle_api/create_attempt/create_attempt_handler.py",
+        "name": "create-attempt"
       }
     ]
   },
@@ -50,24 +55,45 @@
       "options": {}
     },
     "assemble": {
-      "dependsOn": ["compile", "bundle"]
+      "dependsOn": [
+        "compile",
+        "bundle"
+      ]
     },
     "build": {
-      "dependsOn": ["lint", "compile", "test", "typecheck", "bundle"],
-      "inputs": ["default", "^production"],
+      "dependsOn": [
+        "lint",
+        "compile",
+        "test",
+        "typecheck",
+        "bundle"
+      ],
+      "inputs": [
+        "default",
+        "^production"
+      ],
       "options": {
         "outputPath": "{workspaceRoot}/dist/{projectRoot}"
       }
     },
     "bundle": {
-      "dependsOn": ["bundle-x86"]
+      "dependsOn": [
+        "bundle-x86"
+      ]
     },
     "bundle-x86": {
       "executor": "nx:run-commands",
-      "dependsOn": ["compile"],
+      "dependsOn": [
+        "compile"
+      ],
       "cache": true,
-      "inputs": ["production", "^production"],
-      "outputs": ["{workspaceRoot}/dist/{projectRoot}/bundle-x86"],
+      "inputs": [
+        "production",
+        "^production"
+      ],
+      "outputs": [
+        "{workspaceRoot}/dist/{projectRoot}/bundle-x86"
+      ],
       "options": {
         "commands": [
           "rm -rf dist/{projectRoot}/bundle-x86",
@@ -79,9 +105,14 @@
     },
     "compile": {
       "executor": "@nxlv/python:build",
-      "outputs": ["{workspaceRoot}/dist/{projectRoot}/build"],
+      "outputs": [
+        "{workspaceRoot}/dist/{projectRoot}/build"
+      ],
       "cache": true,
-      "inputs": ["production", "^production"],
+      "inputs": [
+        "production",
+        "^production"
+      ],
       "options": {
         "outputPath": "{workspaceRoot}/dist/{projectRoot}/build",
         "publish": false,
@@ -104,9 +135,15 @@
       "executor": "@nxlv/python:ruff-format",
       "outputs": [],
       "cache": true,
-      "inputs": ["default", "^production"],
+      "inputs": [
+        "default",
+        "^production"
+      ],
       "options": {
-        "filePatterns": ["crossword_solver_puzzle_api", "tests"],
+        "filePatterns": [
+          "crossword_solver_puzzle_api",
+          "tests"
+        ],
         "check": true
       },
       "configurations": {
@@ -129,12 +166,20 @@
     },
     "lint": {
       "executor": "@nxlv/python:ruff-check",
-      "dependsOn": ["format"],
+      "dependsOn": [
+        "format"
+      ],
       "cache": true,
-      "inputs": ["default", "^production"],
+      "inputs": [
+        "default",
+        "^production"
+      ],
       "outputs": [],
       "options": {
-        "lintFilePatterns": ["crossword_solver_puzzle_api", "tests"]
+        "lintFilePatterns": [
+          "crossword_solver_puzzle_api",
+          "tests"
+        ]
       },
       "configurations": {
         "fix": {
@@ -173,7 +218,10 @@
     },
     "typecheck": {
       "cache": true,
-      "inputs": ["default", "^production"],
+      "inputs": [
+        "default",
+        "^production"
+      ],
       "executor": "@nxlv/python:run-commands",
       "options": {
         "command": "uv run ty check",
