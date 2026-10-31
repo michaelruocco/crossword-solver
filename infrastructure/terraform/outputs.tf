@@ -38,6 +38,10 @@ output "puzzle_imports_table_name" {
   value = aws_dynamodb_table.puzzle_imports.name
 }
 
+output "attempts_table_name" {
+  value = aws_dynamodb_table.attempts.name
+}
+
 output "puzzle_import_queue_url" {
   value = aws_sqs_queue.puzzle_import.url
 }
