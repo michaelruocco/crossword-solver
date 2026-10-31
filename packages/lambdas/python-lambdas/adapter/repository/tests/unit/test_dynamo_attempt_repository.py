@@ -141,6 +141,7 @@ def test_save_condition_checks_puzzle_and_writes_attempt_in_one_transaction():
 def test_save_rejects_an_attempt_for_a_puzzle_deleted_before_commit(repositories):
     attempts, _ = repositories
     puzzle = a_puzzle()
+    attempt = an_attempt(puzzle)
 
     attempts.puzzle_repository.find_by_id = Mock(return_value=None)
     attempts.dynamodb.meta.client.transact_write_items = Mock(
@@ -151,7 +152,7 @@ def test_save_rejects_an_attempt_for_a_puzzle_deleted_before_commit(repositories
     )
 
     with pytest.raises(PuzzleNotFoundError):
-        attempts.save(an_attempt(puzzle))
+        attempts.save(attempt)
 
 
 def test_delete_by_puzzle_id_removes_only_that_puzzles_attempts(repositories):
