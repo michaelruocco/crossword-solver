@@ -4,6 +4,7 @@ from uuid import uuid4
 
 import boto3
 import pytest
+from boto3.dynamodb.conditions import Key
 from botocore.exceptions import ClientError
 from crossword_solver_domain_entities.attempt import Attempt
 from crossword_solver_domain_entities.cell import Cell
@@ -102,6 +103,15 @@ def test_find_by_id_returns_none_when_attempt_does_not_exist(repositories):
     assert attempts.find_by_id(uuid4(), uuid4()) is None
 
 
+def test_find_by_id_returns_none_when_referenced_puzzle_does_not_exist(repositories):
+    attempts, _ = repositories
+    puzzle = a_puzzle()
+    attempt = an_attempt(puzzle)
+    attempts.table.put_item(Item=attempts.converter.to_item(attempt))
+
+    assert attempts.find_by_id(puzzle.id, attempt.id) is None
+
+
 def test_save_condition_checks_puzzle_and_writes_attempt_in_one_transaction():
     puzzle = a_puzzle()
     attempt = an_attempt(puzzle)
@@ -153,6 +163,77 @@ def test_save_rejects_an_attempt_for_a_puzzle_deleted_before_commit(repositories
 
     with pytest.raises(PuzzleNotFoundError):
         attempts.save(attempt)
+
+
+@pytest.mark.parametrize("error_code", ["ProvisionedThroughputExceededException", "TransactionCanceledException"])
+def test_save_propagates_client_errors_when_puzzle_still_exists(error_code):
+    puzzle = a_puzzle()
+    attempt = an_attempt(puzzle)
+    error = ClientError(
+        {"Error": {"Code": error_code, "Message": "transaction failed"}},
+        "TransactWriteItems",
+    )
+    dynamodb = MagicMock()
+    dynamodb.meta.client.transact_write_items.side_effect = error
+    puzzle_repository = Mock()
+    puzzle_repository.find_by_id.return_value = puzzle
+    attempts = DynamoAttemptRepository(
+        ATTEMPTS_TABLE,
+        PUZZLES_TABLE,
+        puzzle_repository,
+        dynamodb=dynamodb,
+    )
+
+    with pytest.raises(ClientError) as raised:
+        attempts.save(attempt)
+
+    assert raised.value is error
+    if error_code == "TransactionCanceledException":
+        puzzle_repository.find_by_id.assert_called_once_with(puzzle.id)
+    else:
+        puzzle_repository.find_by_id.assert_not_called()
+
+
+def test_delete_by_puzzle_id_deletes_attempts_from_every_query_page():
+    puzzle_id = uuid4()
+    first_key = {"puzzle_id": str(puzzle_id), "attempt_id": str(uuid4())}
+    second_key = {"puzzle_id": str(puzzle_id), "attempt_id": str(uuid4())}
+    dynamodb = MagicMock()
+    table = dynamodb.Table.return_value
+    table.query.side_effect = [
+        {"Items": [first_key], "LastEvaluatedKey": first_key},
+        {"Items": [second_key]},
+    ]
+    attempts = DynamoAttemptRepository(ATTEMPTS_TABLE, PUZZLES_TABLE, Mock(), dynamodb=dynamodb)
+
+    attempts.delete_by_puzzle_id(puzzle_id)
+
+    assert table.query.call_count == 2
+    assert table.query.call_args_list[0].kwargs == {
+        "KeyConditionExpression": Key("puzzle_id").eq(str(puzzle_id)),
+        "ProjectionExpression": "puzzle_id, attempt_id",
+    }
+    assert table.query.call_args_list[1].kwargs == {
+        "KeyConditionExpression": Key("puzzle_id").eq(str(puzzle_id)),
+        "ProjectionExpression": "puzzle_id, attempt_id",
+        "ExclusiveStartKey": first_key,
+    }
+    batch = table.batch_writer.return_value.__enter__.return_value
+    assert batch.delete_item.call_count == 2
+    batch.delete_item.assert_any_call(Key=first_key)
+    batch.delete_item.assert_any_call(Key=second_key)
+
+
+def test_delete_by_puzzle_id_does_not_open_batch_writer_when_no_attempts_exist():
+    dynamodb = MagicMock()
+    table = dynamodb.Table.return_value
+    table.query.return_value = {"Items": []}
+    attempts = DynamoAttemptRepository(ATTEMPTS_TABLE, PUZZLES_TABLE, Mock(), dynamodb=dynamodb)
+
+    attempts.delete_by_puzzle_id(uuid4())
+
+    table.query.assert_called_once()
+    table.batch_writer.assert_not_called()
 
 
 def test_delete_by_puzzle_id_removes_only_that_puzzles_attempts(repositories):
