@@ -1,11 +1,3 @@
-data "archive_file" "create_attempt" {
-  type = "zip"
-
-  source_dir = "${path.module}/../../dist/packages/lambdas/ts-lambdas/bundle/lambda/create-attempt"
-
-  output_path = "${path.module}/.terraform/create-attempt.zip"
-}
-
 resource "aws_iam_role" "create_attempt" {
   name = "crossword-solver-${var.environment}-create-attempt-lambda"
 
@@ -17,21 +9,49 @@ resource "aws_iam_role_policy_attachment" "create_attempt_basic_execution" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }
 
+resource "aws_iam_role_policy" "create_attempt" {
+  name = "create-attempt-access"
+  role = aws_iam_role.create_attempt.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = ["dynamodb:GetItem"]
+        Resource = [aws_dynamodb_table.puzzles.arn, aws_dynamodb_table.attempts.arn]
+      },
+      {
+        Effect   = "Allow"
+        Action   = ["dynamodb:TransactWriteItems"]
+        Resource = [aws_dynamodb_table.puzzles.arn, aws_dynamodb_table.attempts.arn]
+      }
+    ]
+  })
+}
+
 resource "aws_lambda_function" "create_attempt" {
   function_name = "crossword-solver-${var.environment}-create-attempt"
 
   role = aws_iam_role.create_attempt.arn
 
-  runtime = "nodejs22.x"
-  handler = "index.handler"
+  runtime = "python3.14"
+  handler = "crossword_solver_puzzle_api.create_attempt.create_attempt_handler.lambda_handler"
 
   architectures = ["x86_64"]
 
-  filename         = data.archive_file.create_attempt.output_path
-  source_code_hash = data.archive_file.create_attempt.output_base64sha256
+  filename         = data.archive_file.puzzle_api.output_path
+  source_code_hash = data.archive_file.puzzle_api.output_base64sha256
 
-  timeout     = 30
+  timeout     = 10
   memory_size = 512
+
+  environment {
+    variables = {
+      ATTEMPTS_TABLE_NAME = aws_dynamodb_table.attempts.name
+      PUZZLES_TABLE_NAME  = aws_dynamodb_table.puzzles.name
+    }
+  }
 }
 
 resource "aws_lambda_permission" "create_attempt_api_gateway" {

@@ -40,3 +40,20 @@ resource "aws_dynamodb_table" "puzzle_imports" {
     enabled        = true
   }
 }
+
+resource "aws_dynamodb_table" "attempts" {
+  name         = "crossword-solver-${var.environment}-attempts"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "puzzle_id"
+  range_key    = "attempt_id"
+
+  attribute {
+    name = "puzzle_id"
+    type = "S"
+  }
+
+  attribute {
+    name = "attempt_id"
+    type = "S"
+  }
+}

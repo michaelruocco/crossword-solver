@@ -57,10 +57,12 @@ locals {
       handler   = "crossword_solver_puzzle_api.delete_puzzle.delete_puzzle_handler.lambda_handler"
       route_key = "DELETE /v1/puzzles/{puzzleId}"
       environment = {
-        PUZZLES_TABLE_NAME = aws_dynamodb_table.puzzles.name
+        ATTEMPTS_TABLE_NAME = aws_dynamodb_table.attempts.name
+        PUZZLES_TABLE_NAME  = aws_dynamodb_table.puzzles.name
       }
       statements = [
         { actions = ["dynamodb:DeleteItem"], resources = [aws_dynamodb_table.puzzles.arn] },
+        { actions = ["dynamodb:Query", "dynamodb:BatchWriteItem"], resources = [aws_dynamodb_table.attempts.arn] },
       ]
     }
 
