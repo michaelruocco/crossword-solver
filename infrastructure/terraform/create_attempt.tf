@@ -23,8 +23,13 @@ resource "aws_iam_role_policy" "create_attempt" {
       },
       {
         Effect   = "Allow"
-        Action   = ["dynamodb:TransactWriteItems"]
-        Resource = [aws_dynamodb_table.puzzles.arn, aws_dynamodb_table.attempts.arn]
+        Action   = ["dynamodb:ConditionCheckItem"]
+        Resource = aws_dynamodb_table.puzzles.arn
+      },
+      {
+        Effect   = "Allow"
+        Action   = ["dynamodb:PutItem"]
+        Resource = aws_dynamodb_table.attempts.arn
       }
     ]
   })
