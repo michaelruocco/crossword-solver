@@ -80,7 +80,7 @@ def test_saves_attempt_by_reference_and_hydrates_puzzle_on_load(repositories):
     attempt = an_attempt(puzzle)
     puzzles.save(puzzle)
 
-    attempts.table.put_item(Item=attempts.converter.to_item(attempt))
+    attempts.save(attempt)
     item = attempts.table.get_item(
         Key={"puzzle_id": str(puzzle.id), "attempt_id": str(attempt.id)},
         ConsistentRead=True,
@@ -130,7 +130,7 @@ def test_save_condition_checks_puzzle_and_writes_attempt_in_one_transaction():
     assert transaction[0] == {
         "ConditionCheck": {
             "TableName": PUZZLES_TABLE,
-            "Key": {"id": {"S": str(puzzle.id)}},
+            "Key": {"id": str(puzzle.id)},
             "ConditionExpression": "attribute_exists(id)",
         }
     }
@@ -138,11 +138,11 @@ def test_save_condition_checks_puzzle_and_writes_attempt_in_one_transaction():
         "Put": {
             "TableName": ATTEMPTS_TABLE,
             "Item": {
-                "puzzle_id": {"S": str(puzzle.id)},
-                "attempt_id": {"S": str(attempt.id)},
-                "created_at": {"S": CREATED_AT.isoformat()},
-                "solving": {"BOOL": False},
-                "answer_count": {"N": "0"},
+                "puzzle_id": str(puzzle.id),
+                "attempt_id": str(attempt.id),
+                "created_at": CREATED_AT.isoformat(),
+                "solving": False,
+                "answer_count": 0,
             },
         }
     }
