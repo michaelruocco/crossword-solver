@@ -1,7 +1,6 @@
 from uuid import UUID
 
 from boto3.dynamodb.conditions import Key
-from boto3.dynamodb.types import TypeSerializer
 from botocore.exceptions import ClientError
 from crossword_solver_domain_entities.attempt import Attempt
 from crossword_solver_domain_use_case.attempt_repository import AttemptRepository
@@ -41,15 +40,14 @@ class DynamoAttemptRepository(AttemptRepository):
         return self.converter.to_attempt(item, puzzle)
 
     def save(self, attempt: Attempt) -> None:
-        serializer = TypeSerializer()
-        item = {key: serializer.serialize(value) for key, value in self.converter.to_item(attempt).items()}
+        item = self.converter.to_item(attempt)
         try:
             self.dynamodb.meta.client.transact_write_items(
                 TransactItems=[
                     {
                         "ConditionCheck": {
                             "TableName": self.puzzle_table_name,
-                            "Key": {"id": {"S": str(attempt.puzzle_id)}},
+                            "Key": {"id": str(attempt.puzzle_id)},
                             "ConditionExpression": "attribute_exists(id)",
                         }
                     },
