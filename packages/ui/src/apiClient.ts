@@ -1,3 +1,26 @@
+export interface PuzzleCell {
+  id: number | null
+  coordinates: { x: number; y: number }
+  black: boolean
+  character: string | null
+}
+
+export interface PuzzleClue {
+  id: number
+  direction: 'ACROSS' | 'DOWN'
+  text: string
+  lengths: number[]
+}
+
+export interface Puzzle {
+  id: string
+  name: string
+  createdAt: string
+  grid: { numberOfRows: number; numberOfColumns: number; cells: PuzzleCell[] }
+  clues: PuzzleClue[]
+  words: { id: number; direction: 'ACROSS' | 'DOWN'; length: number; coordinates: { x: number; y: number } }[]
+}
+
 export interface PuzzleSummary {
   id: string
   name: string
@@ -127,6 +150,11 @@ export class ApiClient {
       signal,
     })
     if (!response.ok) throw await this.responseError(response, 'Unable to delete puzzle.')
+  }
+
+  async getPuzzle(puzzleId: string, signal?: AbortSignal): Promise<Puzzle> {
+    const response = await fetch(this.endpoint(`/v1/puzzles/${encodeURIComponent(puzzleId)}`), { signal })
+    return this.readJson<Puzzle>(response, 'Unable to load puzzle.')
   }
 
   getPuzzleGridImageUrl(puzzleId: string): string {

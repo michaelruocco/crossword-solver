@@ -4,6 +4,7 @@ import { beforeEach, expect, test, vi } from 'vitest'
 const { apiClientMock } = vi.hoisted(() => ({
   apiClientMock: {
     getAllPuzzleSummaries: vi.fn(),
+    getPuzzle: vi.fn(),
     deletePuzzle: vi.fn(),
     startPuzzleImport: vi.fn(),
     waitForPuzzleImport: vi.fn(),
@@ -23,11 +24,40 @@ const puzzle = {
 }
 
 beforeEach(() => {
+  window.history.replaceState(null, '', '/')
   vi.clearAllMocks()
   apiClientMock.getAllPuzzleSummaries.mockResolvedValue([puzzle])
   apiClientMock.deletePuzzle.mockResolvedValue(undefined)
   apiClientMock.startPuzzleImport.mockResolvedValue({ location: '/v1/puzzles/imports/import-1' })
   apiClientMock.waitForPuzzleImport.mockResolvedValue({ status: 'COMPLETE', puzzleId: puzzle.id })
+  apiClientMock.getPuzzle.mockResolvedValue({ ...puzzle, grid: { numberOfRows: 1, numberOfColumns: 1, cells: [] }, clues: [], words: [] })
+})
+
+test('opens a linked puzzle and returns to the library on hash navigation', async () => {
+  render(<App />)
+  const link = await screen.findByRole('link', { name: 'View puzzle Sunday Cryptic' })
+
+  act(() => {
+    window.history.pushState(null, '', link.getAttribute('href'))
+    window.dispatchEvent(new HashChangeEvent('hashchange'))
+  })
+  expect(await screen.findByRole('table', { name: 'Puzzle grid' })).toBeTruthy()
+  expect(screen.queryByRole('heading', { name: 'Puzzle library' })).toBeNull()
+  expect(apiClientMock.getPuzzle).toHaveBeenCalledWith(puzzle.id, expect.any(AbortSignal))
+
+  act(() => {
+    window.history.pushState(null, '', screen.getByRole('link', { name: 'Puzzle library' }).getAttribute('href'))
+    window.dispatchEvent(new HashChangeEvent('hashchange'))
+  })
+  expect(await screen.findByRole('heading', { name: 'Puzzle library' })).toBeTruthy()
+})
+
+test('loads a puzzle directly from its encoded URL', async () => {
+  window.history.replaceState(null, '', '/#puzzle=puzzle%20%2F1')
+  render(<App />)
+
+  expect(await screen.findByRole('table', { name: 'Puzzle grid' })).toBeTruthy()
+  expect(apiClientMock.getPuzzle).toHaveBeenCalledWith('puzzle /1', expect.any(AbortSignal))
 })
 
 test('loads the library and shows its connected state', async () => {

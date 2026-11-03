@@ -64,13 +64,11 @@ export function PuzzleListItem({ puzzle, rowIndex, onDelete }: Readonly<PuzzleLi
       <div className="row-actions">
         <a
           className="open-grid"
-          href={apiClient.getPuzzleGridImageUrl(puzzle.id)}
-          target="_blank"
-          rel="noreferrer"
-          aria-label={`Open grid image for ${puzzle.name}`}
-          title="Open grid image"
+          href={`#puzzle=${encodeURIComponent(puzzle.id)}`}
+          aria-label={`View puzzle ${puzzle.name}`}
+          title="View puzzle"
         >
-          <span>View grid</span>
+          <span>View puzzle</span>
           <ArrowUpRight size={16} strokeWidth={1.8} aria-hidden="true" />
         </a>
         {confirmingDelete ? (

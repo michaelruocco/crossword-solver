@@ -1,11 +1,19 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useSyncExternalStore } from 'react'
 import { apiClient, type PuzzleSummary } from './apiClient'
 import { PuzzleListPage, type PuzzleListLoadState } from './components/PuzzleListPage'
 import { PuzzleUploadDialog } from './components/PuzzleUploadDialog'
 import { PuzzleImportDialog } from './components/PuzzleImportDialog'
+import { PuzzlePage } from './components/PuzzlePage'
 import './App.css'
 
+function subscribeToNavigation(onChange: () => void) {
+  window.addEventListener('hashchange', onChange)
+  return () => window.removeEventListener('hashchange', onChange)
+}
+
 function App() {
+  const hash = useSyncExternalStore(subscribeToNavigation, () => window.location.hash)
+  const puzzleId = new URLSearchParams(hash.slice(1)).get('puzzle')
   const [puzzles, setPuzzles] = useState<PuzzleSummary[]>([])
   const [loadState, setLoadState] = useState<PuzzleListLoadState>('loading')
   const [errorMessage, setErrorMessage] = useState('')
@@ -59,7 +67,7 @@ function App() {
         </div>
       </header>
 
-      <PuzzleListPage
+      {puzzleId ? <PuzzlePage key={puzzleId} puzzleId={puzzleId} /> : <PuzzleListPage
         puzzles={puzzles}
         loadState={loadState}
         errorMessage={errorMessage}
@@ -67,7 +75,7 @@ function App() {
         onUploadClick={() => setActiveDialog('upload')}
         onImportClick={() => setActiveDialog('import')}
         onDeletePuzzle={deletePuzzle}
-      />
+      />}
       <footer className="app-footer"><span>Crossword Atlas</span><span>PUZZLE ARCHIVE <span className="footer-separator">/</span> 01</span></footer>
       {activeDialog === 'upload' && (
         <PuzzleUploadDialog onClose={() => setActiveDialog(null)} onComplete={refresh} />
