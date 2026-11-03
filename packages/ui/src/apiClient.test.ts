@@ -3,6 +3,27 @@ import { ApiClient } from './apiClient'
 
 afterEach(() => vi.unstubAllGlobals())
 
+test('loads a puzzle with an encoded id and abort signal', async () => {
+  const puzzle = { id: 'puzzle /1', grid: { cells: [] }, clues: [] }
+  const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify(puzzle)))
+  vi.stubGlobal('fetch', fetchMock)
+  const client = new ApiClient('https://api.test')
+  const controller = new AbortController()
+
+  await expect(client.getPuzzle(puzzle.id, controller.signal)).resolves.toEqual(puzzle)
+  expect(fetchMock).toHaveBeenCalledWith('https://api.test/v1/puzzles/puzzle%20%2F1', { signal: controller.signal })
+})
+
+test('reports puzzle API errors and falls back for invalid error responses', async () => {
+  vi.stubGlobal('fetch', vi.fn()
+    .mockResolvedValueOnce(new Response(JSON.stringify({ message: 'Puzzle not found' }), { status: 404 }))
+    .mockResolvedValueOnce(new Response('offline', { status: 502 })))
+  const client = new ApiClient('')
+
+  await expect(client.getPuzzle('missing')).rejects.toThrow('Puzzle not found')
+  await expect(client.getPuzzle('missing')).rejects.toThrow('Unable to load puzzle.')
+})
+
 test('starts a URL import and returns the import location', async () => {
   const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ id: 'import-1' }), {
     status: 202,
