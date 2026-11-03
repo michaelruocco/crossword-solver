@@ -37,7 +37,7 @@ export function PuzzlePage({ puzzleId }: Readonly<{ puzzleId: string }>) {
 
   return (
     <main className="main-content puzzle-page">
-      <a className="puzzle-back" href="#"><ArrowLeft size={16} aria-hidden="true" /> Puzzle library</a>
+      <a className="puzzle-back" href="/"><ArrowLeft size={16} aria-hidden="true" /> Puzzle library</a>
       {state.status === 'loading' && <output className="state-panel">Loading puzzle...</output>}
       {state.status === 'error' && (
         <div className="state-panel" role="alert">

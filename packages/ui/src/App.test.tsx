@@ -46,7 +46,7 @@ test('opens a linked puzzle and returns to the library on hash navigation', asyn
   expect(apiClientMock.getPuzzle).toHaveBeenCalledWith(puzzle.id, expect.any(AbortSignal))
 
   act(() => {
-    window.history.pushState(null, '', '#')
+    window.history.pushState(null, '', screen.getByRole('link', { name: 'Puzzle library' }).getAttribute('href'))
     window.dispatchEvent(new HashChangeEvent('hashchange'))
   })
   expect(await screen.findByRole('heading', { name: 'Puzzle library' })).toBeTruthy()

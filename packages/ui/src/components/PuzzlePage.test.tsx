@@ -134,7 +134,7 @@ test('marks future attempt and auto-solve actions as unavailable', async () => {
     expect((screen.getByRole('button', { name }) as HTMLButtonElement).disabled).toBe(true)
   }
   expect(screen.getByText('Not available yet')).toBeTruthy()
-  expect(screen.getByRole('link', { name: 'Puzzle library' }).getAttribute('href')).toBe('#')
+  expect(screen.getByRole('link', { name: 'Puzzle library' }).getAttribute('href')).toBe('/')
 })
 
 test('allows typing and clearing a local answer draft without submitting or modifying the grid', async () => {
