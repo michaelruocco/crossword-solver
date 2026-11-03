@@ -164,6 +164,50 @@ test('loads and selects previous attempts with their summary status', async () =
   expect((await screen.findByRole('button', { name: /Attempt 1/ })).getAttribute('aria-pressed')).toBe('true')
 })
 
+test('shows a loading state while attempt summaries are being fetched', async () => {
+  let resolveSummaries: (summaries: PuzzleAttemptSummary[]) => void = () => undefined
+  vi.mocked(apiClient.getAttemptSummaries).mockImplementationOnce(() => new Promise((resolve) => {
+    resolveSummaries = resolve
+  }))
+  render(<PuzzlePage puzzleId={puzzle.id} />)
+  await screen.findByRole('table')
+
+  fireEvent.click(screen.getByRole('button', { name: 'Previous attempts' }))
+  expect(screen.getByText('Loading attempts...')).toBeTruthy()
+
+  await act(async () => {
+    resolveSummaries([attemptSummary])
+    await Promise.resolve()
+  })
+  expect(await screen.findByRole('button', { name: /Attempt 1/ })).toBeTruthy()
+})
+
+test('ignores a failed attempt-summary request after unmount', async () => {
+  let rejectSummaries: (error: Error) => void = () => undefined
+  vi.mocked(apiClient.getAttemptSummaries).mockImplementationOnce(() => new Promise((_resolve, reject) => {
+    rejectSummaries = reject
+  }))
+  const { unmount } = render(<PuzzlePage puzzleId={puzzle.id} />)
+  const signal = vi.mocked(apiClient.getAttemptSummaries).mock.calls[0][1]
+  unmount()
+  expect(signal?.aborted).toBe(true)
+
+  await act(async () => {
+    rejectSummaries(new Error('Aborted'))
+    await Promise.resolve()
+  })
+})
+
+test('uses a fallback when attempt summaries fail without an Error', async () => {
+  vi.mocked(apiClient.getAttemptSummaries).mockRejectedValueOnce('offline')
+  render(<PuzzlePage puzzleId={puzzle.id} />)
+  await screen.findByRole('table')
+
+  fireEvent.click(screen.getByRole('button', { name: 'Previous attempts' }))
+
+  expect((await screen.findByRole('alert')).textContent).toBe('Unable to load attempt summaries.')
+})
+
 test('shows when there are no previous attempts and leaves unrelated actions unavailable', async () => {
   render(<PuzzlePage puzzleId={puzzle.id} />)
   await screen.findByRole('table')
@@ -213,6 +257,28 @@ test('reports an attempt creation error and allows retrying', async () => {
 
   expect((await screen.findByRole('alert')).textContent).toBe('Attempt could not be created')
   expect((screen.getByRole('button', { name: 'New attempt' }) as HTMLButtonElement).disabled).toBe(false)
+})
+
+test('uses a fallback when attempt creation fails without an Error', async () => {
+  vi.mocked(apiClient.createAttempt).mockRejectedValueOnce('offline')
+  render(<PuzzlePage puzzleId={puzzle.id} />)
+  await screen.findByRole('table')
+
+  fireEvent.click(screen.getByRole('button', { name: 'New attempt' }))
+
+  expect((await screen.findByRole('alert')).textContent).toBe('Unable to create puzzle attempt.')
+})
+
+test('shows the status for an attempt that is not solving', async () => {
+  vi.mocked(apiClient.getAttemptSummaries).mockResolvedValueOnce([{ ...attemptSummary, solving: false }])
+  render(<PuzzlePage puzzleId={puzzle.id} />)
+  await screen.findByRole('table')
+
+  fireEvent.click(screen.getByRole('button', { name: 'Previous attempts' }))
+  fireEvent.click(await screen.findByRole('button', { name: /Attempt 1/ }))
+
+  const selectedStatus = screen.getByRole('status', { name: 'Selected attempt status' })
+  expect(within(selectedStatus).getByText('Not solving')).toBeTruthy()
 })
 
 test('allows typing and clearing a local answer draft without submitting or modifying the grid', async () => {
