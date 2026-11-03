@@ -11,6 +11,15 @@
 .attempt-context { color:var(--forest); font-size:12px; }
 .attempt-context span { color:var(--muted); font-size:11px; }
 .attempt-error { flex-basis:100%; margin:0; color:#a23e31; font-size:12px; }
+.attempt-history { flex-basis:100%; display:grid; gap:10px; padding-top:14px; border-top:1px solid #d5ddd3; }
+.attempt-history > p { margin:0; color:var(--muted); font-size:12px; }
+.attempt-history-list { display:flex; flex-wrap:wrap; gap:8px; }
+.attempt-history-item { display:grid; gap:4px; min-width:190px; padding:10px 12px; border:1px solid #cbd6c7; border-radius:4px; color:var(--ink); background:transparent; font:400 11px/1.4 var(--body); text-align:left; cursor:pointer; }
+.attempt-history-item:hover { border-color:var(--forest-soft); background:#edf3e9; }
+.attempt-history-item[aria-pressed="true"] { border-color:var(--forest); background:#e7f2b7; }
+.attempt-history-item time, .attempt-history-item span { color:var(--muted); }
+.attempt-status { flex-basis:100%; display:flex; flex-wrap:wrap; align-items:center; gap:8px 18px; padding:12px 0 0; border-top:1px solid #d5ddd3; color:var(--forest); font-size:12px; }
+.attempt-status-note { flex-basis:100%; color:var(--muted); font-size:11px; }
 .attempt-toolbar button:disabled, .puzzle-workspace button:disabled { opacity:.5; cursor:not-allowed; transform:none; }
 .puzzle-workspace { display:grid; grid-template-columns:minmax(0, 1fr) minmax(0, 1.1fr); align-items:start; gap:36px; }
 .puzzle-board-section { position:sticky; top:24px; min-width:0; }

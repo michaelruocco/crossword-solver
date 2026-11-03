@@ -1,9 +1,11 @@
 import { act, fireEvent, render, screen, within } from '@testing-library/react'
 import { beforeEach, expect, test, vi } from 'vitest'
-import { apiClient, type Puzzle } from '../apiClient'
+import { apiClient, type Puzzle, type PuzzleAttemptSummary } from '../apiClient'
 import { PuzzlePage } from './PuzzlePage'
 
-vi.mock('../apiClient', () => ({ apiClient: { getPuzzle: vi.fn(), createAttempt: vi.fn() } }))
+vi.mock('../apiClient', () => ({
+  apiClient: { getPuzzle: vi.fn(), getAttemptSummaries: vi.fn(), createAttempt: vi.fn() },
+}))
 
 const puzzle: Puzzle = {
   id: 'puzzle-1',
@@ -41,9 +43,18 @@ const attempt = {
   answerCount: 0,
 }
 
+const attemptSummary: PuzzleAttemptSummary = {
+  id: 'attempt-1',
+  createdAt: '2026-10-18T09:30:00Z',
+  solving: true,
+  answerCount: 2,
+  clueCount: 3,
+}
+
 beforeEach(() => {
   vi.resetAllMocks()
   vi.mocked(apiClient.getPuzzle).mockResolvedValue(puzzle)
+  vi.mocked(apiClient.getAttemptSummaries).mockResolvedValue([])
   vi.mocked(apiClient.createAttempt).mockResolvedValue(attempt)
 })
 
@@ -135,15 +146,34 @@ test('highlights a down entry toward decreasing y without extending above or bel
   expect(cells.map((cell) => cell.classList.contains('puzzle-cell-selected'))).toEqual([false, true, true, false])
 })
 
-test('keeps attempt history and auto-solve unavailable while enabling new attempts', async () => {
+test('loads and selects previous attempts with their summary status', async () => {
+  vi.mocked(apiClient.getAttemptSummaries).mockResolvedValueOnce([attemptSummary])
   render(<PuzzlePage puzzleId={puzzle.id} />)
   await screen.findByRole('table')
 
-  for (const name of ['Previous attempts', 'Auto-solve']) {
+  fireEvent.click(screen.getByRole('button', { name: 'Previous attempts' }))
+  const previousAttempt = await screen.findByRole('button', { name: /Attempt 1/ })
+  expect(previousAttempt.textContent).toContain('2 of 3 answered')
+  fireEvent.click(previousAttempt)
+
+  const selectedStatus = screen.getByRole('status', { name: 'Selected attempt status' })
+  expect(within(selectedStatus).getByText('2 of 3 clues answered')).toBeTruthy()
+  expect(within(selectedStatus).getByText('Solving')).toBeTruthy()
+  expect(within(selectedStatus).getByText('Answer details are not available yet.')).toBeTruthy()
+  fireEvent.click(screen.getByRole('button', { name: 'Previous attempts' }))
+  expect((await screen.findByRole('button', { name: /Attempt 1/ })).getAttribute('aria-pressed')).toBe('true')
+})
+
+test('shows when there are no previous attempts and leaves unrelated actions unavailable', async () => {
+  render(<PuzzlePage puzzleId={puzzle.id} />)
+  await screen.findByRole('table')
+
+  for (const name of ['Auto-solve']) {
     expect((screen.getByRole('button', { name }) as HTMLButtonElement).disabled).toBe(true)
   }
   expect((screen.getByRole('button', { name: 'New attempt' }) as HTMLButtonElement).disabled).toBe(false)
-  expect(screen.getByText('No attempt created')).toBeTruthy()
+  fireEvent.click(screen.getByRole('button', { name: 'Previous attempts' }))
+  expect(await screen.findByText('No attempts yet.')).toBeTruthy()
   expect(screen.getByRole('link', { name: 'Puzzle library' }).getAttribute('href')).toBe('/')
 })
 
@@ -154,7 +184,24 @@ test('creates an attempt for the current puzzle and reports success', async () =
   fireEvent.click(screen.getByRole('button', { name: 'New attempt' }))
 
   expect(apiClient.createAttempt).toHaveBeenCalledWith(puzzle.id)
-  expect(await screen.findByText('Attempt created')).toBeTruthy()
+  const selectedStatus = await screen.findByRole('status', { name: 'Selected attempt status' })
+  expect(within(selectedStatus).getByText('0 of 3 clues answered')).toBeTruthy()
+  expect(within(selectedStatus).getByText('Answer details are not available yet.')).toBeTruthy()
+})
+
+test('makes a newly created attempt available after attempt history fails to load', async () => {
+  vi.mocked(apiClient.getAttemptSummaries).mockRejectedValueOnce(new Error('Attempt history unavailable'))
+  render(<PuzzlePage puzzleId={puzzle.id} />)
+  await screen.findByRole('table')
+  fireEvent.click(screen.getByRole('button', { name: 'Previous attempts' }))
+  expect((await screen.findByRole('alert')).textContent).toBe('Attempt history unavailable')
+
+  fireEvent.click(screen.getByRole('button', { name: 'New attempt' }))
+  await screen.findByRole('status', { name: 'Selected attempt status' })
+  fireEvent.click(screen.getByRole('button', { name: 'Previous attempts' }))
+
+  expect(await screen.findByRole('button', { name: /Attempt 1/ })).toBeTruthy()
+  expect(screen.queryByRole('alert')).toBeNull()
 })
 
 test('reports an attempt creation error and allows retrying', async () => {
