@@ -55,43 +55,41 @@ test('maps bottom-left-origin coordinates to top-to-bottom display rows without 
   expect(apiClient.getPuzzle).toHaveBeenCalledWith(puzzle.id, expect.any(AbortSignal))
 })
 
-test('groups and sorts clues, preserving their lengths', async () => {
+test('groups and sorts clues', async () => {
   render(<PuzzlePage puzzleId={puzzle.id} />)
   await screen.findByRole('table')
 
   const across = screen.getByRole('region', { name: 'Across' })
   const clues = within(across).getAllByRole('button')
-  expect(clues[0].textContent).toBe('1A horizontal entry (3)')
-  expect(clues[1].textContent).toBe('3A second entry (1, 1)')
+  expect(clues[0].textContent).toBe('1A horizontal entry')
+  expect(clues[1].textContent).toBe('3A second entry')
   expect(within(screen.getByRole('region', { name: 'Down' })).getByText('A vertical entry')).toBeTruthy()
 })
 
 test.each([
-  { lengths: [], suffix: '' },
-  { lengths: [3], suffix: ' (3)' },
-  { lengths: [1, 2], suffix: ' (1, 2)' },
-])('renders clue lengths $lengths consistently in the list and answer panel', async ({ lengths, suffix }) => {
+  { lengths: [], text: 'A horizontal entry' },
+  { lengths: [3], text: 'A horizontal entry' },
+  { lengths: [1, 2], text: 'A horizontal entry' },
+  { lengths: [1, 2], text: 'A horizontal entry (1, 2)' },
+])('renders only the clue text "$text" with lengths $lengths', async ({ lengths, text }) => {
   vi.mocked(apiClient.getPuzzle).mockResolvedValueOnce({
     ...puzzle,
-    clues: puzzle.clues.map((clue) => ({ ...clue, lengths })),
+    clues: [{ id: 1, direction: 'ACROSS', text, lengths }],
   })
   render(<PuzzlePage puzzleId={puzzle.id} />)
 
-  const clue = await screen.findByRole('button', { name: `1 Across: A horizontal entry${suffix}` })
-  expect(clue.textContent).toBe(`1A horizontal entry${suffix}`)
-  expect(clue.querySelector('.clue-length')?.textContent ?? '').toBe(suffix)
-  if (lengths.length === 0) expect(clue.querySelector('.clue-length')).toBeNull()
+  const clue = await screen.findByRole('button', { name: `1 Across: ${text}` })
+  expect(clue.textContent).toBe(`1${text}`)
 
   fireEvent.click(clue)
   const selected = screen.getByRole('region', { name: 'Selected clue' })
-  expect(within(selected).getByText(`A horizontal entry${suffix}`, { selector: 'p' })).toBeTruthy()
-  expect(selected.textContent).not.toContain('()')
+  expect(selected.querySelector('p')?.textContent).toBe(text)
 })
 
 test('selects across and down entries independently when their numbers match', async () => {
   render(<PuzzlePage puzzleId={puzzle.id} />)
-  const across = await screen.findByRole('button', { name: '1 Across: A horizontal entry (3)' })
-  const down = screen.getByRole('button', { name: '1 Down: A vertical entry (2)' })
+  const across = await screen.findByRole('button', { name: '1 Across: A horizontal entry' })
+  const down = screen.getByRole('button', { name: '1 Down: A vertical entry' })
   const cells = within(screen.getByRole('table')).getAllByRole('cell')
 
   fireEvent.click(across)
@@ -122,7 +120,7 @@ test('highlights a down entry toward decreasing y without extending above or bel
     words: [{ id: 1, direction: 'DOWN', length: 2, coordinates: { x: 0, y: 2 } }],
   })
   render(<PuzzlePage puzzleId={puzzle.id} />)
-  fireEvent.click(await screen.findByRole('button', { name: '1 Down: A vertical entry (2)' }))
+  fireEvent.click(await screen.findByRole('button', { name: '1 Down: A vertical entry' }))
 
   const cells = within(screen.getByRole('table')).getAllByRole('cell')
   expect(cells.map((cell) => cell.classList.contains('puzzle-cell-selected'))).toEqual([false, true, true, false])
@@ -142,7 +140,7 @@ test('marks future attempt and auto-solve actions as unavailable', async () => {
 test('allows typing and clearing a local answer draft without submitting or modifying the grid', async () => {
   render(<PuzzlePage puzzleId={puzzle.id} />)
   expect(screen.queryByRole('textbox', { name: 'Answer draft' })).toBeNull()
-  fireEvent.click(await screen.findByRole('button', { name: '1 Across: A horizontal entry (3)' }))
+  fireEvent.click(await screen.findByRole('button', { name: '1 Across: A horizontal entry' }))
   const input = screen.getByRole('textbox', { name: 'Answer draft' }) as HTMLInputElement
   const clear = screen.getByRole('button', { name: 'Clear answer draft' }) as HTMLButtonElement
 
@@ -166,8 +164,8 @@ test('allows typing and clearing a local answer draft without submitting or modi
 
 test('preserves independent drafts for across and down clues and only clears the selected draft', async () => {
   render(<PuzzlePage puzzleId={puzzle.id} />)
-  const across = await screen.findByRole('button', { name: '1 Across: A horizontal entry (3)' })
-  const down = screen.getByRole('button', { name: '1 Down: A vertical entry (2)' })
+  const across = await screen.findByRole('button', { name: '1 Across: A horizontal entry' })
+  const down = screen.getByRole('button', { name: '1 Down: A vertical entry' })
 
   fireEvent.click(across)
   fireEvent.change(screen.getByRole('textbox', { name: 'Answer draft' }), { target: { value: 'arc' } })
@@ -232,7 +230,7 @@ test('handles missing clues and an unavailable grid', async () => {
 test('renders missing cells as black squares and tolerates clues without word positions', async () => {
   vi.mocked(apiClient.getPuzzle).mockResolvedValueOnce({ ...puzzle, words: [], grid: { ...puzzle.grid, cells: [] } })
   render(<PuzzlePage puzzleId={puzzle.id} />)
-  fireEvent.click(await screen.findByRole('button', { name: '1 Across: A horizontal entry (3)' }))
+  fireEvent.click(await screen.findByRole('button', { name: '1 Across: A horizontal entry' }))
 
   const cells = within(screen.getByRole('table')).getAllByRole('cell')
   expect(cells.every((cell) => cell.classList.contains('puzzle-cell-black'))).toBe(true)

@@ -33,7 +33,6 @@
 .clue-button:hover { background:#e8eee4; }
 .clue-button[aria-pressed="true"] { background:#e7f2b7; box-shadow:inset 3px 0 var(--forest-soft); }
 .clue-number { color:var(--forest); font-weight:700; }
-.clue-length { color:#68766d; white-space:nowrap; }
 .clue-empty { color:var(--muted); font-size:12px; }
 .selected-clue { padding:18px 0; margin-bottom:20px; border-block:1px solid #cbd6c7; }
 .selected-clue strong { color:var(--forest); font-size:12px; }

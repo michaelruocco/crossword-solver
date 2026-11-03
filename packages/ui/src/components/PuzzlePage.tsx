@@ -4,10 +4,6 @@ import { apiClient, type Puzzle, type PuzzleClue } from '../apiClient'
 
 type PuzzleState = { status: 'loading' } | { status: 'error'; message: string } | { status: 'ready'; puzzle: Puzzle }
 
-function formatClueLengths(lengths: number[]): string {
-  return lengths.length > 0 ? ` (${lengths.join(', ')})` : ''
-}
-
 export function PuzzlePage({ puzzleId }: Readonly<{ puzzleId: string }>) {
   const [state, setState] = useState<PuzzleState>({ status: 'loading' })
   const [reloadKey, setReloadKey] = useState(0)
@@ -75,7 +71,7 @@ export function PuzzlePage({ puzzleId }: Readonly<{ puzzleId: string }>) {
               {selectedClue && (
                 <section className="selected-clue" aria-label="Selected clue">
                   <strong>{selectedClue.id} {selectedClue.direction === 'ACROSS' ? 'Across' : 'Down'}</strong>
-                  <p>{selectedClue.text}{formatClueLengths(selectedClue.lengths)}</p>
+                  <p>{selectedClue.text}</p>
                   <div className="answer-label"><label htmlFor="clue-answer">Answer draft</label><span>{answerDraft ? 'Unsaved draft' : 'Not submitted'}</span></div>
                   <div className="answer-entry">
                     <input id="clue-answer" type="text" value={answerDraft} onChange={(event) => updateAnswerDraft(event.target.value)} autoComplete="off" autoCapitalize="characters" spellCheck={false} />
@@ -94,9 +90,9 @@ export function PuzzlePage({ puzzleId }: Readonly<{ puzzleId: string }>) {
                     <ol className="clue-list">
                       {state.puzzle.clues.filter((clue) => clue.direction === direction).sort((first, second) => first.id - second.id).map((clue) => (
                         <li key={`${clue.direction}-${clue.id}`}>
-                          <button type="button" className="clue-button" aria-label={`${clue.id} ${direction === 'ACROSS' ? 'Across' : 'Down'}: ${clue.text}${formatClueLengths(clue.lengths)}`} aria-pressed={selectedClue?.id === clue.id && selectedClue.direction === direction} onClick={() => setSelectedClue(clue)}>
+                          <button type="button" className="clue-button" aria-label={`${clue.id} ${direction === 'ACROSS' ? 'Across' : 'Down'}: ${clue.text}`} aria-pressed={selectedClue?.id === clue.id && selectedClue.direction === direction} onClick={() => setSelectedClue(clue)}>
                             <span className="clue-number">{clue.id}</span>
-                            <span>{clue.text}{clue.lengths.length > 0 && <span className="clue-length">{formatClueLengths(clue.lengths)}</span>}</span>
+                            <span>{clue.text}</span>
                           </button>
                         </li>
                       ))}
