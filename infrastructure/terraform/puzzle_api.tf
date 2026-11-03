@@ -88,6 +88,19 @@ locals {
         { actions = ["dynamodb:Scan"], resources = [aws_dynamodb_table.puzzles.arn] },
       ]
     }
+
+    get-attempt-summaries = {
+      handler   = "crossword_solver_puzzle_api.get_attempt_summaries.get_attempt_summaries_handler.lambda_handler"
+      route_key = "GET /v1/puzzles/{puzzleId}/attempt-summaries"
+      environment = {
+        ATTEMPTS_TABLE_NAME = aws_dynamodb_table.attempts.name
+        PUZZLES_TABLE_NAME  = aws_dynamodb_table.puzzles.name
+      }
+      statements = [
+        { actions = ["dynamodb:Query"], resources = [aws_dynamodb_table.attempts.arn] },
+        { actions = ["dynamodb:GetItem"], resources = [aws_dynamodb_table.puzzles.arn] },
+      ]
+    }
   }
 }
 

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { ArrowLeft, ArrowRight, ArrowDown, Eraser, History, Plus, Send, Sparkles, Trash2 } from 'lucide-react'
-import { apiClient, type Puzzle, type PuzzleClue } from '../apiClient'
+import { apiClient, type Puzzle, type PuzzleAttemptSummary, type PuzzleClue } from '../apiClient'
 
 type PuzzleState = { status: 'loading' } | { status: 'error'; message: string } | { status: 'ready'; puzzle: Puzzle }
 
@@ -9,8 +9,16 @@ export function PuzzlePage({ puzzleId }: Readonly<{ puzzleId: string }>) {
   const [reloadKey, setReloadKey] = useState(0)
   const [selectedClue, setSelectedClue] = useState<PuzzleClue | null>(null)
   const [answerDrafts, setAnswerDrafts] = useState<Record<string, string>>({})
+  const [attemptSummaries, setAttemptSummaries] = useState<PuzzleAttemptSummary[]>([])
+  const [attemptSummariesState, setAttemptSummariesState] = useState<'loading' | 'error' | 'ready'>('loading')
+  const [attemptSummariesError, setAttemptSummariesError] = useState('')
+  const [selectedAttemptId, setSelectedAttemptId] = useState<string | null>(null)
+  const [attemptHistoryOpen, setAttemptHistoryOpen] = useState(false)
+  const [creatingAttempt, setCreatingAttempt] = useState(false)
+  const [attemptError, setAttemptError] = useState('')
   const selectedClueKey = selectedClue ? `${selectedClue.direction}-${selectedClue.id}` : ''
   const answerDraft = answerDrafts[selectedClueKey] ?? ''
+  const selectedAttempt = attemptSummaries.find((summary) => summary.id === selectedAttemptId) ?? null
 
   const updateAnswerDraft = (value: string) => {
     setAnswerDrafts((drafts) => ({ ...drafts, [selectedClueKey]: value }))
@@ -30,9 +38,51 @@ export function PuzzlePage({ puzzleId }: Readonly<{ puzzleId: string }>) {
     return () => controller.abort()
   }, [puzzleId, reloadKey])
 
+  useEffect(() => {
+    const controller = new AbortController()
+    apiClient.getAttemptSummaries(puzzleId, controller.signal)
+      .then((summaries) => {
+        if (!controller.signal.aborted) {
+          setAttemptSummaries(summaries)
+          setAttemptSummariesState('ready')
+        }
+      })
+      .catch((error: unknown) => {
+        if (!controller.signal.aborted) {
+          setAttemptSummariesError(error instanceof Error ? error.message : 'Unable to load attempt summaries.')
+          setAttemptSummariesState('error')
+        }
+      })
+    return () => controller.abort()
+  }, [puzzleId])
+
   const retry = () => {
     setState({ status: 'loading' })
     setReloadKey((key) => key + 1)
+  }
+
+  const createAttempt = async () => {
+    setCreatingAttempt(true)
+    setAttemptError('')
+    try {
+      const created = await apiClient.createAttempt(puzzleId)
+      const summary = {
+        id: created.id,
+        createdAt: created.createdAt,
+        solving: created.solving,
+        answerCount: created.answerCount,
+        clueCount: created.puzzle.clues.length,
+      }
+      setAttemptSummaries((summaries) => [summary, ...summaries.filter((existing) => existing.id !== summary.id)])
+      setAttemptSummariesState('ready')
+      setAttemptSummariesError('')
+      setSelectedAttemptId(summary.id)
+      setAttemptHistoryOpen(false)
+    } catch (error) {
+      setAttemptError(error instanceof Error ? error.message : 'Unable to create puzzle attempt.')
+    } finally {
+      setCreatingAttempt(false)
+    }
   }
 
   return (
@@ -56,11 +106,49 @@ export function PuzzlePage({ puzzleId }: Readonly<{ puzzleId: string }>) {
             <span className="puzzle-view-label">Puzzle preview</span>
           </header>
           <section className="attempt-toolbar" aria-label="Puzzle attempts">
-            <div className="attempt-context"><History size={18} aria-hidden="true" /><strong>Attempts</strong><span>Not available yet</span></div>
+            <div className="attempt-context"><History size={18} aria-hidden="true" /><strong>Attempts</strong><span aria-live="polite">{selectedAttempt ? `${selectedAttempt.answerCount} of ${selectedAttempt.clueCount} clues answered` : `${attemptSummaries.length} available`}</span></div>
             <div className="attempt-actions">
-              <button type="button" className="upload-button import-button" disabled title="Attempt history is not available yet"><History size={15} aria-hidden="true" /> Previous attempts</button>
-              <button type="button" className="upload-button" disabled title="Creating attempts is not available in this view yet"><Plus size={16} aria-hidden="true" /> New attempt</button>
+              <button type="button" className="upload-button import-button" aria-expanded={attemptHistoryOpen} aria-controls="attempt-history" onClick={() => setAttemptHistoryOpen((open) => !open)}><History size={15} aria-hidden="true" /> Previous attempts</button>
+              <button type="button" className="upload-button" disabled={creatingAttempt} onClick={() => void createAttempt()}><Plus size={16} aria-hidden="true" /> {creatingAttempt ? 'Creating...' : 'New attempt'}</button>
             </div>
+            {attemptError && <p className="attempt-error" role="alert">{attemptError}</p>}
+            {attemptHistoryOpen && (
+              <section id="attempt-history" className="attempt-history" aria-label="Previous attempts">
+                {attemptSummariesState === 'loading' && <output>Loading attempts...</output>}
+                {attemptSummariesState === 'error' && <p role="alert">{attemptSummariesError}</p>}
+                {attemptSummariesState === 'ready' && attemptSummaries.length === 0 && <p>No attempts yet.</p>}
+                {attemptSummaries.length > 0 && (
+                  <div className="attempt-history-list">
+                    {attemptSummaries.map((summary, index) => (
+                      <button
+                        key={summary.id}
+                        type="button"
+                        className="attempt-history-item"
+                        aria-pressed={selectedAttemptId === summary.id}
+                        onClick={() => {
+                          setSelectedAttemptId(summary.id)
+                          setAttemptHistoryOpen(false)
+                          setAttemptError('')
+                          setSelectedClue(null)
+                        }}
+                      >
+                        <strong>Attempt {index + 1}</strong>
+                        <time dateTime={summary.createdAt}>{new Date(summary.createdAt).toLocaleString()}</time>
+                        <span>{summary.answerCount} of {summary.clueCount} answered</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </section>
+            )}
+            {selectedAttempt && (
+              <output className="attempt-status" aria-label="Selected attempt status">
+                <strong>Selected attempt</strong>
+                <span>{selectedAttempt.answerCount} of {selectedAttempt.clueCount} clues answered</span>
+                <span>{selectedAttempt.solving ? 'Solving' : 'Not solving'}</span>
+                <span className="attempt-status-note">Answer details are not available yet.</span>
+              </output>
+            )}
           </section>
           <div className="puzzle-workspace">
             <section className="puzzle-board-section" aria-labelledby="grid-heading">

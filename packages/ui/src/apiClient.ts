@@ -39,6 +39,22 @@ export interface PuzzleSummaryPageOptions {
   signal?: AbortSignal
 }
 
+export interface PuzzleAttempt {
+  id: string
+  createdAt: string
+  solving: boolean
+  puzzle: Puzzle
+  answerCount: number
+}
+
+export interface PuzzleAttemptSummary {
+  id: string
+  createdAt: string
+  solving: boolean
+  answerCount: number
+  clueCount: number
+}
+
 export interface PuzzleUploadPost {
   url: string
   fields: Record<string, string>
@@ -150,6 +166,19 @@ export class ApiClient {
       signal,
     })
     if (!response.ok) throw await this.responseError(response, 'Unable to delete puzzle.')
+  }
+
+  async createAttempt(puzzleId: string, signal?: AbortSignal): Promise<PuzzleAttempt> {
+    const response = await fetch(this.endpoint(`/v1/puzzles/${encodeURIComponent(puzzleId)}/attempts`), {
+      method: 'POST',
+      signal,
+    })
+    return this.readJson<PuzzleAttempt>(response, 'Unable to create puzzle attempt.')
+  }
+
+  async getAttemptSummaries(puzzleId: string, signal?: AbortSignal): Promise<PuzzleAttemptSummary[]> {
+    const response = await fetch(this.endpoint(`/v1/puzzles/${encodeURIComponent(puzzleId)}/attempt-summaries`), { signal })
+    return this.readJson<PuzzleAttemptSummary[]>(response, 'Unable to load attempt summaries.')
   }
 
   async getPuzzle(puzzleId: string, signal?: AbortSignal): Promise<Puzzle> {

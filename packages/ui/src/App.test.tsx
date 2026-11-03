@@ -4,6 +4,7 @@ import { beforeEach, expect, test, vi } from 'vitest'
 const { apiClientMock } = vi.hoisted(() => ({
   apiClientMock: {
     getAllPuzzleSummaries: vi.fn(),
+    getAttemptSummaries: vi.fn(),
     getPuzzle: vi.fn(),
     deletePuzzle: vi.fn(),
     startPuzzleImport: vi.fn(),
@@ -27,6 +28,7 @@ beforeEach(() => {
   window.history.replaceState(null, '', '/')
   vi.clearAllMocks()
   apiClientMock.getAllPuzzleSummaries.mockResolvedValue([puzzle])
+  apiClientMock.getAttemptSummaries.mockResolvedValue([])
   apiClientMock.deletePuzzle.mockResolvedValue(undefined)
   apiClientMock.startPuzzleImport.mockResolvedValue({ location: '/v1/puzzles/imports/import-1' })
   apiClientMock.waitForPuzzleImport.mockResolvedValue({ status: 'COMPLETE', puzzleId: puzzle.id })

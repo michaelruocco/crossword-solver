@@ -112,6 +112,45 @@ def test_find_by_id_returns_none_when_referenced_puzzle_does_not_exist(repositor
     assert attempts.find_by_id(puzzle.id, attempt.id) is None
 
 
+def test_find_by_puzzle_reads_all_pages_and_sorts_attempts_newest_first(repositories):
+    attempts, puzzles = repositories
+    puzzle = a_puzzle()
+    puzzles.save(puzzle)
+    older = Attempt(uuid4(), datetime(2026, 10, 30, 9, 30, tzinfo=UTC), puzzle)
+    newer = Attempt(uuid4(), datetime(2026, 10, 31, 9, 30, tzinfo=UTC), puzzle)
+    attempts.save(older)
+    attempts.save(newer)
+
+    result = attempts.find_by_puzzle(puzzle)
+
+    assert [attempt.id for attempt in result] == [newer.id, older.id]
+    assert all(attempt.puzzle is puzzle for attempt in result)
+
+
+def test_find_by_puzzle_uses_exclusive_start_key_for_query_pages():
+    puzzle = a_puzzle()
+    first_item = {
+        "puzzle_id": str(puzzle.id),
+        "attempt_id": str(uuid4()),
+        "created_at": CREATED_AT.isoformat(),
+        "solving": False,
+        "answer_count": 0,
+    }
+    second_item = {**first_item, "attempt_id": str(uuid4())}
+    dynamodb = MagicMock()
+    table = dynamodb.Table.return_value
+    table.query.side_effect = [
+        {"Items": [first_item], "LastEvaluatedKey": first_item},
+        {"Items": [second_item]},
+    ]
+    repository = DynamoAttemptRepository(ATTEMPTS_TABLE, PUZZLES_TABLE, Mock(), dynamodb=dynamodb)
+
+    result = repository.find_by_puzzle(puzzle)
+
+    assert len(result) == 2
+    assert table.query.call_args_list[1].kwargs["ExclusiveStartKey"] == first_item
+
+
 def test_save_condition_checks_puzzle_and_writes_attempt_in_one_transaction():
     puzzle = a_puzzle()
     attempt = an_attempt(puzzle)

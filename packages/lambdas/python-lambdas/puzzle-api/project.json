@@ -34,6 +34,11 @@
       },
       {
         "generator": "py#lambda-function",
+        "path": "crossword_solver_puzzle_api/get_attempt_summaries/get_attempt_summaries_handler.py",
+        "name": "get-attempt-summaries"
+      },
+      {
+        "generator": "py#lambda-function",
         "path": "crossword_solver_puzzle_api/get_puzzle_image/get_puzzle_image_handler.py",
         "name": "get-puzzle-image"
       },
