@@ -3,6 +3,7 @@ from uuid import UUID
 from boto3.dynamodb.conditions import Key
 from botocore.exceptions import ClientError
 from crossword_solver_domain_entities.attempt import Attempt
+from crossword_solver_domain_entities.puzzle import Puzzle
 from crossword_solver_domain_use_case.attempt_repository import AttemptRepository
 from crossword_solver_domain_use_case.puzzle_not_found_error import PuzzleNotFoundError
 from crossword_solver_domain_use_case.puzzle_repository import PuzzleRepository
@@ -38,6 +39,23 @@ class DynamoAttemptRepository(AttemptRepository):
         if puzzle is None:
             return None
         return self.converter.to_attempt(item, puzzle)
+
+    def find_by_puzzle(self, puzzle: Puzzle) -> list[Attempt]:
+        query = self.table.query(
+            KeyConditionExpression=Key("puzzle_id").eq(str(puzzle.id)),
+            ProjectionExpression="puzzle_id, attempt_id, created_at, solving, answer_count",
+        )
+        items = query["Items"]
+        while "LastEvaluatedKey" in query:
+            query = self.table.query(
+                KeyConditionExpression=Key("puzzle_id").eq(str(puzzle.id)),
+                ProjectionExpression="puzzle_id, attempt_id, created_at, solving, answer_count",
+                ExclusiveStartKey=query["LastEvaluatedKey"],
+            )
+            items.extend(query["Items"])
+
+        attempts = [self.converter.to_attempt(item, puzzle) for item in items]
+        return sorted(attempts, key=lambda attempt: attempt.created_at, reverse=True)
 
     def save(self, attempt: Attempt) -> None:
         item = self.converter.to_item(attempt)
