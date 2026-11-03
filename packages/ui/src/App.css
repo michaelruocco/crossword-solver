@@ -10,6 +10,7 @@
 .attempt-context, .attempt-actions { display:flex; align-items:center; flex-wrap:wrap; gap:10px; }
 .attempt-context { color:var(--forest); font-size:12px; }
 .attempt-context span { color:var(--muted); font-size:11px; }
+.attempt-error { flex-basis:100%; margin:0; color:#a23e31; font-size:12px; }
 .attempt-toolbar button:disabled, .puzzle-workspace button:disabled { opacity:.5; cursor:not-allowed; transform:none; }
 .puzzle-workspace { display:grid; grid-template-columns:minmax(0, 1fr) minmax(0, 1.1fr); align-items:start; gap:36px; }
 .puzzle-board-section { position:sticky; top:24px; min-width:0; }

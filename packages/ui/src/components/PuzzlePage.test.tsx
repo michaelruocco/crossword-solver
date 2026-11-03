@@ -3,7 +3,7 @@ import { beforeEach, expect, test, vi } from 'vitest'
 import { apiClient, type Puzzle } from '../apiClient'
 import { PuzzlePage } from './PuzzlePage'
 
-vi.mock('../apiClient', () => ({ apiClient: { getPuzzle: vi.fn() } }))
+vi.mock('../apiClient', () => ({ apiClient: { getPuzzle: vi.fn(), createAttempt: vi.fn() } }))
 
 const puzzle: Puzzle = {
   id: 'puzzle-1',
@@ -33,9 +33,18 @@ const puzzle: Puzzle = {
   ],
 }
 
+const attempt = {
+  id: 'attempt-1',
+  createdAt: '2026-10-18T09:30:00Z',
+  solving: true,
+  puzzle,
+  answerCount: 0,
+}
+
 beforeEach(() => {
   vi.resetAllMocks()
   vi.mocked(apiClient.getPuzzle).mockResolvedValue(puzzle)
+  vi.mocked(apiClient.createAttempt).mockResolvedValue(attempt)
 })
 
 test('maps bottom-left-origin coordinates to top-to-bottom display rows without reversing columns', async () => {
@@ -126,15 +135,37 @@ test('highlights a down entry toward decreasing y without extending above or bel
   expect(cells.map((cell) => cell.classList.contains('puzzle-cell-selected'))).toEqual([false, true, true, false])
 })
 
-test('marks future attempt and auto-solve actions as unavailable', async () => {
+test('keeps attempt history and auto-solve unavailable while enabling new attempts', async () => {
   render(<PuzzlePage puzzleId={puzzle.id} />)
   await screen.findByRole('table')
 
-  for (const name of ['Previous attempts', 'New attempt', 'Auto-solve']) {
+  for (const name of ['Previous attempts', 'Auto-solve']) {
     expect((screen.getByRole('button', { name }) as HTMLButtonElement).disabled).toBe(true)
   }
-  expect(screen.getByText('Not available yet')).toBeTruthy()
+  expect((screen.getByRole('button', { name: 'New attempt' }) as HTMLButtonElement).disabled).toBe(false)
+  expect(screen.getByText('No attempt created')).toBeTruthy()
   expect(screen.getByRole('link', { name: 'Puzzle library' }).getAttribute('href')).toBe('/')
+})
+
+test('creates an attempt for the current puzzle and reports success', async () => {
+  render(<PuzzlePage puzzleId={puzzle.id} />)
+  await screen.findByRole('table')
+
+  fireEvent.click(screen.getByRole('button', { name: 'New attempt' }))
+
+  expect(apiClient.createAttempt).toHaveBeenCalledWith(puzzle.id)
+  expect(await screen.findByText('Attempt created')).toBeTruthy()
+})
+
+test('reports an attempt creation error and allows retrying', async () => {
+  vi.mocked(apiClient.createAttempt).mockRejectedValueOnce(new Error('Attempt could not be created'))
+  render(<PuzzlePage puzzleId={puzzle.id} />)
+  await screen.findByRole('table')
+
+  fireEvent.click(screen.getByRole('button', { name: 'New attempt' }))
+
+  expect((await screen.findByRole('alert')).textContent).toBe('Attempt could not be created')
+  expect((screen.getByRole('button', { name: 'New attempt' }) as HTMLButtonElement).disabled).toBe(false)
 })
 
 test('allows typing and clearing a local answer draft without submitting or modifying the grid', async () => {

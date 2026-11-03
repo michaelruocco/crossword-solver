@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { ArrowLeft, ArrowRight, ArrowDown, Eraser, History, Plus, Send, Sparkles, Trash2 } from 'lucide-react'
-import { apiClient, type Puzzle, type PuzzleClue } from '../apiClient'
+import { apiClient, type Puzzle, type PuzzleAttempt, type PuzzleClue } from '../apiClient'
 
 type PuzzleState = { status: 'loading' } | { status: 'error'; message: string } | { status: 'ready'; puzzle: Puzzle }
 
@@ -9,6 +9,9 @@ export function PuzzlePage({ puzzleId }: Readonly<{ puzzleId: string }>) {
   const [reloadKey, setReloadKey] = useState(0)
   const [selectedClue, setSelectedClue] = useState<PuzzleClue | null>(null)
   const [answerDrafts, setAnswerDrafts] = useState<Record<string, string>>({})
+  const [attempt, setAttempt] = useState<PuzzleAttempt | null>(null)
+  const [creatingAttempt, setCreatingAttempt] = useState(false)
+  const [attemptError, setAttemptError] = useState('')
   const selectedClueKey = selectedClue ? `${selectedClue.direction}-${selectedClue.id}` : ''
   const answerDraft = answerDrafts[selectedClueKey] ?? ''
 
@@ -35,6 +38,18 @@ export function PuzzlePage({ puzzleId }: Readonly<{ puzzleId: string }>) {
     setReloadKey((key) => key + 1)
   }
 
+  const createAttempt = async () => {
+    setCreatingAttempt(true)
+    setAttemptError('')
+    try {
+      setAttempt(await apiClient.createAttempt(puzzleId))
+    } catch (error) {
+      setAttemptError(error instanceof Error ? error.message : 'Unable to create puzzle attempt.')
+    } finally {
+      setCreatingAttempt(false)
+    }
+  }
+
   return (
     <main className="main-content puzzle-page">
       <a className="puzzle-back" href="/"><ArrowLeft size={16} aria-hidden="true" /> Puzzle library</a>
@@ -56,11 +71,12 @@ export function PuzzlePage({ puzzleId }: Readonly<{ puzzleId: string }>) {
             <span className="puzzle-view-label">Puzzle preview</span>
           </header>
           <section className="attempt-toolbar" aria-label="Puzzle attempts">
-            <div className="attempt-context"><History size={18} aria-hidden="true" /><strong>Attempts</strong><span>Not available yet</span></div>
+            <div className="attempt-context"><History size={18} aria-hidden="true" /><strong>Attempts</strong><span aria-live="polite">{attempt ? 'Attempt created' : 'No attempt created'}</span></div>
             <div className="attempt-actions">
               <button type="button" className="upload-button import-button" disabled title="Attempt history is not available yet"><History size={15} aria-hidden="true" /> Previous attempts</button>
-              <button type="button" className="upload-button" disabled title="Creating attempts is not available in this view yet"><Plus size={16} aria-hidden="true" /> New attempt</button>
+              <button type="button" className="upload-button" disabled={creatingAttempt} onClick={() => void createAttempt()}><Plus size={16} aria-hidden="true" /> {creatingAttempt ? 'Creating...' : 'New attempt'}</button>
             </div>
+            {attemptError && <p className="attempt-error" role="alert">{attemptError}</p>}
           </section>
           <div className="puzzle-workspace">
             <section className="puzzle-board-section" aria-labelledby="grid-heading">
