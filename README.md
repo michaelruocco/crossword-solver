@@ -8,8 +8,8 @@
 
 ### Prerequisites
 
-Install Git, Node.js 22, pnpm 12.9.1, Python 3.14, and uv. Run commands from the repository
-root unless a different directory is shown. uv can install the required Python version:
+Install Git, Node.js 22, pnpm 12.9.1, and uv. Run commands from the repository root unless a
+different directory is shown. Install Python 3.14 with uv, then install the project dependencies:
 
 ```sh
 uv python install 3.14
