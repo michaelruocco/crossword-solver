@@ -87,7 +87,7 @@ Add these GitHub Actions variables at repository level, or override them in each
 
 Use the same bucket and target environment chosen above. The deployment workflow does not
 create the state bucket or OIDC resources. After completing bootstrap, continue with
-[environment initialization and deployment](../../README.md#2-initialize-a-new-environment).
+[layer publication and deployment](../../README.md#2-publish-the-opencv-layer).
 
 ## Adopt an Existing Role
 
