@@ -1,0 +1,64 @@
+provider "aws" {
+  region                      = "eu-west-2"
+  access_key                  = "testing"
+  secret_key                  = "testing"
+  skip_credentials_validation = true
+  skip_metadata_api_check     = true
+  skip_requesting_account_id  = true
+}
+
+override_data {
+  target = data.aws_caller_identity.current
+  values = {
+    account_id = "123456789012"
+  }
+}
+
+override_data {
+  target = data.aws_partition.current
+  values = {
+    partition = "aws"
+  }
+}
+
+variables {
+  environment  = "dev"
+  state_bucket = "example-terraform-state"
+}
+
+run "deployment_policy" {
+  command = plan
+
+  assert {
+    condition     = length(jsondecode(data.aws_iam_policy_document.trust.json).Statement) == 1 && jsondecode(data.aws_iam_policy_document.trust.json).Statement[0].Condition.StringEquals["token.actions.githubusercontent.com:sub"] == "repo:michaelruocco/crossword-solver:environment:dev"
+    error_message = "Trust must be limited to the configured GitHub environment."
+  }
+
+  assert {
+    condition     = jsondecode(data.aws_iam_policy_document.trust.json).Statement[0].Condition.StringEquals["token.actions.githubusercontent.com:aud"] == "sts.amazonaws.com"
+    error_message = "Trust must require the STS audience."
+  }
+
+  assert {
+    condition     = length(jsonencode(jsondecode(data.aws_iam_policy_document.deploy.json))) <= 10240
+    error_message = "The deployment policy must fit the IAM inline role policy size limit."
+  }
+
+  assert {
+    condition     = local.role_arn == "arn:aws:iam::123456789012:role/crossword-solver-dev-*-lambda" && local.state_arn == "arn:aws:s3:::example-terraform-state/crossword-solver/dev/terraform.tfstate"
+    error_message = "IAM and state paths must be scoped to the environment."
+  }
+
+  assert {
+    condition     = one([for statement in jsondecode(data.aws_iam_policy_document.deploy.json).Statement : statement if statement.Sid == "PassLambdaRoles"]).Condition.StringEquals["iam:PassedToService"] == "lambda.amazonaws.com"
+    error_message = "PassRole must only permit Lambda."
+  }
+}
+
+run "reject_invalid_environment" {
+  command = plan
+  variables {
+    environment = "dev/*"
+  }
+  expect_failures = [var.environment]
+}
