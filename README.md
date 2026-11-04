@@ -17,34 +17,19 @@ pnpm install --frozen-lockfile
 uv sync --all-packages --frozen
 ```
 
-### 1. Bootstrap the shared state bucket
+### 1. Bootstrap AWS and GitHub
 
-Terraform needs an existing S3 bucket before it can initialize its remote backend. Create
-this bucket once per account/project, before the first local deployment or deployment pipeline
-run. It is shared by environments, with a separate state key for each environment.
-
-Choose a globally unique bucket name and set the target environment and region:
-
-```
-export TF_STATE_BUCKET="<globally-unique-bucket-name>"
-export AWS_REGION="eu-west-2"
-export DEPLOY_ENV="dev"
-
-./infrastructure/terraform/setup-state-bucket.sh "$TF_STATE_BUCKET" "$AWS_REGION"
-```
-
-The script enables versioning, default encryption, bucket-owner enforcement, and S3 public-access
-blocking. The bucket is created outside the application's Terraform configuration, so destroying
-an application environment does not delete its state bucket. Do not delete the bucket while its
-state is still needed.
-
-Subsequent deployments and additional environments in the same account reuse the existing bucket;
-do not rerun the bucket creation script. For GitHub Actions deployments, configure the same
-`TF_STATE_BUCKET` value and bootstrap AWS authentication as described below before the first run.
+Follow the [bootstrap guide](infrastructure/bootstrap/README.md) to create the shared state
+bucket, configure GitHub OIDC and the deployment role, and set GitHub environment variables.
+It also covers adopting an existing role. Complete this setup before the first deployment;
+subsequent deployments reuse it.
 
 ### 2. Initialize a new environment
 
 For a clean environment with no existing infrastructure or local Terraform state:
+
+Use the `TF_STATE_BUCKET`, `AWS_REGION`, and `DEPLOY_ENV` values chosen during bootstrap;
+export them again when using a new shell.
 
 ```
 terraform -chdir=infrastructure/terraform init \
@@ -155,60 +140,6 @@ image or upstream dependency updates can be requested by changing a committed bu
 Publishing uses `GITHUB_TOKEN` with `contents: write`; deployment only needs `contents: read`.
 No registry, additional credentials, or separate repository is required. Local Docker builds
 remain available using the commands above.
-
-#### One-time AWS and GitHub setup
-
-1. Create the state bucket using the bootstrap instructions above. If deploying an existing
-   environment, ensure its state has been migrated to the matching S3 key first.
-2. In AWS IAM, register GitHub's OIDC provider, `https://token.actions.githubusercontent.com`,
-   with audience `sts.amazonaws.com`, if the account does not already have it.
-3. Create an IAM deployment role with a trust policy like the following, replacing
-   `<aws-account-id>` and using the target GitHub environment name in the subject:
-
-   ```json
-   {
-     "Version": "2012-10-17",
-     "Statement": [
-       {
-         "Effect": "Allow",
-         "Principal": {
-           "Federated": "arn:aws:iam::<aws-account-id>:oidc-provider/token.actions.githubusercontent.com"
-         },
-         "Action": "sts:AssumeRoleWithWebIdentity",
-         "Condition": {
-           "StringEquals": {
-             "token.actions.githubusercontent.com:aud": "sts.amazonaws.com",
-             "token.actions.githubusercontent.com:sub": "repo:michaelruocco/crossword-solver:environment:dev"
-           }
-         }
-       }
-     ]
-   }
-   ```
-
-   Grant this role the permissions required to manage the resources in `infrastructure/terraform`
-   (including the Lambda IAM roles and `iam:PassRole`), upload UI files, and invalidate CloudFront.
-   It also needs `s3:ListBucket` on the state bucket, `s3:GetObject` and `s3:PutObject` on the
-   environment's state object, and `s3:GetObject`, `s3:PutObject`, and `s3:DeleteObject` on its
-   `.tflock` object. Scope state access to the environment's key and lock file. No AWS access keys
-   are stored in GitHub.
-
-4. Under **Settings > Environments**, create the target environment (for example, `dev`).
-   Use lowercase letters, digits, and hyphens, starting with a letter. Configure deployment
-   protection rules to allow only trusted branches and tags and add required reviewers where needed.
-   The workflow's environment-based OIDC subject relies on these rules to restrict which code
-   can assume the role.
-5. Add these GitHub Actions variables at repository level, or override them in each environment:
-
-   | Variable          | Value                                         |
-   | ----------------- | --------------------------------------------- |
-   | `AWS_ROLE_ARN`    | ARN of the environment's OIDC deployment role |
-   | `TF_STATE_BUCKET` | Name of the existing shared state bucket      |
-   | `AWS_REGION`      | Deployment region; defaults to `eu-west-2`    |
-   | `TF_STATE_REGION` | State bucket region; defaults to `AWS_REGION` |
-
-Each environment uses `crossword-solver/<environment>/terraform.tfstate` in the shared bucket.
-The state bucket and OIDC resources are bootstrap prerequisites; this workflow does not create them.
 
 #### Run a deployment
 

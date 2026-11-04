@@ -48,6 +48,9 @@ vitest.config.*.timestamp*
 **/.terraform/*
 *.tfstate
 *.tfstate.*
+/infrastructure/bootstrap/*.tfplan
+/infrastructure/bootstrap/*.tfvars
+/infrastructure/bootstrap/*.tfvars.json
 .vitest
 
 # Lambda layers built by infrastructure/*/build-layer.sh
