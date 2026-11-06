@@ -257,6 +257,36 @@ Terraform still evaluates local artifact inputs for destruction. The layer relea
 It creates and automatically applies a saved destroy plan; environment approvals happen before
 the job starts, not between plan and apply.
 
+Bucket cleanup runs through [empty-destroy-buckets.sh](infrastructure/empty-destroy-buckets.sh).
+Terraform's S3 bucket resource does not remove bucket contents when destroying a bucket;
+S3 rejects `DeleteBucket` while objects remain. Versioning adds another wrinkle: removing an
+object can create a delete marker while older versions remain, and those versions and markers
+must also be explicitly deleted. The script removes current objects, then repeatedly lists and
+deletes object versions and delete markers until each bucket is empty.
+
+The script reads `destroy.tfplan` from `infrastructure/terraform`, gets bucket names from its
+planned deletions, and accepts only this environment's puzzle-image, Lambda-layer, and UI buckets.
+It refuses the shared Terraform state bucket and validates every planned bucket before deleting
+anything. Once they are empty, Terraform can apply the saved destroy plan; that is why the
+workflow uses `terraform apply destroy.tfplan` rather than making a new destroy plan.
+
+The workflow runs the script automatically. To run it manually, first initialize Terraform and
+create `destroy.tfplan` for the intended environment using the same state key; then, with AWS CLI
+credentials for that environment, run from the repository root:
+
+```sh
+TF_VAR_environment=dev TF_STATE_BUCKET=<shared-state-bucket> bash infrastructure/empty-destroy-buckets.sh
+terraform -chdir=infrastructure/terraform apply -lock-timeout=5m destroy.tfplan
+```
+
+This permanently removes application bucket data. Do not use a plan for a different environment.
+If S3 rejects individual deletions, the script logs each failed object's key, version ID, error
+code, and message before stopping. Its offline tests mock AWS and Terraform and require Bash and jq:
+
+```sh
+bash infrastructure/tests/empty-destroy-buckets.sh
+```
+
 The shared state bucket, state history, bootstrap deployment role, OIDC provider, and GitHub
 environment remain intact. Bucket cleanup is irreversible even if Terraform subsequently fails;
 resolve the failure and rerun to finish removing the environment. Avoid manual Terraform changes

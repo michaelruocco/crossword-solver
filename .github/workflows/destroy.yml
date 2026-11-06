@@ -123,40 +123,7 @@ jobs:
         run: terraform -chdir=infrastructure/terraform plan -destroy -lock-timeout=5m -out=destroy.tfplan
 
       - name: Empty application buckets in the destroy plan
-        run: |
-          plan_json="$RUNNER_TEMP/destroy-plan.json"
-          terraform -chdir=infrastructure/terraform show -json destroy.tfplan > "$plan_json"
-          account_id=$(aws sts get-caller-identity --query Account --output text)
-          bucket_list="$RUNNER_TEMP/destroy-buckets.txt"
-          jq -r '.resource_changes[]? | select(.type == "aws_s3_bucket" and (.change.actions | index("delete"))) | .change.before.bucket' \
-            "$plan_json" > "$bucket_list"
-          while IFS= read -r bucket; do
-            case "$bucket" in
-              "crossword-solver-$TF_VAR_environment-puzzle-images"|"crossword-solver-$TF_VAR_environment-lambda-layers"|"crossword-solver-$TF_VAR_environment-ui-$account_id") ;;
-              *) echo "::error::Refusing to empty unexpected bucket $bucket"; exit 1 ;;
-            esac
-            if [[ "$bucket" == "$TF_STATE_BUCKET" ]]; then
-              echo "::error::Refusing to empty the Terraform state bucket."
-              exit 1
-            fi
-          done < "$bucket_list"
-          while IFS= read -r bucket; do
-            aws s3 rm "s3://$bucket" --recursive --only-show-errors
-            while true; do
-              aws s3api list-object-versions --bucket "$bucket" --max-keys 1000 --no-paginate \
-                > "$RUNNER_TEMP/bucket-versions.json"
-              jq '{Objects: ([.Versions[]?, .DeleteMarkers[]?] | map({Key, VersionId})), Quiet: true}' \
-                "$RUNNER_TEMP/bucket-versions.json" > "$RUNNER_TEMP/bucket-deletions.json"
-              count=$(jq '.Objects | length' "$RUNNER_TEMP/bucket-deletions.json")
-              if [[ "$count" == 0 ]]; then break; fi
-              aws s3api delete-objects --bucket "$bucket" \
-                --delete "file://$RUNNER_TEMP/bucket-deletions.json" > "$RUNNER_TEMP/bucket-delete-result.json"
-              if ! jq -e '(.Errors // []) | length == 0' "$RUNNER_TEMP/bucket-delete-result.json" > /dev/null; then
-                echo "::error::S3 could not delete all versions from $bucket."
-                exit 1
-              fi
-            done
-          done < "$bucket_list"
+        run: bash infrastructure/empty-destroy-buckets.sh
 
       - name: Apply destruction
         run: terraform -chdir=infrastructure/terraform apply -lock-timeout=5m destroy.tfplan
