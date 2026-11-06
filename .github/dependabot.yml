@@ -49,6 +49,9 @@ updates:
       - /infrastructure/opencv
     schedule:
       interval: weekly
+    ignore:
+      # Upgrade this runtime together with the Lambda runtime and OpenCV Python binding paths.
+      - dependency-name: lambda/python
 
   - package-ecosystem: terraform
     directory: /infrastructure/terraform
