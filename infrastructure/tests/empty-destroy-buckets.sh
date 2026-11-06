@@ -44,7 +44,6 @@ aws() {
 }
 
 export -f terraform aws
-export TF_VAR_environment=dev
 export TF_STATE_BUCKET=crossword-solver-state
 export TEST_DELETE_RESULT='{}'
 export TEST_PLAN_JSON
@@ -53,7 +52,7 @@ run_case() {
   local expected="$1"
   local actual=0
   rm -f "$TEST_DIR/aws-calls" "$TEST_DIR/list-count"
-  bash "$SCRIPT_DIR/../empty-destroy-buckets.sh" > "$TEST_DIR/stdout" 2> "$TEST_DIR/stderr" || actual=$?
+  TF_VAR_environment=dev bash "$SCRIPT_DIR/../empty-destroy-buckets.sh" > "$TEST_DIR/stdout" 2> "$TEST_DIR/stderr" || actual=$?
   if [[ "$actual" != "$expected" ]]; then
     cat "$TEST_DIR/stderr" >&2
     echo "Expected exit $expected, got $actual" >&2
@@ -69,12 +68,18 @@ echo "PASS: removes versions and delete markers across multiple batches"
 
 export TEST_DELETE_RESULT='{"Errors":[{"Key":"layer.zip","VersionId":"version-1","Code":"AccessDenied","Message":"Access Denied"}]}'
 run_case 1
-grep -q '"Key": "layer.zip"' "$TEST_DIR/stderr"
-grep -q '"VersionId": "version-1"' "$TEST_DIR/stderr"
-grep -q '"Code": "AccessDenied"' "$TEST_DIR/stderr"
-grep -q '"Message": "Access Denied"' "$TEST_DIR/stderr"
+grep -q '"Key":"layer.zip"' "$TEST_DIR/stderr"
+grep -q '"VersionId":"version-1"' "$TEST_DIR/stderr"
+grep -q '"Code":"AccessDenied"' "$TEST_DIR/stderr"
+grep -q '"Message":"Access Denied"' "$TEST_DIR/stderr"
 [[ "$(grep -c 's3api delete-objects' "$TEST_DIR/aws-calls")" == 1 ]]
-echo "PASS: reports all per-object failure details and stops immediately"
+echo "PASS: reports raw per-object failures and stops immediately"
+export TEST_DELETE_RESULT='{"Errors":[{"ObjectKey":"layer.zip","ErrorCode":"AccessDenied","Reason":"Version is retained"}]}'
+run_case 1
+grep -q '"ObjectKey":"layer.zip"' "$TEST_DIR/stderr"
+grep -q '"ErrorCode":"AccessDenied"' "$TEST_DIR/stderr"
+grep -q '"Reason":"Version is retained"' "$TEST_DIR/stderr"
+echo "PASS: preserves additional S3 response fields in diagnostics"
 export TEST_DELETE_RESULT='{}'
 
 TEST_PLAN_JSON=$(jq '.resource_changes += [{"type":"aws_s3_bucket","change":{"actions":["delete"],"before":{"bucket":"unexpected-bucket"}}}]' <<< "$TEST_PLAN_JSON")
