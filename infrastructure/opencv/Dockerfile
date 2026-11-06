@@ -1,4 +1,4 @@
-FROM --platform=linux/amd64 public.ecr.aws/lambda/python:3.15
+FROM --platform=linux/amd64 public.ecr.aws/lambda/python:3.14
 
 ARG OPENCV_VERSION=5.0.0
 
@@ -53,8 +53,8 @@ RUN cmake .. \
     -DWITH_PNG=ON \
     -DWITH_TIFF=ON \
     -DPYTHON3_EXECUTABLE=/var/lang/bin/python3 \
-    -DPYTHON3_INCLUDE_DIR=/var/lang/include/python3.15 \
-    -DPYTHON3_LIBRARY=/var/lang/lib/libpython3.15.so \
+    -DPYTHON3_INCLUDE_DIR=/var/lang/include/python3.14 \
+    -DPYTHON3_LIBRARY=/var/lang/lib/libpython3.14.so \
     -DPYTHON3_PACKAGES_PATH=/opt/python
 
 RUN cmake --build . --parallel 2 \
