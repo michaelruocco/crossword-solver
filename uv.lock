@@ -507,7 +507,7 @@ requires-dist = [
 [package.metadata.requires-dev]
 dev = [
     { name = "boto3", specifier = ">=1.43.123" },
-    { name = "moto", extras = ["s3"], specifier = ">=5.2.4" },
+    { name = "moto", extras = ["s3"], specifier = ">=5.2.5" },
 ]
 
 [[package]]
