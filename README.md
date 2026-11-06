@@ -280,8 +280,9 @@ terraform -chdir=infrastructure/terraform apply -lock-timeout=5m destroy.tfplan
 ```
 
 This permanently removes application bucket data. Do not use a plan for a different environment.
-If S3 rejects individual deletions, the script logs each failed object's key, version ID, error
-code, and message before stopping. Its offline tests mock AWS and Terraform and require Bash and jq:
+If S3 rejects individual deletions, the script logs each raw per-object error returned by S3
+before stopping, including fields the script does not recognize. Its offline tests mock AWS and
+Terraform and require Bash and jq:
 
 ```sh
 bash infrastructure/tests/empty-destroy-buckets.sh

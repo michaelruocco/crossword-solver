@@ -43,8 +43,8 @@ while IFS= read -r bucket; do
     aws s3api delete-objects --bucket "$bucket" \
       --delete "file://$WORK_DIR/deletions.json" > "$WORK_DIR/delete-result.json"
     if ! jq -e '(.Errors // []) | length == 0' "$WORK_DIR/delete-result.json" > /dev/null; then
-      echo "::error::S3 could not delete all versions from $bucket. Per-object failures:" >&2
-      jq '.Errors[]? | {Key, VersionId, Code, Message}' "$WORK_DIR/delete-result.json" >&2
+      echo "::error::S3 could not delete all versions from $bucket. Raw per-object failures:" >&2
+      jq -c '.Errors[]?' "$WORK_DIR/delete-result.json" >&2
       exit 1
     fi
   done
