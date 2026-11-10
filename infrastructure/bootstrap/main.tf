@@ -77,7 +77,10 @@ data "aws_iam_policy_document" "trust" {
     condition {
       test     = "StringLike"
       variable = "token.actions.githubusercontent.com:sub"
-      values   = ["repo:michaelruocco@7877120/crossword-solver@R_kgDOVC8OUA:environment:*"]
+      values   = [
+        "repo:michaelruocco@7877120/crossword-solver@1412370000:ref:refs/heads/*",
+        "repo:michaelruocco@7877120/crossword-solver@1412370000:environment:*"
+      ]
     }
   }
 }
