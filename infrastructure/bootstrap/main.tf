@@ -9,15 +9,6 @@ terraform {
   }
 }
 
-variable "environment" {
-  type = string
-
-  validation {
-    condition     = can(regex("^[a-z][a-z0-9-]*$", var.environment))
-    error_message = "Use lowercase letters, digits, and hyphens, starting with a letter."
-  }
-}
-
 variable "aws_region" {
   type    = string
   default = "eu-west-2"
@@ -52,13 +43,13 @@ data "aws_partition" "current" {}
 locals {
   account   = data.aws_caller_identity.current.account_id
   partition = data.aws_partition.current.partition
-  prefix    = "crossword-solver-${var.environment}"
-  role_arn  = "arn:${local.partition}:iam::${local.account}:role/${local.prefix}-*-lambda"
-  state_arn = "arn:${local.partition}:s3:::${var.state_bucket}/crossword-solver/${var.environment}/terraform.tfstate"
+  prefix    = "crossword-solver-*"
+  role_arn  = "arn:${local.partition}:iam::${local.account}:role/${local.prefix}-lambda"
+  state_arn = "arn:${local.partition}:s3:::${var.state_bucket}/crossword-solver/*/terraform.tfstate"
   buckets = [
     "arn:${local.partition}:s3:::${local.prefix}-puzzle-images",
     "arn:${local.partition}:s3:::${local.prefix}-lambda-layers",
-    "arn:${local.partition}:s3:::${local.prefix}-ui-${local.account}",
+    "arn:${local.partition}:s3:::${local.prefix}-ui",
   ]
   oidc_arn = "arn:${local.partition}:iam::${local.account}:oidc-provider/token.actions.githubusercontent.com"
 }
@@ -66,8 +57,9 @@ locals {
 resource "aws_iam_openid_connect_provider" "github" {
   count = var.create_oidc_provider ? 1 : 0
 
-  url            = "https://token.actions.githubusercontent.com"
-  client_id_list = ["sts.amazonaws.com"]
+  url             = "https://token.actions.githubusercontent.com"
+  client_id_list  = ["sts.amazonaws.com"]
+  thumbprint_list = ["d367a47959a77b088bec4fe3e7dd3ec9ba733ab5"]
 }
 
 data "aws_iam_policy_document" "trust" {
@@ -83,9 +75,12 @@ data "aws_iam_policy_document" "trust" {
       values   = ["sts.amazonaws.com"]
     }
     condition {
-      test     = "StringEquals"
+      test     = "StringLike"
       variable = "token.actions.githubusercontent.com:sub"
-      values   = ["repo:${var.github_repository}:environment:${var.environment}"]
+      values   = [
+        "repo:michaelruocco/crossword-solver:environment:dev",
+        "repo:michaelruocco/crossword-solver:environment:prod"
+      ]
     }
   }
 }
@@ -132,7 +127,7 @@ data "aws_iam_policy_document" "deploy" {
     condition {
       test     = "StringLike"
       variable = "s3:prefix"
-      values   = ["crossword-solver/${var.environment}/*", "env:/"]
+      values   = ["crossword-solver/*", "env:/"]
     }
   }
   statement {
@@ -154,9 +149,9 @@ data "aws_iam_policy_document" "deploy" {
     sid     = "FunctionsAndLayers"
     actions = ["lambda:*"]
     resources = [
-      "arn:${local.partition}:lambda:${var.aws_region}:${local.account}:function:${local.prefix}-*",
-      "arn:${local.partition}:lambda:${var.aws_region}:${local.account}:layer:${local.prefix}-*",
-      "arn:${local.partition}:lambda:${var.aws_region}:${local.account}:layer:${local.prefix}-*:*",
+      "arn:${local.partition}:lambda:${var.aws_region}:${local.account}:function:crossword-solver-*",
+      "arn:${local.partition}:lambda:${var.aws_region}:${local.account}:layer:crossword-solver-*",
+      "arn:${local.partition}:lambda:${var.aws_region}:${local.account}:layer:crossword-solver-*:*",
     ]
   }
   statement {
@@ -167,12 +162,12 @@ data "aws_iam_policy_document" "deploy" {
   statement {
     sid       = "Tables"
     actions   = ["dynamodb:*"]
-    resources = ["arn:${local.partition}:dynamodb:${var.aws_region}:${local.account}:table/${local.prefix}-*"]
+    resources = ["arn:${local.partition}:dynamodb:${var.aws_region}:${local.account}:table/crossword-solver-*"]
   }
   statement {
     sid       = "Queues"
     actions   = ["sqs:*"]
-    resources = ["arn:${local.partition}:sqs:${var.aws_region}:${local.account}:${local.prefix}-*"]
+    resources = ["arn:${local.partition}:sqs:${var.aws_region}:${local.account}:crossword-solver-*"]
   }
   statement {
     sid       = "HttpApis"
@@ -194,7 +189,7 @@ data "aws_iam_policy_document" "deploy" {
 }
 
 resource "aws_iam_role_policy" "deploy" {
-  name   = "crossword-solver-${var.environment}-deployment"
+  name   = "crossword-solver-deployment"
   role   = aws_iam_role.deploy.id
   policy = data.aws_iam_policy_document.deploy.json
 }

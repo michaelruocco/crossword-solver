@@ -62,11 +62,7 @@ jobs:
       TF_INPUT: 'false'
     steps:
       - name: Validate deployment configuration
-        run: |
-          if [[ -z "$AWS_ROLE_ARN" || -z "$TF_STATE_BUCKET" ]]; then
-            echo "::error::Configure AWS_ROLE_ARN and TF_STATE_BUCKET as GitHub Actions variables."
-            exit 1
-          fi
+        run: bash infrastructure/validate-deployment-config.sh
 
       - uses: actions/checkout@v7
         with:
@@ -77,19 +73,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
-        run: |
-          tag=$(bash infrastructure/layer-release-tag.sh opencv)
-          bash infrastructure/wait-for-opencv-release.sh "$tag"
-          echo "Downloading OpenCV layer from $tag"
-          download_dir="$RUNNER_TEMP/native-layers/opencv"
-          if ! gh release download "$tag" --dir "$download_dir" \
-            --pattern opencv-layer.zip --pattern SHA256SUMS; then
-            echo "::error::Unable to download OpenCV layer. Run publish-opencv-layer.yml for this commit and wait for it to succeed before deploying."
-            exit 1
-          fi
-          (cd "$download_dir" && sha256sum --check SHA256SUMS)
-          mkdir -p infrastructure/opencv/build
-          mv "$download_dir/opencv-layer.zip" infrastructure/opencv/build/
+        run: bash infrastructure/download-opencv-layer.sh
 
       - uses: pnpm/action-setup@v6
         with:

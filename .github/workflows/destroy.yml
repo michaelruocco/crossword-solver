@@ -53,12 +53,8 @@ jobs:
       TF_IN_AUTOMATION: 'true'
       TF_INPUT: 'false'
     steps:
-      - name: Validate AWS configuration
-        run: |
-          if [[ -z "$AWS_ROLE_ARN" || -z "$TF_STATE_BUCKET" ]]; then
-            echo "::error::Configure AWS_ROLE_ARN and TF_STATE_BUCKET as GitHub Actions variables."
-            exit 1
-          fi
+      - name: Validate deployment configuration
+        run: bash infrastructure/validate-deployment-config.sh
 
       - uses: actions/checkout@v7
         with:
@@ -69,15 +65,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
-        run: |
-          tag=$(bash infrastructure/layer-release-tag.sh opencv)
-          bash infrastructure/wait-for-opencv-release.sh "$tag"
-          download_dir="$RUNNER_TEMP/native-layers/opencv"
-          gh release download "$tag" --dir "$download_dir" \
-            --pattern opencv-layer.zip --pattern SHA256SUMS
-          (cd "$download_dir" && sha256sum --check SHA256SUMS)
-          mkdir -p infrastructure/opencv/build
-          mv "$download_dir/opencv-layer.zip" infrastructure/opencv/build/
+        run: bash infrastructure/download-opencv-layer.sh
 
       - uses: pnpm/action-setup@v6
         with:
@@ -120,13 +108,13 @@ jobs:
         run: terraform -chdir=infrastructure/terraform validate
 
       - name: Plan destruction
-        run: terraform -chdir=infrastructure/terraform plan -destroy -lock-timeout=5m -out=destroy.tfplan
+        run: terraform -chdir=infrastructure/terraform plan -destroy -out=destroy.tfplan
 
       - name: Empty application buckets in the destroy plan
         run: bash infrastructure/empty-destroy-buckets.sh
 
       - name: Apply destruction
-        run: terraform -chdir=infrastructure/terraform apply -lock-timeout=5m destroy.tfplan
+        run: terraform -chdir=infrastructure/terraform apply destroy.tfplan
 
       - name: Report destruction
         run: |

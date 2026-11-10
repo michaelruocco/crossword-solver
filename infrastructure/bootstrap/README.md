@@ -14,12 +14,11 @@ Terraform needs an existing S3 bucket before it can initialize the application's
 Create this bucket once per account/project. It is shared by environments, with a separate
 state key for each environment.
 
-Choose a globally unique bucket name and set the target environment and region:
+Choose a globally unique bucket name and set the target region:
 
 ```sh
 export TF_STATE_BUCKET="<globally-unique-bucket-name>"
 export AWS_REGION="eu-west-2"
-export DEPLOY_ENV="dev"
 
 ./infrastructure/bootstrap/setup-state-bucket.sh "$TF_STATE_BUCKET" "$AWS_REGION"
 ```
@@ -57,7 +56,6 @@ For a new role and an account without GitHub's OIDC provider:
 ```sh
 terraform -chdir=infrastructure/bootstrap init
 terraform -chdir=infrastructure/bootstrap plan \
-  -var="environment=$DEPLOY_ENV" \
   -var="aws_region=$AWS_REGION" \
   -var="state_bucket=$TF_STATE_BUCKET" \
   -var='create_oidc_provider=true' \
@@ -85,27 +83,15 @@ Add these GitHub Actions variables at repository level, or override them in each
 | `AWS_REGION`      | Deployment region; defaults to `eu-west-2`          |
 | `TF_STATE_REGION` | State bucket region; defaults to `AWS_REGION`       |
 
-Use the same bucket and target environment chosen above. The deployment workflow does not
+Use the same bucket and target region chosen above. The deployment workflow does not
 create the state bucket or OIDC resources. After completing bootstrap, continue with
 [layer publication and deployment](../../README.md#2-publish-the-opencv-layer).
 
-## Adopt an Existing Role
+## Reusing an Existing OIDC Provider
 
-The default role name matches the existing `crossword-solver-github-actions` role. Before the
-first plan/apply, import it rather than attempting to create it again:
-
-```sh
-terraform -chdir=infrastructure/bootstrap import \
-  -var='environment=dev' -var="state_bucket=$TF_STATE_BUCKET" \
-  aws_iam_role.deploy crossword-solver-github-actions
-```
-
-Leave `create_oidc_provider=false` when reusing your existing provider. Review the plan carefully:
-applying updates the role's trust to the specified repository/environment and adds the named
-inline deployment policy. Existing attached policies and differently named inline policies
-are not removed. Audit them separately: leaving broad old policies attached defeats the new
-policy's scope restrictions. Do not remove old permissions until the new policy is reviewed
-and a deployment succeeds.
+If the GitHub OIDC provider already exists in your AWS account (created for another project),
+simply omit `create_oidc_provider=true` when running terraform. The role's trust policy will
+reference the existing account-level provider at `https://token.actions.githubusercontent.com`.
 
 ## State and Environments
 
@@ -114,22 +100,25 @@ and back up this state; do not commit it. For shared administration, configure a
 backend/key and migrate the bootstrap state using Terraform's normal state migration procedure.
 Never reuse the application's state key or run application destroy commands in this directory.
 
-For another environment, use a separate checkout/state and a distinct `role_name`, such as
-`crossword-solver-prod-github-actions`, and reuse the account's existing OIDC provider. Do not
-switch an existing bootstrap state's environment: that changes its role's trust and permissions.
+A single role created by this bootstrap can deploy to all environments (dev, prod, staging, etc.)
+within the same AWS account. The role's trust policy allows GitHub Actions from any environment,
+and resource-level permissions are isolated via the `crossword-solver-*` naming prefix, which
+ensures the role can only access resources for your application across all environments.
 
 ## Permissions
 
-The policy includes role tagging, limits IAM role management to the environment's Lambda
-roles, and restricts `PassRole` to Lambda. State access is limited to the environment's key
-and lock object. Application S3 buckets, Lambda functions/layers, DynamoDB tables, and SQS
-queues use the stack's names and the selected region/account.
+## Permissions
+
+The policy includes role tagging, limits IAM role management to Lambda roles, and restricts
+`PassRole` to Lambda. State access is granted for all environments via wildcard patterns.
+Application S3 buckets, Lambda functions/layers, DynamoDB tables, and SQS queues use the
+prefix `crossword-solver-*` to match any environment across the selected region/account.
 
 Lambda role management requires `iam:TagRole` and `iam:UntagRole` on roles named
-`crossword-solver-<environment>-*-lambda`: the application AWS provider applies `Application`
-and `Environment` default tags. The policy also grants `s3:ListBucket` on the state bucket,
-`s3:GetObject` and `s3:PutObject` on the environment's state object, and `s3:GetObject`,
-`s3:PutObject`, and `s3:DeleteObject` on its `.tflock` object.
+`crossword-solver-*-lambda`: the application AWS provider applies `Application` and
+`Environment` default tags. The policy also grants `s3:ListBucket` on the state bucket,
+`s3:GetObject` and `s3:PutObject` on all environment state objects, and `s3:GetObject`,
+`s3:PutObject`, and `s3:DeleteObject` on their `.tflock` objects.
 
 This is a project-scoped deployment policy, not strict least privilege: service wildcards
 allow management of the named resources, including their data. HTTP API IDs, Lambda event-source

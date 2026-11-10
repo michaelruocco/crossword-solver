@@ -22,7 +22,6 @@ override_data {
 }
 
 variables {
-  environment  = "dev"
   state_bucket = "example-terraform-state"
 }
 
@@ -30,8 +29,8 @@ run "deployment_policy" {
   command = plan
 
   assert {
-    condition     = length(jsondecode(data.aws_iam_policy_document.trust.json).Statement) == 1 && jsondecode(data.aws_iam_policy_document.trust.json).Statement[0].Condition.StringEquals["token.actions.githubusercontent.com:sub"] == "repo:michaelruocco/crossword-solver:environment:dev"
-    error_message = "Trust must be limited to the configured GitHub environment."
+    condition     = length(jsondecode(data.aws_iam_policy_document.trust.json).Statement) == 1 && jsondecode(data.aws_iam_policy_document.trust.json).Statement[0].Condition.StringLike["token.actions.githubusercontent.com:sub"] == "repo:michaelruocco/crossword-solver:environment:*"
+    error_message = "Trust must allow any GitHub environment for this repository."
   }
 
   assert {
@@ -45,20 +44,12 @@ run "deployment_policy" {
   }
 
   assert {
-    condition     = local.role_arn == "arn:aws:iam::123456789012:role/crossword-solver-dev-*-lambda" && local.state_arn == "arn:aws:s3:::example-terraform-state/crossword-solver/dev/terraform.tfstate"
-    error_message = "IAM and state paths must be scoped to the environment."
+    condition     = local.role_arn == "arn:aws:iam::123456789012:role/crossword-solver-*-lambda" && local.state_arn == "arn:aws:s3:::example-terraform-state/crossword-solver/*/terraform.tfstate"
+    error_message = "IAM and state paths must support all environments via wildcard patterns."
   }
 
   assert {
     condition     = one([for statement in jsondecode(data.aws_iam_policy_document.deploy.json).Statement : statement if statement.Sid == "PassLambdaRoles"]).Condition.StringEquals["iam:PassedToService"] == "lambda.amazonaws.com"
     error_message = "PassRole must only permit Lambda."
   }
-}
-
-run "reject_invalid_environment" {
-  command = plan
-  variables {
-    environment = "dev/*"
-  }
-  expect_failures = [var.environment]
 }
