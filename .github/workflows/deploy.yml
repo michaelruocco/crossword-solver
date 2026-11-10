@@ -61,13 +61,13 @@ jobs:
       TF_IN_AUTOMATION: 'true'
       TF_INPUT: 'false'
     steps:
-      - name: Validate deployment configuration
-        run: bash infrastructure/validate-deployment-config.sh
-
       - uses: actions/checkout@v7
         with:
           ref: ${{ github.sha }}
           persist-credentials: false
+
+      - name: Validate deployment configuration
+        run: bash infrastructure/validate-deployment-config.sh
 
       - name: Download OpenCV layer
         env:
