@@ -57,8 +57,9 @@ locals {
 resource "aws_iam_openid_connect_provider" "github" {
   count = var.create_oidc_provider ? 1 : 0
 
-  url            = "https://token.actions.githubusercontent.com"
-  client_id_list = ["sts.amazonaws.com"]
+  url             = "https://token.actions.githubusercontent.com"
+  client_id_list  = ["sts.amazonaws.com"]
+  thumbprint_list = ["d367a47959a77b088bec4fe3e7dd3ec9ba733ab5"]
 }
 
 data "aws_iam_policy_document" "trust" {
@@ -75,8 +76,8 @@ data "aws_iam_policy_document" "trust" {
     }
     condition {
       test     = "StringLike"
-      variable = "token.actions.githubusercontent.com:sub"
-      values   = ["repo:${var.github_repository}:environment:*"]
+      variable = "token.actions.githubusercontent.com:job_workflow_ref"
+      values   = ["michaelruocco/crossword-solver/.github/workflows/deploy.yml@*"]
     }
   }
 }
