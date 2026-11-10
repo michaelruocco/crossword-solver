@@ -1,5 +1,5 @@
 resource "aws_s3_bucket" "ui" {
-  bucket = "crossword-solver-${var.environment}-ui-${data.aws_caller_identity.current.account_id}"
+  bucket = "crossword-solver-${var.environment}-ui"
 }
 
 resource "aws_s3_bucket_public_access_block" "ui" {
