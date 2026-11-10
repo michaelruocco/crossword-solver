@@ -171,7 +171,7 @@ data "aws_iam_policy_document" "deploy" {
   }
   statement {
     sid       = "HttpApis"
-    actions   = ["apigateway:GET", "apigateway:POST", "apigateway:PUT", "apigateway:PATCH", "apigateway:DELETE"]
+    actions   = ["apigateway:GET", "apigateway:POST", "apigateway:PUT", "apigateway:PATCH", "apigateway:DELETE", "apigateway:TagResource", "apigateway:UntagResource"]
     resources = ["arn:${local.partition}:apigateway:${var.aws_region}::/apis", "arn:${local.partition}:apigateway:${var.aws_region}::/apis/*", "arn:${local.partition}:apigateway:${var.aws_region}::/tags/*"]
   }
   statement {
