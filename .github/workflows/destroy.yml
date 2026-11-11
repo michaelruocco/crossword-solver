@@ -53,13 +53,13 @@ jobs:
       TF_IN_AUTOMATION: 'true'
       TF_INPUT: 'false'
     steps:
-      - name: Validate deployment configuration
-        run: bash infrastructure/validate-deployment-config.sh
-
       - uses: actions/checkout@v7
         with:
           ref: ${{ github.sha }}
           persist-credentials: false
+
+      - name: Validate deployment configuration
+        run: bash infrastructure/validate-deployment-config.sh
 
       - name: Download OpenCV layer
         env:
@@ -110,7 +110,7 @@ jobs:
       - name: Plan destruction
         run: terraform -chdir=infrastructure/terraform plan -destroy -out=destroy.tfplan
 
-      - name: Empty application buckets in the destroy plan
+      - name: Empty application buckets
         run: bash infrastructure/empty-destroy-buckets.sh
 
       - name: Apply destruction
