@@ -52,7 +52,8 @@ run_case() {
   local expected="$1"
   local actual=0
   rm -f "$TEST_DIR/aws-calls" "$TEST_DIR/list-count"
-  TF_VAR_environment=dev bash "$SCRIPT_DIR/../empty-destroy-buckets.sh" > "$TEST_DIR/stdout" 2> "$TEST_DIR/stderr" || actual=$?
+  : > "$TEST_DIR/aws-calls"
+  TF_VAR_environment=dev bash "$SCRIPT_DIR/../empty-buckets.sh" > "$TEST_DIR/stdout" 2> "$TEST_DIR/stderr" || actual=$?
   if [[ "$actual" != "$expected" ]]; then
     cat "$TEST_DIR/stderr" >&2
     echo "Expected exit $expected, got $actual" >&2
@@ -65,6 +66,18 @@ run_case 0
 [[ "$(grep -c 's3api delete-objects' "$TEST_DIR/aws-calls")" == 2 ]]
 [[ "$(cat "$TEST_DIR/list-count")" == 3 ]]
 echo "PASS: removes versions and delete markers across multiple batches"
+
+TEST_PLAN_JSON='{"resource_changes":[
+  {"type":"aws_s3_bucket","change":{"actions":["delete"],"before":{"bucket":"crossword-solver-dev-ui"}}},
+  {"type":"aws_s3_bucket","change":{"actions":["delete"],"before":{"bucket":"crossword-solver-dev-puzzle-images"}}},
+  {"type":"aws_s3_bucket","change":{"actions":["delete"],"before":{"bucket":"crossword-solver-dev-lambda-layers"}}}
+]}'
+run_case 0
+[[ "$(grep -c '^s3 rm s3://crossword-solver-dev-' "$TEST_DIR/aws-calls")" == 3 ]]
+grep -q '^s3 rm s3://crossword-solver-dev-ui --recursive$' "$TEST_DIR/aws-calls"
+grep -q '^s3 rm s3://crossword-solver-dev-puzzle-images --recursive$' "$TEST_DIR/aws-calls"
+grep -q '^s3 rm s3://crossword-solver-dev-lambda-layers --recursive$' "$TEST_DIR/aws-calls"
+echo "PASS: empties only the planned UI, puzzle-image, and Lambda-layer buckets"
 
 export TEST_DELETE_RESULT='{"Errors":[{"Key":"layer.zip","VersionId":"version-1","Code":"AccessDenied","Message":"Access Denied"}]}'
 run_case 1
