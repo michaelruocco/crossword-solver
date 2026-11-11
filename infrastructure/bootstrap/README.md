@@ -114,7 +114,10 @@ prefix `crossword-solver-*` to match any environment across the selected region/
 
 Lambda role management requires `iam:TagRole` and `iam:UntagRole` on roles named
 `crossword-solver-*-lambda`: the application AWS provider applies `Application` and
-`Environment` default tags. The policy also grants `s3:ListBucket` on the state bucket,
+`Environment` default tags. It also grants `iam:ListInstanceProfilesForRole` on those roles so
+Terraform can check for attached instance profiles when deleting them. Event-source mapping
+management is scoped to the application's mapping ARNs; `lambda:GetEventSourceMapping` requires
+`Resource = "*"` and is granted separately. The policy also grants `s3:ListBucket` on the state bucket,
 `s3:GetObject` and `s3:PutObject` on all environment state objects, and `s3:GetObject`,
 `s3:PutObject`, and `s3:DeleteObject` on their `.tflock` objects.
 
@@ -136,6 +139,60 @@ discovery prefix, but does not grant read/write access to non-default workspace 
 
 Review every bootstrap plan before applying. No AWS resources are changed just by adding this
 configuration to the repository.
+
+## Destroy Bootstrap Resources
+
+Use an administrator/bootstrap AWS identity, not the GitHub deployment role. Bootstrap uses
+local Terraform state, so run these commands from a checkout that has the correct
+`infrastructure/bootstrap/terraform.tfstate`. Back up that state before destroying anything;
+without it Terraform cannot reliably identify the resources this configuration manages.
+
+Set the same region and state bucket values used when creating the bootstrap resources, then
+initialize Terraform and inspect which resources this state owns:
+
+```sh
+export AWS_REGION="eu-west-2"
+export TF_STATE_BUCKET="<shared-state-bucket>"
+
+terraform -chdir=infrastructure/bootstrap init
+terraform -chdir=infrastructure/bootstrap state list
+```
+
+The state should include `aws_iam_role.deploy` and `aws_iam_role_policy.deploy`. If it also
+includes `aws_iam_openid_connect_provider.github[0]`, this bootstrap state owns the
+account-level GitHub OIDC provider. Only in that case, include
+`-var='create_oidc_provider=true'` in the plan command:
+
+```sh
+terraform -chdir=infrastructure/bootstrap plan -destroy \
+  -var="aws_region=$AWS_REGION" \
+  -var="state_bucket=$TF_STATE_BUCKET" \
+  -var='create_oidc_provider=true' \
+  -out=bootstrap-destroy.tfplan
+```
+
+If `aws_iam_openid_connect_provider.github[0]` is not listed, omit the
+`create_oidc_provider` argument:
+
+```sh
+terraform -chdir=infrastructure/bootstrap plan -destroy \
+  -var="aws_region=$AWS_REGION" \
+  -var="state_bucket=$TF_STATE_BUCKET" \
+  -out=bootstrap-destroy.tfplan
+```
+
+Review the plan before applying it:
+
+```sh
+terraform -chdir=infrastructure/bootstrap show bootstrap-destroy.tfplan
+terraform -chdir=infrastructure/bootstrap apply bootstrap-destroy.tfplan
+```
+
+The destroy removes the deployment role and its policy. It removes the OIDC provider only when
+that provider is tracked in this bootstrap state and the plan includes its deletion. The provider
+is shared account-wide; do not destroy it if another repository or application depends on it.
+The shared S3 state bucket is created separately by `setup-state-bucket.sh` and is not removed
+by this Terraform destroy. Delete that bucket manually only when its state is no longer needed.
 
 ## Local Validation
 

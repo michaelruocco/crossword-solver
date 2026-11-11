@@ -29,8 +29,14 @@ run "deployment_policy" {
   command = plan
 
   assert {
-    condition     = length(jsondecode(data.aws_iam_policy_document.trust.json).Statement) == 1 && jsondecode(data.aws_iam_policy_document.trust.json).Statement[0].Condition.StringLike["token.actions.githubusercontent.com:sub"] == "repo:michaelruocco/crossword-solver:environment:*"
-    error_message = "Trust must allow any GitHub environment for this repository."
+    condition = length(jsondecode(data.aws_iam_policy_document.trust.json).Statement) == 1 && contains(
+      jsondecode(data.aws_iam_policy_document.trust.json).Statement[0].Condition.StringLike["token.actions.githubusercontent.com:sub"],
+      "repo:michaelruocco@7877120/crossword-solver@1412370000:environment:*"
+      ) && contains(
+      jsondecode(data.aws_iam_policy_document.trust.json).Statement[0].Condition.StringLike["token.actions.githubusercontent.com:sub"],
+      "repo:michaelruocco@7877120/crossword-solver@1412370000:ref:refs/heads/*"
+    )
+    error_message = "Trust must allow this repository's configured GitHub environments and branches."
   }
 
   assert {
@@ -51,5 +57,15 @@ run "deployment_policy" {
   assert {
     condition     = one([for statement in jsondecode(data.aws_iam_policy_document.deploy.json).Statement : statement if statement.Sid == "PassLambdaRoles"]).Condition.StringEquals["iam:PassedToService"] == "lambda.amazonaws.com"
     error_message = "PassRole must only permit Lambda."
+  }
+
+  assert {
+    condition     = contains(one([for statement in jsondecode(data.aws_iam_policy_document.deploy.json).Statement : statement if statement.Sid == "LambdaRoles"]).Action, "iam:ListInstanceProfilesForRole")
+    error_message = "The deployment role must be able to check for instance profiles when deleting Lambda roles."
+  }
+
+  assert {
+    condition     = one([for statement in jsondecode(data.aws_iam_policy_document.deploy.json).Statement : statement if statement.Sid == "GetEventSourceMapping"]).Resource == "*"
+    error_message = "GetEventSourceMapping must use the wildcard resource required by AWS."
   }
 }

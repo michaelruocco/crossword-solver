@@ -77,7 +77,7 @@ data "aws_iam_policy_document" "trust" {
     condition {
       test     = "StringLike"
       variable = "token.actions.githubusercontent.com:sub"
-      values   = [
+      values = [
         "repo:michaelruocco@7877120/crossword-solver@1412370000:ref:refs/heads/*",
         "repo:michaelruocco@7877120/crossword-solver@1412370000:environment:*"
       ]
@@ -97,6 +97,7 @@ data "aws_iam_policy_document" "deploy" {
       "iam:CreateRole", "iam:GetRole", "iam:DeleteRole", "iam:UpdateAssumeRolePolicy",
       "iam:TagRole", "iam:UntagRole", "iam:ListRoleTags", "iam:ListRolePolicies",
       "iam:GetRolePolicy", "iam:PutRolePolicy", "iam:DeleteRolePolicy", "iam:ListAttachedRolePolicies",
+      "iam:ListInstanceProfilesForRole",
     ]
     resources = [local.role_arn]
   }
@@ -156,8 +157,13 @@ data "aws_iam_policy_document" "deploy" {
   }
   statement {
     sid       = "EventSourceMappings"
-    actions   = ["lambda:CreateEventSourceMapping", "lambda:GetEventSourceMapping", "lambda:UpdateEventSourceMapping", "lambda:DeleteEventSourceMapping", "lambda:ListTags", "lambda:TagResource", "lambda:UntagResource"]
+    actions   = ["lambda:CreateEventSourceMapping", "lambda:UpdateEventSourceMapping", "lambda:DeleteEventSourceMapping", "lambda:ListTags", "lambda:TagResource", "lambda:UntagResource"]
     resources = ["arn:${local.partition}:lambda:${var.aws_region}:${local.account}:event-source-mapping:*"]
+  }
+  statement {
+    sid       = "GetEventSourceMapping"
+    actions   = ["lambda:GetEventSourceMapping"]
+    resources = ["*"]
   }
   statement {
     sid       = "Tables"
