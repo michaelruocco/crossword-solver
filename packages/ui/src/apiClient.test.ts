@@ -134,7 +134,7 @@ test('deletes a puzzle by id', async () => {
 })
 
 test('creates a puzzle attempt without a request body', async () => {
-  const attempt = { id: 'attempt-1', createdAt: '2026-10-18T09:30:00Z', solving: true, puzzle: {}, answerCount: 0 }
+  const attempt = { id: 'attempt-1', createdAt: '2026-10-18T09:30:00Z', solving: true, puzzle: {}, answerCount: 0, answers: [] }
   const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify(attempt), { status: 201 }))
   vi.stubGlobal('fetch', fetchMock)
   const client = new ApiClient('https://api.test')
@@ -145,6 +145,33 @@ test('creates a puzzle attempt without a request body', async () => {
     method: 'POST',
     signal: controller.signal,
   })
+})
+
+test('posts an answer for an attempt and returns the updated attempt', async () => {
+  const answer = { id: '3A', value: 'CAT' }
+  const attempt = {
+    id: 'attempt-1',
+    createdAt: '2026-10-18T09:30:00Z',
+    solving: true,
+    puzzle: {},
+    answerCount: 1,
+    answers: [answer],
+  }
+  const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify(attempt), { status: 200 }))
+  vi.stubGlobal('fetch', fetchMock)
+  const client = new ApiClient('https://api.test')
+  const controller = new AbortController()
+
+  await expect(client.postAttemptAnswer('puzzle /1', 'attempt /1', answer, controller.signal)).resolves.toEqual(attempt)
+  expect(fetchMock).toHaveBeenCalledWith(
+    'https://api.test/v1/puzzles/puzzle%20%2F1/attempts/attempt%20%2F1/answers',
+    {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(answer),
+      signal: controller.signal,
+    },
+  )
 })
 
 test('loads attempt summaries for an encoded puzzle id', async () => {

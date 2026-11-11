@@ -3,6 +3,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field
 
+from .answer_response import AnswerResponse
 from .puzzle_response import PuzzleResponse
 
 
@@ -12,3 +13,4 @@ class AttemptResponse(BaseModel):
     solving: bool
     puzzle: PuzzleResponse
     answer_count: int = Field(alias="answerCount")
+    answers: list[AnswerResponse] = Field(default_factory=list)

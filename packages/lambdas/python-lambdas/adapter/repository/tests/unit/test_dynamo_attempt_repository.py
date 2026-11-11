@@ -6,12 +6,15 @@ import boto3
 import pytest
 from boto3.dynamodb.conditions import Key
 from botocore.exceptions import ClientError
+from crossword_solver_domain_entities.answer import Answer
+from crossword_solver_domain_entities.answers import Answers
 from crossword_solver_domain_entities.attempt import Attempt
 from crossword_solver_domain_entities.cell import Cell
 from crossword_solver_domain_entities.cells import Cells
 from crossword_solver_domain_entities.clues import Clues
 from crossword_solver_domain_entities.coordinates import Coordinates
 from crossword_solver_domain_entities.grid import Grid
+from crossword_solver_domain_entities.id import Id
 from crossword_solver_domain_entities.puzzle import Puzzle
 from crossword_solver_domain_entities.words import Words
 from crossword_solver_domain_use_case.puzzle_not_found_error import PuzzleNotFoundError
@@ -87,7 +90,8 @@ def test_saves_attempt_by_reference_and_hydrates_puzzle_on_load(repositories):
     )["Item"]
     restored = attempts.find_by_id(puzzle.id, attempt.id)
 
-    assert set(item) == {"puzzle_id", "attempt_id", "created_at", "solving", "answer_count"}
+    assert set(item) == {"puzzle_id", "attempt_id", "created_at", "solving", "answer_count", "answers"}
+    assert item["answers"] == {}
     assert item["puzzle_id"] == str(puzzle.id)
     assert restored is not None
     assert restored.id == attempt.id
@@ -182,6 +186,7 @@ def test_save_condition_checks_puzzle_and_writes_attempt_in_one_transaction():
                 "created_at": CREATED_AT.isoformat(),
                 "solving": False,
                 "answer_count": 0,
+                "answers": {},
             },
         }
     }
@@ -202,6 +207,49 @@ def test_save_rejects_an_attempt_for_a_puzzle_deleted_before_commit(repositories
 
     with pytest.raises(PuzzleNotFoundError):
         attempts.save(attempt)
+
+
+def test_saves_and_loads_answers_by_clue_id(repositories):
+    attempts, puzzles = repositories
+    puzzle = a_puzzle()
+    puzzles.save(puzzle)
+    attempt = Attempt(
+        id=uuid4(),
+        created_at=CREATED_AT,
+        puzzle=puzzle,
+        answer_count=1,
+        answers=Answers([Answer(Id.down(1), "OWL")]),
+    )
+
+    attempts.save(attempt)
+
+    restored = attempts.find_by_id(puzzle.id, attempt.id)
+
+    assert restored is not None
+    assert restored.answer_count == 1
+    assert restored.answers.find(Id.down(1)) == Answer(Id.down(1), "OWL")
+
+
+def test_loads_legacy_attempt_without_answers(repositories):
+    attempts, puzzles = repositories
+    puzzle = a_puzzle()
+    puzzles.save(puzzle)
+    attempt_id = uuid4()
+    attempts.table.put_item(
+        Item={
+            "puzzle_id": str(puzzle.id),
+            "attempt_id": str(attempt_id),
+            "created_at": CREATED_AT.isoformat(),
+            "solving": False,
+            "answer_count": 0,
+        }
+    )
+
+    restored = attempts.find_by_id(puzzle.id, attempt_id)
+
+    assert restored is not None
+    assert restored.answers is not None
+    assert len(restored.answers) == 0
 
 
 @pytest.mark.parametrize("error_code", ["ProvisionedThroughputExceededException", "TransactionCanceledException"])

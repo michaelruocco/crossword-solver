@@ -2,6 +2,7 @@ import json
 
 from aws_lambda_powertools.utilities.parser.models import APIGatewayProxyEventV2Model
 
+from .answer_request import AnswerRequest
 from .create_puzzle_upload_request import CreatePuzzleUploadRequest
 from .import_puzzle_request import ImportPuzzleRequest
 from .puzzle_summary_query import PuzzleSummaryQuery
@@ -13,6 +14,9 @@ class ApiGatewayEventConverter:
 
     def to_upload_request(self, event: APIGatewayProxyEventV2Model) -> CreatePuzzleUploadRequest:
         return CreatePuzzleUploadRequest.model_validate(_to_json(event))
+
+    def to_answer_request(self, event: APIGatewayProxyEventV2Model) -> AnswerRequest:
+        return AnswerRequest.model_validate(_to_json(event))
 
     def to_puzzle_summary_query(self, event: APIGatewayProxyEventV2Model) -> PuzzleSummaryQuery:
         return PuzzleSummaryQuery.model_validate(event.queryStringParameters or {})
