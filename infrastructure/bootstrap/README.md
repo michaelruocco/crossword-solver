@@ -107,8 +107,6 @@ ensures the role can only access resources for your application across all envir
 
 ## Permissions
 
-## Permissions
-
 The policy includes role tagging, limits IAM role management to Lambda roles, and restricts
 `PassRole` to Lambda. State access is granted for all environments via wildcard patterns.
 Application S3 buckets, Lambda functions/layers, DynamoDB tables, and SQS queues use the
