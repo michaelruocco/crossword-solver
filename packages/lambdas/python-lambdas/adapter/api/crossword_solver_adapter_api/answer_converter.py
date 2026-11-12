@@ -7,7 +7,7 @@ from crossword_solver_domain_entities.id import Id
 from .answer_request import AnswerRequest
 from .answer_response import AnswerResponse
 
-_ANSWER_ID_PATTERN = re.compile(r"([1-9][0-9]*)([AD])")
+_ANSWER_ID_PATTERN = re.compile(r"([1-9]\d*)([AD])")
 
 
 class AnswerConverter:

@@ -1,4 +1,4 @@
-from dataclasses import dataclass, field, replace
+from dataclasses import dataclass, field
 from datetime import datetime
 from uuid import UUID
 
@@ -27,4 +27,11 @@ class Attempt:
 
         updated_answers = self.answers.save(answer)
         answer_count = self.answer_count + (self.answers.find(answer.id) is None)
-        return replace(self, answers=updated_answers, answer_count=answer_count)
+        return Attempt(
+            id=self.id,
+            created_at=self.created_at,
+            puzzle=self.puzzle,
+            solving=self.solving,
+            answer_count=answer_count,
+            answers=updated_answers,
+        )
