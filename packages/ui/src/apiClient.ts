@@ -182,6 +182,14 @@ export class ApiClient {
     return this.readJson<PuzzleAttempt>(response, 'Unable to create puzzle attempt.')
   }
 
+  async getAttempt(puzzleId: string, attemptId: string, signal?: AbortSignal): Promise<PuzzleAttempt> {
+    const response = await fetch(
+      this.endpoint(`/v1/puzzles/${encodeURIComponent(puzzleId)}/attempts/${encodeURIComponent(attemptId)}`),
+      { signal },
+    )
+    return this.readJson<PuzzleAttempt>(response, 'Unable to load puzzle attempt.')
+  }
+
   async postAttemptAnswer(
     puzzleId: string,
     attemptId: string,
