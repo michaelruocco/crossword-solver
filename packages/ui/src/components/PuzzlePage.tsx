@@ -28,7 +28,7 @@ export function PuzzlePage({ puzzleId }: Readonly<{ puzzleId: string }>) {
     ? `${selectedAttemptId ?? 'unselected'}:${selectedClue.direction}-${selectedClue.id}`
     : ''
   const hasAnswerDraft = Object.hasOwn(answerDrafts, selectedClueKey)
-  const answerDraft = hasAnswerDraft ? answerDrafts[selectedClueKey] ?? '' : ''
+  const answerDraft = answerDrafts[selectedClueKey] ?? ''
   const selectedAttempt = attemptSummaries.find((summary) => summary.id === selectedAttemptId) ?? null
   const loadedAttempt = attemptDetails?.status === 'ready' && attemptDetails.attemptId === selectedAttemptId
     ? attemptDetails.attempt
