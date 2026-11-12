@@ -41,6 +41,7 @@ const attempt = {
   solving: true,
   puzzle,
   answerCount: 0,
+  answers: [],
 }
 
 const attemptSummary: PuzzleAttemptSummary = {

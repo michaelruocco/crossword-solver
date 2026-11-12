@@ -1,12 +1,15 @@
 from datetime import UTC, datetime
 from uuid import uuid4
 
+from crossword_solver_domain_entities.answer import Answer
+from crossword_solver_domain_entities.answers import Answers
 from crossword_solver_domain_entities.attempt import Attempt
 from crossword_solver_domain_entities.cell import Cell
 from crossword_solver_domain_entities.cells import Cells
 from crossword_solver_domain_entities.clues import Clues
 from crossword_solver_domain_entities.coordinates import Coordinates
 from crossword_solver_domain_entities.grid import Grid
+from crossword_solver_domain_entities.id import Id
 from crossword_solver_domain_entities.puzzle import Puzzle
 from crossword_solver_domain_entities.words import Words
 
@@ -34,6 +37,7 @@ def test_to_response_includes_attempt_state_and_full_puzzle():
         "createdAt": "2026-10-31T09:30:00Z",
         "solving": False,
         "answerCount": 0,
+        "answers": [],
         "puzzle": {
             "id": str(puzzle.id),
             "name": puzzle.name,
@@ -49,3 +53,28 @@ def test_to_response_includes_attempt_state_and_full_puzzle():
             "createdAt": "2026-10-31T09:30:00Z",
         },
     }
+
+
+def test_to_response_includes_saved_answers():
+    created_at = datetime(2026, 10, 31, 9, 30, tzinfo=UTC)
+    puzzle = Puzzle(
+        id=uuid4(),
+        name="test-puzzle",
+        format=".png",
+        hash="hash-value",
+        clues=Clues([]),
+        grid=Grid(Cells([Cell(Coordinates(0, 0), black=False)]), column_width=1, row_height=1),
+        words=Words([]),
+        created_at=created_at,
+    )
+    attempt = Attempt(
+        id=uuid4(),
+        created_at=created_at,
+        puzzle=puzzle,
+        answer_count=1,
+        answers=Answers([Answer(Id.across(3), "CAT")]),
+    )
+
+    response = AttemptConverter().to_response(attempt).model_dump(by_alias=True, mode="json")
+
+    assert response["answers"] == [{"id": "3A", "value": "CAT"}]

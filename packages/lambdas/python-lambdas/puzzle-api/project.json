@@ -51,6 +51,11 @@
         "generator": "py#lambda-function",
         "path": "crossword_solver_puzzle_api/create_attempt/create_attempt_handler.py",
         "name": "create-attempt"
+      },
+      {
+        "generator": "py#lambda-function",
+        "path": "crossword_solver_puzzle_api/update_attempt_answer/update_attempt_answer_handler.py",
+        "name": "update-attempt-answer"
       }
     ]
   },

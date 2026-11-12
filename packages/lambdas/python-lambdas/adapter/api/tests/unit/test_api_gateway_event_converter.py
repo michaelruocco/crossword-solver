@@ -34,6 +34,14 @@ def test_to_upload_request(converter, build_event):
     assert request.file_name == "puzzle14.png"
 
 
+def test_to_answer_request(converter, build_event):
+    event = APIGatewayProxyEventV2Model.model_validate(build_event({"id": "3A", "value": "CAT"}))
+
+    request = converter.to_answer_request(event)
+
+    assert request.model_dump() == {"id": "3A", "value": "CAT"}
+
+
 @pytest.mark.parametrize("body", [None, {}, {"fileName": ""}, {"fileName": "a" * 256}])
 def test_to_upload_request_rejects_invalid_requests(converter, build_event, body):
     event = APIGatewayProxyEventV2Model.model_validate(build_event(body))

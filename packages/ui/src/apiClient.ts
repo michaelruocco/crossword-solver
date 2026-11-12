@@ -45,6 +45,12 @@ export interface PuzzleAttempt {
   solving: boolean
   puzzle: Puzzle
   answerCount: number
+  answers: PuzzleAnswer[]
+}
+
+export interface PuzzleAnswer {
+  id: string
+  value: string
 }
 
 export interface PuzzleAttemptSummary {
@@ -174,6 +180,24 @@ export class ApiClient {
       signal,
     })
     return this.readJson<PuzzleAttempt>(response, 'Unable to create puzzle attempt.')
+  }
+
+  async postAttemptAnswer(
+    puzzleId: string,
+    attemptId: string,
+    answer: PuzzleAnswer,
+    signal?: AbortSignal,
+  ): Promise<PuzzleAttempt> {
+    const response = await fetch(
+      this.endpoint(`/v1/puzzles/${encodeURIComponent(puzzleId)}/attempts/${encodeURIComponent(attemptId)}/answers`),
+      {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(answer),
+        signal,
+      },
+    )
+    return this.readJson<PuzzleAttempt>(response, 'Unable to save attempt answer.')
   }
 
   async getAttemptSummaries(puzzleId: string, signal?: AbortSignal): Promise<PuzzleAttemptSummary[]> {
