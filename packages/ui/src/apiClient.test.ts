@@ -147,6 +147,20 @@ test('creates a puzzle attempt without a request body', async () => {
   })
 })
 
+test('loads an attempt using encoded puzzle and attempt ids', async () => {
+  const attempt = { id: 'attempt-1', answers: [] }
+  const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify(attempt), { status: 200 }))
+  vi.stubGlobal('fetch', fetchMock)
+  const client = new ApiClient('https://api.test')
+  const controller = new AbortController()
+
+  await expect(client.getAttempt('puzzle /1', 'attempt /1', controller.signal)).resolves.toEqual(attempt)
+  expect(fetchMock).toHaveBeenCalledWith(
+    'https://api.test/v1/puzzles/puzzle%20%2F1/attempts/attempt%20%2F1',
+    { signal: controller.signal },
+  )
+})
+
 test('posts an answer for an attempt and returns the updated attempt', async () => {
   const answer = { id: '3A', value: 'CAT' }
   const attempt = {

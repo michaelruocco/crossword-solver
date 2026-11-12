@@ -20,6 +20,7 @@
 .attempt-history-item time, .attempt-history-item span { color:var(--muted); }
 .attempt-status { flex-basis:100%; display:flex; flex-wrap:wrap; align-items:center; gap:8px 18px; padding:12px 0 0; border-top:1px solid #d5ddd3; color:var(--forest); font-size:12px; }
 .attempt-status-note { flex-basis:100%; color:var(--muted); font-size:11px; }
+.inline-button { padding:0; border:0; background:transparent; color:var(--forest-soft); font:inherit; text-decoration:underline; cursor:pointer; }
 .attempt-toolbar button:disabled, .puzzle-workspace button:disabled { opacity:.5; cursor:not-allowed; transform:none; }
 .puzzle-workspace { display:grid; grid-template-columns:minmax(0, 1fr) minmax(0, 1.1fr); align-items:start; gap:36px; }
 .puzzle-board-section { position:sticky; top:24px; min-width:0; }
@@ -39,14 +40,17 @@
 .clue-columns { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:22px; }
 .clue-list { list-style:none; padding:0; margin:0; }
 .clue-list li { border-top:1px solid #dde4db; }
-.clue-button { display:grid; grid-template-columns:24px minmax(0, 1fr); gap:5px; width:100%; padding:13px 6px; border:0; border-radius:0; background:transparent; color:var(--ink); font:400 12px/1.7 var(--body); text-align:left; overflow-wrap:anywhere; cursor:pointer; }
+.clue-button { display:grid; grid-template-columns:24px minmax(0, 1fr) auto; align-items:center; gap:5px; width:100%; padding:13px 6px; border:0; border-radius:0; background:transparent; color:var(--ink); font:400 12px/1.7 var(--body); text-align:left; overflow-wrap:anywhere; cursor:pointer; }
 .clue-button:hover { background:#e8eee4; }
 .clue-button[aria-pressed="true"] { background:#e7f2b7; box-shadow:inset 3px 0 var(--forest-soft); }
 .clue-number { color:var(--forest); font-weight:700; }
+.clue-saved-answer { padding:2px 6px; border-radius:3px; background:#e7f2b7; color:var(--forest); font:600 10px/1.4 var(--mono); }
 .clue-empty { color:var(--muted); font-size:12px; }
 .selected-clue { padding:18px 0; margin-bottom:20px; border-block:1px solid #cbd6c7; }
 .selected-clue strong { color:var(--forest); font-size:12px; }
 .selected-clue p { margin:6px 0 0; font-size:12px; line-height:1.6; overflow-wrap:anywhere; }
+.selected-clue .saved-answer { color:var(--muted); }
+.selected-clue .saved-answer strong { margin-left:4px; font-family:var(--mono); text-transform:uppercase; }
 .selected-clue .icon-button { flex-shrink:0; }
 .answer-label { display:flex; align-items:center; justify-content:space-between; gap:12px; margin:16px 0 8px; font-size:11px; }
 .answer-label label { color:var(--forest); font-weight:600; }

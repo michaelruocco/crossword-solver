@@ -102,6 +102,18 @@ locals {
       ]
     }
 
+    get-attempt = {
+      handler   = "crossword_solver_puzzle_api.get_attempt.get_attempt_handler.lambda_handler"
+      route_key = "GET /v1/puzzles/{puzzleId}/attempts/{attemptId}"
+      environment = {
+        ATTEMPTS_TABLE_NAME = aws_dynamodb_table.attempts.name
+        PUZZLES_TABLE_NAME  = aws_dynamodb_table.puzzles.name
+      }
+      statements = [
+        { actions = ["dynamodb:GetItem"], resources = [aws_dynamodb_table.attempts.arn, aws_dynamodb_table.puzzles.arn] },
+      ]
+    }
+
     update-attempt-answer = {
       handler   = "crossword_solver_puzzle_api.update_attempt_answer.update_attempt_answer_handler.lambda_handler"
       route_key = "POST /v1/puzzles/{puzzleId}/attempts/{attemptId}/answers"
