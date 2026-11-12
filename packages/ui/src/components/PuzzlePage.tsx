@@ -149,17 +149,15 @@ export function PuzzlePage({ puzzleId }: Readonly<{ puzzleId: string }>) {
     }
   }
 
-  const submitAnswer = async () => {
-    if (!loadedAttempt || !selectedClue || !displayedAnswer.trim() || savingAnswer) return
-
+  const submitAnswer = async (attempt: PuzzleAttempt, clue: PuzzleClue) => {
     setSavingAnswer(true)
     setAnswerError('')
     const answer: PuzzleAnswer = {
-      id: clueAnswerId(selectedClue),
+      id: clueAnswerId(clue),
       value: displayedAnswer.trim().toUpperCase(),
     }
     try {
-      const updatedAttempt = await apiClient.postAttemptAnswer(puzzleId, loadedAttempt.id, answer)
+      const updatedAttempt = await apiClient.postAttemptAnswer(puzzleId, attempt.id, answer)
       setAttemptDetails((details) => details?.attemptId === updatedAttempt.id
         ? { attemptId: updatedAttempt.id, status: 'ready', attempt: updatedAttempt }
         : details)
@@ -176,6 +174,10 @@ export function PuzzlePage({ puzzleId }: Readonly<{ puzzleId: string }>) {
       setSavingAnswer(false)
     }
   }
+
+  const submitAnswerAction = loadedAttempt && selectedClue
+    ? () => void submitAnswer(loadedAttempt, selectedClue)
+    : undefined
 
   return (
     <main className="main-content puzzle-page">
@@ -279,7 +281,7 @@ export function PuzzlePage({ puzzleId }: Readonly<{ puzzleId: string }>) {
                     <div className="answer-actions">
                       <button type="button" className="icon-button" disabled={!hasAnswerDraft || !answerDraft} onClick={() => updateAnswerDraft('')} aria-label="Clear answer draft" title="Clear answer draft"><Eraser size={17} aria-hidden="true" /></button>
                       <button type="button" className="icon-button answer-delete" disabled aria-label="Delete saved answer" title="Saved-answer deletion is not available yet"><Trash2 size={17} aria-hidden="true" /></button>
-                      <button type="button" className="icon-button" disabled={!loadedAttempt || !displayedAnswer.trim() || savingAnswer} onClick={() => void submitAnswer()} aria-label={savingAnswer ? 'Submitting answer' : 'Submit answer'} title="Submit answer"><Send size={17} aria-hidden="true" /></button>
+                      <button type="button" className="icon-button" disabled={!submitAnswerAction || !displayedAnswer.trim() || savingAnswer} onClick={submitAnswerAction} aria-label={savingAnswer ? 'Submitting answer' : 'Submit answer'} title="Submit answer"><Send size={17} aria-hidden="true" /></button>
                     </div>
                   </div>
                   {!selectedAttemptId && <p className="attempt-status-note">Create or select an attempt before submitting an answer.</p>}

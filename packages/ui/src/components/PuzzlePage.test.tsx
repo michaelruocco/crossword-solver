@@ -448,11 +448,12 @@ test('submits an answer for the selected attempt and displays it in the clue and
   expect(screen.getByRole('cell', { name: 'Row 1, column 3: T' })).toBeTruthy()
 })
 
-test('guards submission without an attempt, without an answer, and while a save is in flight', async () => {
+test('disables submission without an attempt, without an answer, and while a save is in flight', async () => {
   render(<PuzzlePage puzzleId={puzzle.id} />)
   fireEvent.click(await screen.findByRole('button', { name: '1 Across: A horizontal entry' }))
   fireEvent.change(screen.getByRole('textbox', { name: 'Answer' }), { target: { value: 'cat' } })
   const submitButton = screen.getByRole('button', { name: 'Submit answer' })
+  expect((submitButton as HTMLButtonElement).disabled).toBe(true)
   submitButton.dispatchEvent(new MouseEvent('click', { bubbles: true }))
   expect(apiClient.postAttemptAnswer).not.toHaveBeenCalled()
 
@@ -460,6 +461,7 @@ test('guards submission without an attempt, without an answer, and while a save 
   await screen.findByText('0 saved answers loaded.')
   fireEvent.click(screen.getByRole('button', { name: '1 Across: A horizontal entry' }))
   fireEvent.click(screen.getByRole('button', { name: 'Clear answer draft' }))
+  expect((submitButton as HTMLButtonElement).disabled).toBe(true)
   submitButton.dispatchEvent(new MouseEvent('click', { bubbles: true }))
   expect(apiClient.postAttemptAnswer).not.toHaveBeenCalled()
 
@@ -470,7 +472,7 @@ test('guards submission without an attempt, without an answer, and while a save 
   fireEvent.change(screen.getByRole('textbox', { name: 'Answer' }), { target: { value: 'cat' } })
   fireEvent.click(screen.getByRole('button', { name: 'Submit answer' }))
   const submittingButton = screen.getByRole('button', { name: 'Submitting answer' })
-  submittingButton.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+  expect((submittingButton as HTMLButtonElement).disabled).toBe(true)
   expect(apiClient.postAttemptAnswer).toHaveBeenCalledTimes(1)
 
   await act(async () => {
@@ -501,7 +503,7 @@ test('removes only the submitted draft and ignores a response for a different at
   expect(await screen.findByText('Not submitted', { selector: 'span' })).toBeTruthy()
   fireEvent.click(screen.getByRole('button', { name: '1 Down: A vertical entry' }))
   expect((screen.getByRole('textbox', { name: 'Answer' }) as HTMLInputElement).value).toBe('at')
-  expect(screen.queryByText('0 saved answers loaded.')).toBeTruthy()
+  expect(screen.getByText('0 saved answers loaded.')).toBeTruthy()
   expect(screen.queryByText('1 saved answer loaded.')).toBeNull()
   expect(screen.queryByText('Saved answer:', { selector: 'p' })).toBeNull()
 })
