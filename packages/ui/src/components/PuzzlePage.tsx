@@ -38,6 +38,9 @@ export function PuzzlePage({ puzzleId }: Readonly<{ puzzleId: string }>) {
     ? savedAnswers.find((answer) => answer.id === clueAnswerId(selectedClue))
     : undefined
   const displayedAnswer = hasAnswerDraft ? answerDraft : selectedSavedAnswer?.value ?? ''
+  let answerStatus = 'Not submitted'
+  if (selectedSavedAnswer) answerStatus = 'Saved answer'
+  if (hasAnswerDraft) answerStatus = 'Unsaved draft'
 
   const updateAnswerDraft = (value: string) => {
     setAnswerError('')
@@ -270,7 +273,7 @@ export function PuzzlePage({ puzzleId }: Readonly<{ puzzleId: string }>) {
                   <strong>{selectedClue.id} {selectedClue.direction === 'ACROSS' ? 'Across' : 'Down'}</strong>
                   <p>{selectedClue.text}</p>
                   {selectedSavedAnswer && <p className="saved-answer">Saved answer: <strong>{selectedSavedAnswer.value}</strong></p>}
-                  <div className="answer-label"><label htmlFor="clue-answer">Answer</label><span>{hasAnswerDraft ? 'Unsaved draft' : selectedSavedAnswer ? 'Saved answer' : 'Not submitted'}</span></div>
+                  <div className="answer-label"><label htmlFor="clue-answer">Answer</label><span>{answerStatus}</span></div>
                   <div className="answer-entry">
                     <input id="clue-answer" type="text" value={displayedAnswer} onChange={(event) => updateAnswerDraft(event.target.value)} autoComplete="off" autoCapitalize="characters" spellCheck={false} />
                     <div className="answer-actions">

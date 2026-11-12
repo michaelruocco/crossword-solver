@@ -283,6 +283,70 @@ test('shows the status for an attempt that is not solving', async () => {
   expect(within(selectedStatus).getByText('Not solving')).toBeTruthy()
 })
 
+test('shows an attempt loading error and retries loading its saved answers', async () => {
+  vi.mocked(apiClient.getAttempt)
+    .mockRejectedValueOnce(new Error('Attempt unavailable'))
+    .mockResolvedValueOnce({ ...attempt, answers: [{ id: '1A', value: 'CAT' }], answerCount: 1 })
+  vi.mocked(apiClient.getAttemptSummaries).mockResolvedValueOnce([attemptSummary])
+  render(<PuzzlePage puzzleId={puzzle.id} />)
+
+  fireEvent.click(await screen.findByRole('button', { name: 'Previous attempts' }))
+  fireEvent.click(await screen.findByRole('button', { name: /Attempt 1/ }))
+  const alert = await screen.findByRole('alert')
+  expect(alert.textContent).toContain('Attempt unavailable')
+
+  fireEvent.click(within(alert).getByRole('button', { name: 'Retry' }))
+
+  expect(await screen.findByText('1 saved answer loaded.')).toBeTruthy()
+  expect(apiClient.getAttempt).toHaveBeenCalledTimes(2)
+})
+
+test('uses a fallback when loading an attempt fails without an Error', async () => {
+  vi.mocked(apiClient.getAttempt).mockRejectedValueOnce('offline')
+  vi.mocked(apiClient.getAttemptSummaries).mockResolvedValueOnce([attemptSummary])
+  render(<PuzzlePage puzzleId={puzzle.id} />)
+
+  fireEvent.click(await screen.findByRole('button', { name: 'Previous attempts' }))
+  fireEvent.click(await screen.findByRole('button', { name: /Attempt 1/ }))
+
+  expect(await screen.findByText('Unable to load puzzle attempt.')).toBeTruthy()
+})
+
+test.each(['resolve', 'reject'] as const)('ignores a late attempt %s after selecting a different attempt', async (outcome) => {
+  const otherAttemptSummary = { ...attemptSummary, id: 'attempt-2' }
+  let resolveRequest: (value: typeof attempt) => void = () => undefined
+  let rejectRequest: (reason: Error) => void = () => undefined
+  vi.mocked(apiClient.getAttemptSummaries).mockResolvedValueOnce([attemptSummary, otherAttemptSummary])
+  vi.mocked(apiClient.getAttempt)
+    .mockImplementationOnce(() => new Promise((resolve, reject) => {
+      resolveRequest = resolve
+      rejectRequest = reject
+    }))
+    .mockResolvedValueOnce({
+      ...attempt,
+      id: otherAttemptSummary.id,
+      answerCount: 1,
+      answers: [{ id: '1A', value: 'CAT' }],
+    })
+  render(<PuzzlePage puzzleId={puzzle.id} />)
+
+  fireEvent.click(await screen.findByRole('button', { name: 'Previous attempts' }))
+  fireEvent.click(await screen.findByRole('button', { name: /Attempt 1/ }))
+  const signal = vi.mocked(apiClient.getAttempt).mock.calls[0][2]
+  fireEvent.click(screen.getByRole('button', { name: 'Previous attempts' }))
+  fireEvent.click(await screen.findByRole('button', { name: /Attempt 2/ }))
+  expect(signal?.aborted).toBe(true)
+  expect(await screen.findByText('1 saved answer loaded.')).toBeTruthy()
+
+  await act(async () => {
+    if (outcome === 'resolve') resolveRequest(attempt)
+    else rejectRequest(new Error('Aborted'))
+    await Promise.resolve()
+  })
+
+  expect(screen.getByRole('status', { name: 'Selected attempt status' }).textContent).toContain('1 saved answer loaded.')
+})
+
 test('allows typing and clearing a local answer draft without submitting or modifying the grid', async () => {
   render(<PuzzlePage puzzleId={puzzle.id} />)
   expect(screen.queryByRole('textbox', { name: 'Answer' })).toBeNull()
@@ -382,6 +446,18 @@ test('keeps the answer draft and shows a useful error when submission fails', as
   expect((input as HTMLInputElement).value).toBe('cat')
 })
 
+test('uses a fallback when answer submission fails without an Error', async () => {
+  vi.mocked(apiClient.postAttemptAnswer).mockRejectedValueOnce('offline')
+  render(<PuzzlePage puzzleId={puzzle.id} />)
+  fireEvent.click(await screen.findByRole('button', { name: 'New attempt' }))
+  await screen.findByText('0 saved answers loaded.')
+  fireEvent.click(screen.getByRole('button', { name: '1 Across: A horizontal entry' }))
+  fireEvent.change(screen.getByRole('textbox', { name: 'Answer' }), { target: { value: 'cat' } })
+  fireEvent.click(screen.getByRole('button', { name: 'Submit answer' }))
+
+  expect((await screen.findByRole('alert')).textContent).toContain('Unable to save attempt answer.')
+})
+
 test('retries a failed request and displays the API error', async () => {
   vi.mocked(apiClient.getPuzzle).mockRejectedValueOnce(new Error('Puzzle not found'))
   render(<PuzzlePage puzzleId={puzzle.id} />)
@@ -437,4 +513,33 @@ test('renders missing cells as black squares and tolerates clues without word po
   const cells = within(screen.getByRole('table')).getAllByRole('cell')
   expect(cells.every((cell) => cell.classList.contains('puzzle-cell-black'))).toBe(true)
   expect(screen.getByRole('region', { name: 'Selected clue' })).toBeTruthy()
+})
+
+test('renders saved down answers in the grid and limits them to the word length', async () => {
+  const savedAttempt = { ...attempt, answerCount: 1, answers: [{ id: '1D', value: 'b t x' }] }
+  vi.mocked(apiClient.getAttemptSummaries).mockResolvedValueOnce([attemptSummary])
+  vi.mocked(apiClient.getAttempt).mockResolvedValueOnce(savedAttempt)
+  render(<PuzzlePage puzzleId={puzzle.id} />)
+
+  fireEvent.click(await screen.findByRole('button', { name: 'Previous attempts' }))
+  fireEvent.click(await screen.findByRole('button', { name: /Attempt 1/ }))
+  await screen.findByText('1 saved answer loaded.')
+
+  expect(screen.getByRole('cell', { name: 'Row 1, column 1: 1, B' })).toBeTruthy()
+  expect(screen.getByRole('cell', { name: 'Row 2, column 1: 3, T' })).toBeTruthy()
+})
+
+test('ignores saved answers without matching clues or word positions', async () => {
+  const savedAttempt = { ...attempt, answers: [{ id: '99A', value: 'ABC' }, { id: '3A', value: 'XY' }] }
+  vi.mocked(apiClient.getPuzzle).mockResolvedValueOnce({ ...puzzle, words: puzzle.words.filter((word) => word.id !== 3) })
+  vi.mocked(apiClient.getAttemptSummaries).mockResolvedValueOnce([attemptSummary])
+  vi.mocked(apiClient.getAttempt).mockResolvedValueOnce(savedAttempt)
+  render(<PuzzlePage puzzleId={puzzle.id} />)
+
+  fireEvent.click(await screen.findByRole('button', { name: 'Previous attempts' }))
+  fireEvent.click(await screen.findByRole('button', { name: /Attempt 1/ }))
+  await screen.findByText('2 saved answers loaded.')
+
+  expect(screen.getByRole('cell', { name: 'Row 2, column 1: 3, empty' })).toBeTruthy()
+  expect(screen.queryByText('ABC')).toBeNull()
 })
