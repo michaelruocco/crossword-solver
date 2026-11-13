@@ -53,10 +53,12 @@
 .selected-clue .saved-answer strong { margin-left:4px; font-family:var(--mono); text-transform:uppercase; }
 .selected-clue .icon-button { flex-shrink:0; }
 .answer-label { display:flex; align-items:center; justify-content:space-between; gap:12px; margin:16px 0 8px; font-size:11px; }
-.answer-label label { color:var(--forest); font-weight:600; }
+.answer-label > span:first-child { color:var(--forest); font-weight:600; }
 .answer-label span { color:var(--muted); }
 .answer-entry { display:flex; align-items:center; gap:8px; }
-.answer-entry input { flex:1; min-width:0; width:100%; min-height:40px; padding:8px 10px; border:1px solid #b9c8b9; border-radius:4px; background:white; color:var(--ink); font:500 16px/1.4 var(--mono); }
+.answer-character-inputs { display:flex; flex:1; flex-wrap:wrap; gap:5px; min-width:0; min-inline-size:0; padding:0; margin:0; border:0; }
+.answer-character-inputs input { width:36px; min-height:40px; padding:7px 4px; border:1px solid #b9c8b9; border-radius:4px; background:white; color:var(--ink); font:500 16px/1.4 var(--mono); text-align:center; text-transform:uppercase; }
+.answer-character-inputs input:disabled { border-color:#cbd6c7; background:#e7f2b7; color:var(--forest); opacity:1; }
 .answer-actions { display:flex; flex-shrink:0; gap:5px; }
 .answer-delete { color:#a23e31; }
 @media (max-width:1000px) {

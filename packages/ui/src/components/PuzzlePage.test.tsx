@@ -60,6 +60,20 @@ beforeEach(() => {
   vi.mocked(apiClient.createAttempt).mockResolvedValue(attempt)
 })
 
+function getAnswerInput(index = 1): HTMLInputElement {
+  return screen.getByRole('textbox', { name: `Answer character ${index}` }) as HTMLInputElement
+}
+
+function enterAnswer(value: string) {
+  for (const [index, character] of Array.from(value).entries()) {
+    fireEvent.change(getAnswerInput(index + 1), { target: { value: character } })
+  }
+}
+
+function answerInputValues(length: number): string[] {
+  return Array.from({ length }, (_, index) => getAnswerInput(index + 1).value)
+}
+
 test('maps bottom-left-origin coordinates to top-to-bottom display rows without reversing columns', async () => {
   render(<PuzzlePage puzzleId={puzzle.id} />)
 
@@ -261,19 +275,19 @@ test('creates a new attempt while preserving drafts scoped to an existing attemp
   fireEvent.click(await screen.findByRole('button', { name: 'New attempt' }))
   await screen.findByText('0 saved answers loaded.')
   fireEvent.click(screen.getByRole('button', { name: '1 Across: A horizontal entry' }))
-  fireEvent.change(screen.getByRole('textbox', { name: 'Answer' }), { target: { value: 'arc' } })
+  enterAnswer('arc')
   fireEvent.click(screen.getByRole('button', { name: 'New attempt' }))
   await screen.findAllByText('0 saved answers loaded.')
 
-  expect((screen.getByRole('textbox', { name: 'Answer' }) as HTMLInputElement).value).toBe('')
+  expect(answerInputValues(3)).toEqual(['', '', ''])
   fireEvent.click(screen.getByRole('button', { name: 'Previous attempts' }))
   fireEvent.click(await screen.findByRole('button', { name: /Attempt 1/ }))
   fireEvent.click(screen.getByRole('button', { name: '1 Across: A horizontal entry' }))
-  expect((screen.getByRole('textbox', { name: 'Answer' }) as HTMLInputElement).value).toBe('')
+  expect(answerInputValues(3)).toEqual(['', '', ''])
   fireEvent.click(screen.getByRole('button', { name: 'Previous attempts' }))
   fireEvent.click(await screen.findByRole('button', { name: /Attempt 2/ }))
   fireEvent.click(screen.getByRole('button', { name: '1 Across: A horizontal entry' }))
-  expect((screen.getByRole('textbox', { name: 'Answer' }) as HTMLInputElement).value).toBe('arc')
+  expect(answerInputValues(3)).toEqual(['A', 'R', 'C'])
 })
 
 test('makes a newly created attempt available after attempt history fails to load', async () => {
@@ -388,29 +402,123 @@ test.each(['resolve', 'reject'] as const)('ignores a late attempt %s after selec
   expect(screen.getByRole('status', { name: 'Selected attempt status' }).textContent).toContain('1 saved answer loaded.')
 })
 
-test('allows typing and clearing a local answer draft without submitting or modifying the grid', async () => {
+test('allows typing and clearing a local answer draft and updates the grid as each character is entered', async () => {
   render(<PuzzlePage puzzleId={puzzle.id} />)
-  expect(screen.queryByRole('textbox', { name: 'Answer' })).toBeNull()
+  expect(screen.queryByRole('group', { name: 'Answer' })).toBeNull()
   fireEvent.click(await screen.findByRole('button', { name: '1 Across: A horizontal entry' }))
-  const input = screen.getByRole('textbox', { name: 'Answer' }) as HTMLInputElement
+  const input = getAnswerInput()
   const clear = screen.getByRole('button', { name: 'Clear answer draft' }) as HTMLButtonElement
 
   expect(input.value).toBe('')
   expect(clear.disabled).toBe(true)
-  fireEvent.change(input, { target: { value: 'arc' } })
-  expect(input.value).toBe('arc')
+  expect(screen.getAllByRole('textbox', { name: /^Answer character/ })).toHaveLength(3)
+  expect(input.maxLength).toBe(1)
+  fireEvent.change(input, { target: { value: 'c' } })
+  expect(input.value).toBe('C')
   expect(screen.getByText('Unsaved draft')).toBeTruthy()
+  fireEvent.change(getAnswerInput(2), { target: { value: 'a' } })
+  getAnswerInput(2).focus()
+  fireEvent.change(getAnswerInput(2), { target: { value: '' } })
+  expect(document.activeElement).toBe(getAnswerInput(2))
   expect(clear.disabled).toBe(false)
   expect((screen.getByRole('button', { name: 'Submit answer' }) as HTMLButtonElement).disabled).toBe(true)
   expect((screen.getByRole('button', { name: 'Delete saved answer' }) as HTMLButtonElement).disabled).toBe(true)
   fireEvent.keyDown(input, { key: 'Enter', code: 'Enter' })
   expect(apiClient.getPuzzle).toHaveBeenCalledOnce()
-  expect(screen.getByRole('cell', { name: 'Row 1, column 2: empty' })).toBeTruthy()
+  expect(screen.getByRole('cell', { name: 'Row 1, column 1: 1, C' })).toBeTruthy()
 
   fireEvent.click(clear)
   expect(input.value).toBe('')
+  expect(answerInputValues(3)).toEqual(['', '', ''])
   expect(clear.disabled).toBe(true)
   expect(screen.getByText('Not submitted', { selector: 'span' })).toBeTruthy()
+  expect(screen.getByRole('cell', { name: 'Row 1, column 1: 1, A' })).toBeTruthy()
+})
+
+test('locks crossing letters and displays draft letters in the grid', async () => {
+  render(<PuzzlePage puzzleId={puzzle.id} />)
+  fireEvent.click(await screen.findByRole('button', { name: '1 Across: A horizontal entry' }))
+  enterAnswer('cat')
+  expect(answerInputValues(3)).toEqual(['C', 'A', 'T'])
+  expect(screen.getByRole('cell', { name: 'Row 1, column 1: 1, C' })).toBeTruthy()
+  expect(screen.getByRole('cell', { name: 'Row 1, column 2: A' })).toBeTruthy()
+  expect(screen.getByRole('cell', { name: 'Row 1, column 3: T' })).toBeTruthy()
+
+  fireEvent.click(screen.getByRole('button', { name: '1 Down: A vertical entry' }))
+  const crossingInput = getAnswerInput(1)
+  expect(crossingInput.value).toBe('C')
+  expect(crossingInput.disabled).toBe(true)
+  expect(getAnswerInput(2).disabled).toBe(false)
+  expect(screen.getByRole('cell', { name: 'Row 1, column 1: 1, C' })).toBeTruthy()
+  expect(screen.getByRole('cell', { name: 'Row 2, column 1: 3, empty' })).toBeTruthy()
+  fireEvent.change(crossingInput, { target: { value: 'x' } })
+  expect(crossingInput.value).toBe('C')
+})
+
+test('focuses the first empty editable character when selecting a clue', async () => {
+  render(<PuzzlePage puzzleId={puzzle.id} />)
+
+  fireEvent.click(await screen.findByRole('button', { name: '1 Down: A vertical entry' }))
+  fireEvent.change(getAnswerInput(1), { target: { value: 'c' } })
+  fireEvent.click(screen.getByRole('button', { name: '1 Across: A horizontal entry' }))
+
+  expect(getAnswerInput(1).disabled).toBe(true)
+  expect(document.activeElement).toBe(getAnswerInput(2))
+})
+
+test('moves focus to the next editable character input, skipping crossing letters', async () => {
+  vi.mocked(apiClient.getPuzzle).mockResolvedValueOnce({
+    ...puzzle,
+    clues: [...puzzle.clues, { id: 5, direction: 'DOWN', text: 'Another crossing', lengths: [2] }],
+    words: [...puzzle.words, { id: 5, direction: 'DOWN', length: 2, coordinates: { x: 1, y: 1 } }],
+  })
+  render(<PuzzlePage puzzleId={puzzle.id} />)
+
+  fireEvent.click(await screen.findByRole('button', { name: '5 Down: Another crossing' }))
+  fireEvent.change(getAnswerInput(1), { target: { value: 'x' } })
+  fireEvent.click(screen.getByRole('button', { name: '1 Across: A horizontal entry' }))
+  expect(getAnswerInput(2).disabled).toBe(true)
+
+  fireEvent.change(getAnswerInput(1), { target: { value: 'c' } })
+
+  expect(document.activeElement).toBe(getAnswerInput(3))
+})
+
+test('moves focus to the previous editable input when deleting from an empty character cell', async () => {
+  vi.mocked(apiClient.getPuzzle).mockResolvedValueOnce({
+    ...puzzle,
+    clues: [...puzzle.clues, { id: 5, direction: 'DOWN', text: 'Another crossing', lengths: [2] }],
+    words: [...puzzle.words, { id: 5, direction: 'DOWN', length: 2, coordinates: { x: 1, y: 1 } }],
+  })
+  render(<PuzzlePage puzzleId={puzzle.id} />)
+
+  fireEvent.click(await screen.findByRole('button', { name: '5 Down: Another crossing' }))
+  fireEvent.change(getAnswerInput(1), { target: { value: 'x' } })
+  fireEvent.click(screen.getByRole('button', { name: '1 Across: A horizontal entry' }))
+  expect(getAnswerInput(2).disabled).toBe(true)
+
+  fireEvent.keyDown(getAnswerInput(3), { key: 'Backspace', code: 'Backspace' })
+
+  expect(document.activeElement).toBe(getAnswerInput(1))
+
+  fireEvent.keyDown(getAnswerInput(3), { key: 'Delete', code: 'Delete' })
+  expect(document.activeElement).toBe(getAnswerInput(1))
+})
+
+test('keeps focus in place for other keys and when deleting a populated character', async () => {
+  render(<PuzzlePage puzzleId={puzzle.id} />)
+
+  fireEvent.click(await screen.findByRole('button', { name: '1 Across: A horizontal entry' }))
+  const secondInput = getAnswerInput(2)
+  secondInput.focus()
+  fireEvent.keyDown(secondInput, { key: 'ArrowLeft', code: 'ArrowLeft' })
+  expect(document.activeElement).toBe(secondInput)
+
+  fireEvent.change(getAnswerInput(1), { target: { value: 'a' } })
+  fireEvent.change(getAnswerInput(2), { target: { value: 'b' } })
+  getAnswerInput(2).focus()
+  fireEvent.keyDown(getAnswerInput(2), { key: 'Backspace', code: 'Backspace' })
+  expect(document.activeElement).toBe(getAnswerInput(2))
 })
 
 test('preserves independent drafts for across and down clues and only clears the selected draft', async () => {
@@ -419,16 +527,16 @@ test('preserves independent drafts for across and down clues and only clears the
   const down = screen.getByRole('button', { name: '1 Down: A vertical entry' })
 
   fireEvent.click(across)
-  fireEvent.change(screen.getByRole('textbox', { name: 'Answer' }), { target: { value: 'arc' } })
+  enterAnswer('arc')
   fireEvent.click(down)
-  expect((screen.getByRole('textbox', { name: 'Answer' }) as HTMLInputElement).value).toBe('')
-  fireEvent.change(screen.getByRole('textbox', { name: 'Answer' }), { target: { value: 'at' } })
+  expect(answerInputValues(2)).toEqual(['A', ''])
+  fireEvent.change(getAnswerInput(2), { target: { value: 't' } })
 
   fireEvent.click(across)
-  expect((screen.getByRole('textbox', { name: 'Answer' }) as HTMLInputElement).value).toBe('arc')
+  expect(answerInputValues(3)).toEqual(['A', 'R', 'C'])
   fireEvent.click(screen.getByRole('button', { name: 'Clear answer draft' }))
   fireEvent.click(down)
-  expect((screen.getByRole('textbox', { name: 'Answer' }) as HTMLInputElement).value).toBe('at')
+  expect(answerInputValues(2)).toEqual(['', 'T'])
 })
 
 test('submits an answer for the selected attempt and displays it in the clue and grid', async () => {
@@ -438,7 +546,7 @@ test('submits an answer for the selected attempt and displays it in the clue and
   fireEvent.click(await screen.findByRole('button', { name: 'New attempt' }))
   await screen.findByText('0 saved answers loaded.')
   fireEvent.click(screen.getByRole('button', { name: '1 Across: A horizontal entry' }))
-  fireEvent.change(screen.getByRole('textbox', { name: 'Answer' }), { target: { value: 'cat' } })
+  enterAnswer('cat')
   fireEvent.click(screen.getByRole('button', { name: 'Submit answer' }))
 
   expect(await within(screen.getByRole('region', { name: 'Selected clue' })).findByText(/Saved answer:/)).toBeTruthy()
@@ -451,7 +559,7 @@ test('submits an answer for the selected attempt and displays it in the clue and
 test('disables submission without an attempt, without an answer, and while a save is in flight', async () => {
   render(<PuzzlePage puzzleId={puzzle.id} />)
   fireEvent.click(await screen.findByRole('button', { name: '1 Across: A horizontal entry' }))
-  fireEvent.change(screen.getByRole('textbox', { name: 'Answer' }), { target: { value: 'cat' } })
+  enterAnswer('cat')
   const submitButton = screen.getByRole('button', { name: 'Submit answer' })
   expect((submitButton as HTMLButtonElement).disabled).toBe(true)
   submitButton.dispatchEvent(new MouseEvent('click', { bubbles: true }))
@@ -469,7 +577,7 @@ test('disables submission without an attempt, without an answer, and while a sav
   vi.mocked(apiClient.postAttemptAnswer).mockImplementationOnce(() => new Promise((resolve) => {
     resolveSave = resolve
   }))
-  fireEvent.change(screen.getByRole('textbox', { name: 'Answer' }), { target: { value: 'cat' } })
+  enterAnswer('cat')
   fireEvent.click(screen.getByRole('button', { name: 'Submit answer' }))
   const submittingButton = screen.getByRole('button', { name: 'Submitting answer' })
   expect((submittingButton as HTMLButtonElement).disabled).toBe(true)
@@ -494,15 +602,15 @@ test('removes only the submitted draft and ignores a response for a different at
   fireEvent.click(await screen.findByRole('button', { name: 'New attempt' }))
   await screen.findByText('0 saved answers loaded.')
   fireEvent.click(screen.getByRole('button', { name: '1 Across: A horizontal entry' }))
-  fireEvent.change(screen.getByRole('textbox', { name: 'Answer' }), { target: { value: 'cat' } })
+  enterAnswer('cat')
   fireEvent.click(screen.getByRole('button', { name: '1 Down: A vertical entry' }))
-  fireEvent.change(screen.getByRole('textbox', { name: 'Answer' }), { target: { value: 'at' } })
+  fireEvent.change(getAnswerInput(2), { target: { value: 't' } })
   fireEvent.click(screen.getByRole('button', { name: '1 Across: A horizontal entry' }))
   fireEvent.click(screen.getByRole('button', { name: 'Submit answer' }))
 
   expect(await screen.findByText('Not submitted', { selector: 'span' })).toBeTruthy()
   fireEvent.click(screen.getByRole('button', { name: '1 Down: A vertical entry' }))
-  expect((screen.getByRole('textbox', { name: 'Answer' }) as HTMLInputElement).value).toBe('at')
+  expect(answerInputValues(2)).toEqual(['', 'T'])
   expect(screen.getByText('0 saved answers loaded.')).toBeTruthy()
   expect(screen.queryByText('1 saved answer loaded.')).toBeNull()
   expect(screen.queryByText('Saved answer:', { selector: 'p' })).toBeNull()
@@ -511,11 +619,11 @@ test('removes only the submitted draft and ignores a response for a different at
 test('keeps unsaved clue drafts when a new attempt is created', async () => {
   render(<PuzzlePage puzzleId={puzzle.id} />)
   fireEvent.click(await screen.findByRole('button', { name: '1 Across: A horizontal entry' }))
-  fireEvent.change(screen.getByRole('textbox', { name: 'Answer' }), { target: { value: 'arc' } })
+  enterAnswer('arc')
   fireEvent.click(screen.getByRole('button', { name: 'New attempt' }))
   await screen.findByText('0 saved answers loaded.')
 
-  expect((screen.getByRole('textbox', { name: 'Answer' }) as HTMLInputElement).value).toBe('arc')
+  expect(answerInputValues(3)).toEqual(['A', 'R', 'C'])
 })
 
 test('shows saved answers when a previous attempt is selected', async () => {
@@ -531,6 +639,11 @@ test('shows saved answers when a previous attempt is selected', async () => {
 
   expect(within(screen.getByRole('region', { name: 'Selected clue' })).getByText(/Saved answer:/)).toBeTruthy()
   expect(screen.getByRole('cell', { name: 'Row 1, column 1: 1, C' })).toBeTruthy()
+
+  fireEvent.click(screen.getByRole('button', { name: '1 Down: A vertical entry' }))
+  expect(getAnswerInput(1).value).toBe('C')
+  expect(getAnswerInput(1).disabled).toBe(true)
+  expect(getAnswerInput(2).disabled).toBe(false)
 })
 
 test('keeps the answer draft and shows a useful error when submission fails', async () => {
@@ -539,12 +652,11 @@ test('keeps the answer draft and shows a useful error when submission fails', as
   fireEvent.click(await screen.findByRole('button', { name: 'New attempt' }))
   await screen.findByText('0 saved answers loaded.')
   fireEvent.click(screen.getByRole('button', { name: '1 Across: A horizontal entry' }))
-  const input = screen.getByRole('textbox', { name: 'Answer' })
-  fireEvent.change(input, { target: { value: 'cat' } })
+  enterAnswer('cat')
   fireEvent.click(screen.getByRole('button', { name: 'Submit answer' }))
 
   expect((await screen.findByRole('alert')).textContent).toContain('Clue not found')
-  expect((input as HTMLInputElement).value).toBe('cat')
+  expect(answerInputValues(3)).toEqual(['C', 'A', 'T'])
 })
 
 test('uses a fallback when answer submission fails without an Error', async () => {
@@ -553,7 +665,7 @@ test('uses a fallback when answer submission fails without an Error', async () =
   fireEvent.click(await screen.findByRole('button', { name: 'New attempt' }))
   await screen.findByText('0 saved answers loaded.')
   fireEvent.click(screen.getByRole('button', { name: '1 Across: A horizontal entry' }))
-  fireEvent.change(screen.getByRole('textbox', { name: 'Answer' }), { target: { value: 'cat' } })
+  enterAnswer('cat')
   fireEvent.click(screen.getByRole('button', { name: 'Submit answer' }))
 
   expect((await screen.findByRole('alert')).textContent).toContain('Unable to save attempt answer.')
