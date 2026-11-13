@@ -14,6 +14,7 @@ from crossword_solver_adapter_repository.dynamo_attempt_repository import Dynamo
 from crossword_solver_adapter_repository.dynamo_puzzle_repository import DynamoPuzzleRepository
 from crossword_solver_adapter_repository.dynamodb_resource import create_dynamodb_resource
 from crossword_solver_domain_entities.clue_not_found_for_id_error import ClueNotFoundForIdError
+from crossword_solver_domain_entities.invalid_answer_error import InvalidAnswerError
 from crossword_solver_domain_use_case.attempt_answer_saver import AttemptAnswerSaver
 from crossword_solver_domain_use_case.attempt_finder import AttemptFinder
 from crossword_solver_domain_use_case.attempt_not_found_error import AttemptNotFoundError
@@ -67,6 +68,8 @@ def lambda_handler(event: APIGatewayProxyEventV2Model, context: LambdaContext) -
         return message_response(404, "Puzzle not found")
     except ClueNotFoundForIdError:
         return message_response(404, "Clue not found")
+    except InvalidAnswerError:
+        return message_response(400, "Invalid answer")
     except Exception as error:
         logger.exception(error)
         return message_response(500, "Internal server error")

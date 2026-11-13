@@ -21,6 +21,17 @@ class Attempt:
     def puzzle_id(self) -> UUID:
         return self.puzzle.id
 
+    def accepts(self, answer: Answer) -> bool:
+        clue = self.puzzle.clues.find(answer.id)
+        if clue is None or len(answer.normalized_value) != clue.total_length:
+            return False
+
+        for intersection in self.puzzle.intersections(answer.id):
+            intersecting_answer = self.answers.find(intersection.to_intersecting_id(answer.id))
+            if intersecting_answer and answer.conflicts_with(intersecting_answer, intersection):
+                return False
+        return True
+
     def save_answer(self, answer: Answer) -> Attempt:
         if not self.puzzle.clues.has_clue(answer.id):
             raise ClueNotFoundForIdError(answer.id)

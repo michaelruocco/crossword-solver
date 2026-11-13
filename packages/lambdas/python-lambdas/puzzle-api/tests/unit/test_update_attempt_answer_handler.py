@@ -4,6 +4,7 @@ from uuid import uuid4
 import pytest
 from crossword_solver_domain_entities.clue_not_found_for_id_error import ClueNotFoundForIdError
 from crossword_solver_domain_entities.id import Id
+from crossword_solver_domain_entities.invalid_answer_error import InvalidAnswerError
 from crossword_solver_domain_use_case.attempt_not_found_error import AttemptNotFoundError
 from crossword_solver_domain_use_case.puzzle_not_found_error import PuzzleNotFoundError
 from crossword_solver_test_utils.responses import response_json, response_status
@@ -107,6 +108,21 @@ def test_handler_returns_not_found_for_puzzle_or_clue(build_event, lambda_contex
 
     assert response_status(response) == 404
     assert response_json(response) == {"message": expected_message}
+
+
+def test_handler_returns_bad_request_for_an_invalid_answer(build_event, lambda_context):
+    with patch.object(
+        update_attempt_answer_handler.attempt_answer_saver,
+        "save",
+        side_effect=InvalidAnswerError(Id.across(3)),
+    ):
+        response = update_attempt_answer_handler.lambda_handler(
+            build_event({"id": "3A", "value": "CAT"}, {"puzzleId": str(uuid4()), "attemptId": str(uuid4())}),
+            lambda_context,
+        )
+
+    assert response_status(response) == 400
+    assert response_json(response) == {"message": "Invalid answer"}
 
 
 def test_handler_returns_internal_server_error_when_save_fails(build_event, lambda_context):

@@ -35,7 +35,7 @@ export function PuzzleListPage({ puzzles, loadState, errorMessage, onRefresh, on
         <div>
           <div className="eyebrow"><span className="eyebrow-rule" /> YOUR COLLECTION</div>
           <h1 id="page-title">Puzzle library</h1>
-          <p className="page-subtitle">Every grid, ready to revisit.</p>
+          <p className="page-subtitle">Every puzzle, ready to revisit.</p>
         </div>
         <div className="heading-actions">
           <div className="collection-stat" aria-live="polite">
