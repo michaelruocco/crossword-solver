@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { ArrowLeft, ArrowRight, ArrowDown, Eraser, History, Plus, Send, Sparkles, Trash2 } from 'lucide-react'
 import { apiClient, type Puzzle, type PuzzleAnswer, type PuzzleAttempt, type PuzzleAttemptSummary, type PuzzleClue } from '../apiClient'
 
@@ -12,7 +12,7 @@ export function PuzzlePage({ puzzleId }: Readonly<{ puzzleId: string }>) {
   const [state, setState] = useState<PuzzleState>({ status: 'loading' })
   const [reloadKey, setReloadKey] = useState(0)
   const [selectedClue, setSelectedClue] = useState<PuzzleClue | null>(null)
-  const [answerDrafts, setAnswerDrafts] = useState<Record<string, string>>({})
+  const [answerDrafts, setAnswerDrafts] = useState<Record<string, string[]>>({})
   const [attemptSummaries, setAttemptSummaries] = useState<PuzzleAttemptSummary[]>([])
   const [attemptSummariesState, setAttemptSummariesState] = useState<'loading' | 'error' | 'ready'>('loading')
   const [attemptSummariesError, setAttemptSummariesError] = useState('')
@@ -24,11 +24,12 @@ export function PuzzlePage({ puzzleId }: Readonly<{ puzzleId: string }>) {
   const [savingAnswer, setSavingAnswer] = useState(false)
   const [attemptError, setAttemptError] = useState('')
   const [answerError, setAnswerError] = useState('')
+  const answerInputRefs = useRef<(HTMLInputElement | null)[]>([])
   const selectedClueKey = selectedClue
     ? `${selectedAttemptId ?? 'unselected'}:${selectedClue.direction}-${selectedClue.id}`
     : ''
-  const hasAnswerDraft = Object.hasOwn(answerDrafts, selectedClueKey)
-  const answerDraft = answerDrafts[selectedClueKey] ?? ''
+  const answerDraft = answerDrafts[selectedClueKey] ?? []
+  const hasAnswerDraft = answerDraft.some(Boolean)
   const selectedAttempt = attemptSummaries.find((summary) => summary.id === selectedAttemptId) ?? null
   const loadedAttempt = attemptDetails?.status === 'ready' && attemptDetails.attemptId === selectedAttemptId
     ? attemptDetails.attempt
@@ -37,20 +38,69 @@ export function PuzzlePage({ puzzleId }: Readonly<{ puzzleId: string }>) {
   const selectedSavedAnswer = selectedClue
     ? savedAnswers.find((answer) => answer.id === clueAnswerId(selectedClue))
     : undefined
-  const displayedAnswer = hasAnswerDraft ? answerDraft : selectedSavedAnswer?.value ?? ''
+  const selectedWord = selectedClue && state.status === 'ready'
+    ? state.puzzle.words.find((word) => word.id === selectedClue.id && word.direction === selectedClue.direction)
+    : undefined
+  const answerLength = selectedClue
+    ? selectedWord?.length ?? selectedClue.lengths.reduce((length, part) => length + part, 0)
+    : 0
+  const draftAnswers = state.status === 'ready'
+    ? state.puzzle.clues.flatMap((clue) => {
+      const key = `${selectedAttemptId ?? 'unselected'}:${clue.direction}-${clue.id}`
+      const characters = answerDrafts[key]
+      if (!characters?.some(Boolean)) return []
+      const savedCharactersForClue = normalizeAnswer(
+        savedAnswers.find((answer) => answer.id === clueAnswerId(clue))?.value ?? '',
+      )
+      return [{
+        id: clueAnswerId(clue),
+        characters: characters.map((character, index) => character || savedCharactersForClue[index] || ''),
+      }]
+    })
+    : []
+  const displayedSavedAnswers = savedAnswers.filter((answer) => !draftAnswers.some((draft) => draft.id === answer.id))
+  const selectedCrossingCharacters = state.status === 'ready' && selectedClue
+    ? getAnswerCharacterMap(state.puzzle, displayedSavedAnswers, draftAnswers, clueAnswerId(selectedClue))
+    : new Map<string, string>()
+  const savedCharacters = selectedSavedAnswer ? normalizeAnswer(selectedSavedAnswer.value) : []
+  const displayedCharacters = Array.from({ length: answerLength }, (_, index) => {
+    const coordinate = selectedWord ? wordCoordinate(selectedWord, index) : ''
+    return selectedCrossingCharacters.get(coordinate) ?? answerDraft[index] ?? savedCharacters[index] ?? ''
+  })
+  const displayedAnswer = displayedCharacters.join('')
   let answerStatus = 'Not submitted'
   if (selectedSavedAnswer) answerStatus = 'Saved answer'
   if (hasAnswerDraft) answerStatus = 'Unsaved draft'
 
-  const updateAnswerDraft = (value: string) => {
+  const updateAnswerDraft = (index: number, value: string) => {
     setAnswerError('')
     setAnswerDrafts((drafts) => {
-      if (value) return { ...drafts, [selectedClueKey]: value }
+      const updatedAnswer = Array.from({ length: answerLength }, (_, characterIndex) => drafts[selectedClueKey]?.[characterIndex] ?? '')
+      updatedAnswer[index] = Array.from(value.toUpperCase())[0] ?? ''
+      if (updatedAnswer.some(Boolean)) return { ...drafts, [selectedClueKey]: updatedAnswer }
       const updatedDrafts = { ...drafts }
       delete updatedDrafts[selectedClueKey]
       return updatedDrafts
     })
   }
+
+  const updateAnswerCharacter = (index: number, value: string) => {
+    updateAnswerDraft(index, value)
+    if (!value) return
+    answerInputRefs.current.slice(index + 1).find((input) => input && !input.disabled)?.focus()
+  }
+
+  const handleAnswerCharacterKeyDown = (index: number, key: string, value: string) => {
+    if ((key !== 'Backspace' && key !== 'Delete') || value) return
+    const previousInput = answerInputRefs.current.slice(0, index).reverse()
+      .find((input) => input && !input.disabled)
+    if (!previousInput) return
+    previousInput.focus()
+  }
+
+  useEffect(() => {
+    answerInputRefs.current.find((input) => input && !input.disabled && !input.value)?.focus()
+  }, [selectedClueKey, loadedAttempt])
 
   useEffect(() => {
     if (!selectedAttemptId) return
@@ -267,7 +317,7 @@ export function PuzzlePage({ puzzleId }: Readonly<{ puzzleId: string }>) {
           <div className="puzzle-workspace">
             <section className="puzzle-board-section" aria-labelledby="grid-heading">
               <div className="puzzle-section-heading"><h2 id="grid-heading">Grid</h2><button className="upload-button import-button" type="button" disabled title="Automatic solving is not available yet"><Sparkles size={15} aria-hidden="true" /> Auto-solve</button></div>
-              <PuzzleGrid puzzle={state.puzzle} selectedClue={selectedClue} answers={savedAnswers} />
+              <PuzzleGrid puzzle={state.puzzle} selectedClue={selectedClue} answers={displayedSavedAnswers} drafts={draftAnswers} />
             </section>
             <section className="puzzle-clues-section" aria-label="Puzzle clues">
               {selectedClue && (
@@ -275,13 +325,41 @@ export function PuzzlePage({ puzzleId }: Readonly<{ puzzleId: string }>) {
                   <strong>{selectedClue.id} {selectedClue.direction === 'ACROSS' ? 'Across' : 'Down'}</strong>
                   <p>{selectedClue.text}</p>
                   {selectedSavedAnswer && <p className="saved-answer">Saved answer: <strong>{selectedSavedAnswer.value}</strong></p>}
-                  <div className="answer-label"><label htmlFor="clue-answer">Answer</label><span>{answerStatus}</span></div>
+                  <div className="answer-label"><span>Answer</span><span>{answerStatus}</span></div>
                   <div className="answer-entry">
-                    <input id="clue-answer" type="text" value={displayedAnswer} onChange={(event) => updateAnswerDraft(event.target.value)} autoComplete="off" autoCapitalize="characters" spellCheck={false} />
+                    <div className="answer-character-inputs" role="group" aria-label="Answer">
+                      {displayedCharacters.map((character, index) => {
+                        const coordinate = selectedWord ? wordCoordinate(selectedWord, index) : ''
+                        const crossingCharacter = selectedCrossingCharacters.get(coordinate)
+                        return (
+                          <input
+                            key={index}
+                            ref={(input) => { answerInputRefs.current[index] = input }}
+                            type="text"
+                            aria-label={`Answer character ${index + 1}`}
+                            value={character}
+                            maxLength={1}
+                            disabled={Boolean(crossingCharacter)}
+                            onChange={(event) => updateAnswerCharacter(index, event.target.value)}
+                            onKeyDown={(event) => handleAnswerCharacterKeyDown(index, event.key, character)}
+                            autoComplete="off"
+                            autoCapitalize="characters"
+                            spellCheck={false}
+                          />
+                        )
+                      })}
+                    </div>
                     <div className="answer-actions">
-                      <button type="button" className="icon-button" disabled={!hasAnswerDraft || !answerDraft} onClick={() => updateAnswerDraft('')} aria-label="Clear answer draft" title="Clear answer draft"><Eraser size={17} aria-hidden="true" /></button>
+                      <button type="button" className="icon-button" disabled={!hasAnswerDraft} onClick={() => {
+                        setAnswerError('')
+                        setAnswerDrafts((drafts) => {
+                          const updatedDrafts = { ...drafts }
+                          delete updatedDrafts[selectedClueKey]
+                          return updatedDrafts
+                        })
+                      }} aria-label="Clear answer draft" title="Clear answer draft"><Eraser size={17} aria-hidden="true" /></button>
                       <button type="button" className="icon-button answer-delete" disabled aria-label="Delete saved answer" title="Saved-answer deletion is not available yet"><Trash2 size={17} aria-hidden="true" /></button>
-                      <button type="button" className="icon-button" disabled={!submitAnswerAction || !displayedAnswer.trim() || savingAnswer} onClick={submitAnswerAction} aria-label={savingAnswer ? 'Submitting answer' : 'Submit answer'} title="Submit answer"><Send size={17} aria-hidden="true" /></button>
+                      <button type="button" className="icon-button" disabled={!submitAnswerAction || !displayedCharacters.length || displayedCharacters.some((character) => !character) || savingAnswer} onClick={submitAnswerAction} aria-label={savingAnswer ? 'Submitting answer' : 'Submit answer'} title="Submit answer"><Send size={17} aria-hidden="true" /></button>
                     </div>
                   </div>
                   {!selectedAttemptId && <p className="attempt-status-note">Create or select an attempt before submitting an answer.</p>}
@@ -322,20 +400,26 @@ export function PuzzlePage({ puzzleId }: Readonly<{ puzzleId: string }>) {
   )
 }
 
-function PuzzleGrid({ puzzle, selectedClue, answers }: Readonly<{ puzzle: Puzzle; selectedClue: PuzzleClue | null; answers: PuzzleAnswer[] }>) {
+function PuzzleGrid({ puzzle, selectedClue, answers, drafts }: Readonly<{
+  puzzle: Puzzle
+  selectedClue: PuzzleClue | null
+  answers: PuzzleAnswer[]
+  drafts: { id: string; characters: string[] }[]
+}>) {
   const cells = new Map(puzzle.grid.cells.map((cell) => [`${cell.coordinates.x},${cell.coordinates.y}`, cell]))
   const word = selectedClue && puzzle.words.find((entry) => entry.id === selectedClue.id && entry.direction === selectedClue.direction)
   const answerCharacters = new Map<string, string>()
-  for (const answer of answers) {
+  const answersToMap = answers.map((answer) => ({ id: answer.id, characters: normalizeAnswer(answer.value) }))
+  for (const answer of [...answersToMap, ...drafts]) {
     const clue = puzzle.clues.find((entry) => clueAnswerId(entry) === answer.id)
     const answerWord = clue && puzzle.words.find((entry) => entry.id === clue.id && entry.direction === clue.direction)
     if (!clue || !answerWord) continue
 
-    const characters = answer.value.replace(/\s/g, '').toUpperCase()
-    for (let index = 0; index < Math.min(characters.length, answerWord.length); index++) {
-      const x = answerWord.coordinates.x + (clue.direction === 'ACROSS' ? index : 0)
-      const y = answerWord.coordinates.y - (clue.direction === 'DOWN' ? index : 0)
-      answerCharacters.set(`${x},${y}`, characters[index])
+    for (let index = 0; index < Math.min(answer.characters.length, answerWord.length); index++) {
+      const character = answer.characters[index]
+      if (!character) continue
+      const coordinate = wordCoordinate(answerWord, index)
+      if (!answerCharacters.has(coordinate)) answerCharacters.set(coordinate, character)
     }
   }
 
@@ -377,4 +461,40 @@ function PuzzleGrid({ puzzle, selectedClue, answers }: Readonly<{ puzzle: Puzzle
 
 function clueAnswerId(clue: Pick<PuzzleClue, 'id' | 'direction'>): string {
   return `${clue.id}${clue.direction === 'ACROSS' ? 'A' : 'D'}`
+}
+
+function normalizeAnswer(value: string): string[] {
+  return Array.from(value.replace(/\s/g, '').toUpperCase())
+}
+
+function wordCoordinate(word: Puzzle['words'][number], index: number): string {
+  const x = word.coordinates.x + (word.direction === 'ACROSS' ? index : 0)
+  const y = word.coordinates.y - (word.direction === 'DOWN' ? index : 0)
+  return `${x},${y}`
+}
+
+function getAnswerCharacterMap(
+  puzzle: Puzzle,
+  answers: PuzzleAnswer[],
+  drafts: { id: string; characters: string[] }[],
+  excludedAnswerId: string,
+): Map<string, string> {
+  const characters = new Map<string, string>()
+  const answerValues = [
+    ...answers.filter((answer) => answer.id !== excludedAnswerId)
+      .map((answer) => ({ id: answer.id, characters: normalizeAnswer(answer.value) })),
+    ...drafts.filter((draft) => draft.id !== excludedAnswerId),
+  ]
+  for (const answer of answerValues) {
+    const clue = puzzle.clues.find((entry) => clueAnswerId(entry) === answer.id)
+    const word = clue && puzzle.words.find((entry) => entry.id === clue.id && entry.direction === clue.direction)
+    if (!word) continue
+    for (let index = 0; index < Math.min(answer.characters.length, word.length); index++) {
+      const character = answer.characters[index]
+      if (character && !characters.has(wordCoordinate(word, index))) {
+        characters.set(wordCoordinate(word, index), character)
+      }
+    }
+  }
+  return characters
 }
