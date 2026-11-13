@@ -38,9 +38,10 @@ def test_rejects_an_invalid_answer_without_saving_the_attempt():
     attempt = Mock()
     finder.find_by_id.return_value = attempt
     attempt.accepts.return_value = False
+    saver = AttemptAnswerSaver(finder, repository)
 
     with pytest.raises(InvalidAnswerError) as error:
-        AttemptAnswerSaver(finder, repository).save(puzzle_id, attempt_id, answer)
+        saver.save(puzzle_id, attempt_id, answer)
 
     attempt.save_answer.assert_called_once_with(answer)
     repository.save.assert_not_called()
