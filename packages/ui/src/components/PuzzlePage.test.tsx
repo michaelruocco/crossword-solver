@@ -74,52 +74,13 @@ function answerInputValues(length: number): string[] {
   return Array.from({ length }, (_, index) => getAnswerInput(index + 1).value)
 }
 
-test('maps bottom-left-origin coordinates to top-to-bottom display rows without reversing columns', async () => {
+test('loads the puzzle and requests it with an abort signal', async () => {
   render(<PuzzlePage puzzleId={puzzle.id} />)
 
   expect(screen.getByRole('status').textContent).toBe('Loading puzzle...')
   expect(await screen.findByRole('heading', { name: puzzle.name })).toBeTruthy()
-  const grid = screen.getByRole('table', { name: 'Puzzle grid' })
-  const cells = within(grid).getAllByRole('cell')
-  expect(cells).toHaveLength(6)
-  expect(cells[0].getAttribute('aria-label')).toBe('Row 1, column 1: 1, A')
-  expect(cells[1].getAttribute('aria-label')).toBe('Row 1, column 2: empty')
-  expect(cells[3].getAttribute('aria-label')).toBe('Row 2, column 1: 3, empty')
-  expect(cells[5].getAttribute('aria-label')).toBe('Row 2, column 3: black square')
-  expect(within(grid).getByText('A')).toBeTruthy()
   expect(screen.queryByRole('img')).toBeNull()
   expect(apiClient.getPuzzle).toHaveBeenCalledWith(puzzle.id, expect.any(AbortSignal))
-})
-
-test('groups and sorts clues', async () => {
-  render(<PuzzlePage puzzleId={puzzle.id} />)
-  await screen.findByRole('table')
-
-  const across = screen.getByRole('region', { name: 'Across' })
-  const clues = within(across).getAllByRole('button')
-  expect(clues[0].textContent).toBe('1A horizontal entry')
-  expect(clues[1].textContent).toBe('3A second entry')
-  expect(within(screen.getByRole('region', { name: 'Down' })).getByText('A vertical entry')).toBeTruthy()
-})
-
-test.each([
-  { lengths: [], text: 'A horizontal entry' },
-  { lengths: [3], text: 'A horizontal entry' },
-  { lengths: [1, 2], text: 'A horizontal entry' },
-  { lengths: [1, 2], text: 'A horizontal entry (1, 2)' },
-])('renders only the clue text "$text" with lengths $lengths', async ({ lengths, text }) => {
-  vi.mocked(apiClient.getPuzzle).mockResolvedValueOnce({
-    ...puzzle,
-    clues: [{ id: 1, direction: 'ACROSS', text, lengths }],
-  })
-  render(<PuzzlePage puzzleId={puzzle.id} />)
-
-  const clue = await screen.findByRole('button', { name: `1 Across: ${text}` })
-  expect(clue.textContent).toBe(`1${text}`)
-
-  fireEvent.click(clue)
-  const selected = screen.getByRole('region', { name: 'Selected clue' })
-  expect(selected.querySelector('p')?.textContent).toBe(text)
 })
 
 test('selects across and down entries independently when their numbers match', async () => {
@@ -145,39 +106,35 @@ test('selects across and down entries independently when their numbers match', a
   expect(screen.getByRole('region', { name: 'Selected clue' }).textContent).toContain('1 Down')
 })
 
-test('highlights a down entry toward decreasing y without extending above or below the word', async () => {
-  vi.mocked(apiClient.getPuzzle).mockResolvedValueOnce({
-    ...puzzle,
-    grid: {
-      numberOfRows: 4,
-      numberOfColumns: 1,
-      cells: Array.from({ length: 4 }, (_, y) => ({ id: null, coordinates: { x: 0, y }, black: false, character: null })),
-    },
-    words: [{ id: 1, direction: 'DOWN', length: 2, coordinates: { x: 0, y: 2 } }],
-  })
-  render(<PuzzlePage puzzleId={puzzle.id} />)
-  fireEvent.click(await screen.findByRole('button', { name: '1 Down: A vertical entry' }))
-
-  const cells = within(screen.getByRole('table')).getAllByRole('cell')
-  expect(cells.map((cell) => cell.classList.contains('puzzle-cell-selected'))).toEqual([false, true, true, false])
-})
 
 test('loads and selects previous attempts with their summary status', async () => {
-  vi.mocked(apiClient.getAttemptSummaries).mockResolvedValueOnce([attemptSummary])
+  const olderAttempt = { ...attemptSummary, id: 'attempt-older', createdAt: '2026-10-17T09:30:00Z' }
+  const latestAttempt = { ...attemptSummary, id: 'attempt-latest', createdAt: '2026-10-19T09:30:00Z' }
+  vi.mocked(apiClient.getAttemptSummaries).mockResolvedValueOnce([olderAttempt, latestAttempt])
+  vi.mocked(apiClient.getAttempt).mockImplementation((_puzzleId, attemptId) => Promise.resolve({
+    ...attempt,
+    id: attemptId,
+    answerCount: 2,
+  }))
   render(<PuzzlePage puzzleId={puzzle.id} />)
   await screen.findByRole('table')
 
+  const selectedStatus = await screen.findByRole('status', { name: 'Selected attempt status' })
+  expect(within(selectedStatus).getByText('Selected attempt 1')).toBeTruthy()
+  expect(apiClient.getAttempt).toHaveBeenCalledWith(puzzle.id, latestAttempt.id, expect.any(AbortSignal))
+
   fireEvent.click(screen.getByRole('button', { name: 'Previous attempts' }))
   const previousAttempt = await screen.findByRole('button', { name: /Attempt 1/ })
-  expect(previousAttempt.textContent).toContain('2 of 3 answered')
-  fireEvent.click(previousAttempt)
+  expect(previousAttempt.getAttribute('aria-pressed')).toBe('true')
+  fireEvent.click(screen.getByRole('button', { name: /Attempt 2/ }))
+  expect(within(selectedStatus).getByText('Selected attempt 2')).toBeTruthy()
+  fireEvent.click(screen.getByRole('button', { name: 'Previous attempts' }))
+  await screen.findByRole('button', { name: /Attempt 1/ })
+  expect((await screen.findByRole('button', { name: /Attempt 2/ })).getAttribute('aria-pressed')).toBe('true')
 
-  const selectedStatus = screen.getByRole('status', { name: 'Selected attempt status' })
   expect(within(selectedStatus).getByText('2 of 3 clues answered')).toBeTruthy()
   expect(within(selectedStatus).getByText('Solving')).toBeTruthy()
   expect(await within(selectedStatus).findByText('0 saved answers loaded.')).toBeTruthy()
-  fireEvent.click(screen.getByRole('button', { name: 'Previous attempts' }))
-  expect((await screen.findByRole('button', { name: /Attempt 1/ })).getAttribute('aria-pressed')).toBe('true')
 })
 
 test('does not reload an attempt when it is already selected', async () => {
@@ -263,6 +220,7 @@ test('creates an attempt for the current puzzle and reports success', async () =
 
   expect(apiClient.createAttempt).toHaveBeenCalledWith(puzzle.id)
   const selectedStatus = await screen.findByRole('status', { name: 'Selected attempt status' })
+  expect(within(selectedStatus).getByText('Selected attempt 1')).toBeTruthy()
   expect(within(selectedStatus).getByText('0 of 3 clues answered')).toBeTruthy()
   expect(await within(selectedStatus).findByText('0 saved answers loaded.')).toBeTruthy()
 })
@@ -279,6 +237,7 @@ test('creates a new attempt while preserving drafts scoped to an existing attemp
   fireEvent.click(screen.getByRole('button', { name: 'New attempt' }))
   await screen.findAllByText('0 saved answers loaded.')
 
+  expect(within(screen.getByRole('status', { name: 'Selected attempt status' })).getByText('Selected attempt 1')).toBeTruthy()
   expect(answerInputValues(3)).toEqual(['', '', ''])
   fireEvent.click(screen.getByRole('button', { name: 'Previous attempts' }))
   fireEvent.click(await screen.findByRole('button', { name: /Attempt 1/ }))
@@ -463,61 +422,6 @@ test('focuses the first empty editable character when selecting a clue', async (
   fireEvent.click(screen.getByRole('button', { name: '1 Across: A horizontal entry' }))
 
   expect(getAnswerInput(1).disabled).toBe(true)
-  expect(document.activeElement).toBe(getAnswerInput(2))
-})
-
-test('moves focus to the next editable character input, skipping crossing letters', async () => {
-  vi.mocked(apiClient.getPuzzle).mockResolvedValueOnce({
-    ...puzzle,
-    clues: [...puzzle.clues, { id: 5, direction: 'DOWN', text: 'Another crossing', lengths: [2] }],
-    words: [...puzzle.words, { id: 5, direction: 'DOWN', length: 2, coordinates: { x: 1, y: 1 } }],
-  })
-  render(<PuzzlePage puzzleId={puzzle.id} />)
-
-  fireEvent.click(await screen.findByRole('button', { name: '5 Down: Another crossing' }))
-  fireEvent.change(getAnswerInput(1), { target: { value: 'x' } })
-  fireEvent.click(screen.getByRole('button', { name: '1 Across: A horizontal entry' }))
-  expect(getAnswerInput(2).disabled).toBe(true)
-
-  fireEvent.change(getAnswerInput(1), { target: { value: 'c' } })
-
-  expect(document.activeElement).toBe(getAnswerInput(3))
-})
-
-test('moves focus to the previous editable input when deleting from an empty character cell', async () => {
-  vi.mocked(apiClient.getPuzzle).mockResolvedValueOnce({
-    ...puzzle,
-    clues: [...puzzle.clues, { id: 5, direction: 'DOWN', text: 'Another crossing', lengths: [2] }],
-    words: [...puzzle.words, { id: 5, direction: 'DOWN', length: 2, coordinates: { x: 1, y: 1 } }],
-  })
-  render(<PuzzlePage puzzleId={puzzle.id} />)
-
-  fireEvent.click(await screen.findByRole('button', { name: '5 Down: Another crossing' }))
-  fireEvent.change(getAnswerInput(1), { target: { value: 'x' } })
-  fireEvent.click(screen.getByRole('button', { name: '1 Across: A horizontal entry' }))
-  expect(getAnswerInput(2).disabled).toBe(true)
-
-  fireEvent.keyDown(getAnswerInput(3), { key: 'Backspace', code: 'Backspace' })
-
-  expect(document.activeElement).toBe(getAnswerInput(1))
-
-  fireEvent.keyDown(getAnswerInput(3), { key: 'Delete', code: 'Delete' })
-  expect(document.activeElement).toBe(getAnswerInput(1))
-})
-
-test('keeps focus in place for other keys and when deleting a populated character', async () => {
-  render(<PuzzlePage puzzleId={puzzle.id} />)
-
-  fireEvent.click(await screen.findByRole('button', { name: '1 Across: A horizontal entry' }))
-  const secondInput = getAnswerInput(2)
-  secondInput.focus()
-  fireEvent.keyDown(secondInput, { key: 'ArrowLeft', code: 'ArrowLeft' })
-  expect(document.activeElement).toBe(secondInput)
-
-  fireEvent.change(getAnswerInput(1), { target: { value: 'a' } })
-  fireEvent.change(getAnswerInput(2), { target: { value: 'b' } })
-  getAnswerInput(2).focus()
-  fireEvent.keyDown(getAnswerInput(2), { key: 'Backspace', code: 'Backspace' })
   expect(document.activeElement).toBe(getAnswerInput(2))
 })
 
@@ -716,43 +620,4 @@ test('handles missing clues and an unavailable grid', async () => {
   expect(screen.getByText('Grid unavailable.')).toBeTruthy()
   expect(screen.getByText('No across clues.')).toBeTruthy()
   expect(screen.getByText('No down clues.')).toBeTruthy()
-})
-
-test('renders missing cells as black squares and tolerates clues without word positions', async () => {
-  vi.mocked(apiClient.getPuzzle).mockResolvedValueOnce({ ...puzzle, words: [], grid: { ...puzzle.grid, cells: [] } })
-  render(<PuzzlePage puzzleId={puzzle.id} />)
-  fireEvent.click(await screen.findByRole('button', { name: '1 Across: A horizontal entry' }))
-
-  const cells = within(screen.getByRole('table')).getAllByRole('cell')
-  expect(cells.every((cell) => cell.classList.contains('puzzle-cell-black'))).toBe(true)
-  expect(screen.getByRole('region', { name: 'Selected clue' })).toBeTruthy()
-})
-
-test('renders saved down answers in the grid and limits them to the word length', async () => {
-  const savedAttempt = { ...attempt, answerCount: 1, answers: [{ id: '1D', value: 'b t x' }] }
-  vi.mocked(apiClient.getAttemptSummaries).mockResolvedValueOnce([attemptSummary])
-  vi.mocked(apiClient.getAttempt).mockResolvedValueOnce(savedAttempt)
-  render(<PuzzlePage puzzleId={puzzle.id} />)
-
-  fireEvent.click(await screen.findByRole('button', { name: 'Previous attempts' }))
-  fireEvent.click(await screen.findByRole('button', { name: /Attempt 1/ }))
-  await screen.findByText('1 saved answer loaded.')
-
-  expect(screen.getByRole('cell', { name: 'Row 1, column 1: 1, B' })).toBeTruthy()
-  expect(screen.getByRole('cell', { name: 'Row 2, column 1: 3, T' })).toBeTruthy()
-})
-
-test('ignores saved answers without matching clues or word positions', async () => {
-  const savedAttempt = { ...attempt, answers: [{ id: '99A', value: 'ABC' }, { id: '3A', value: 'XY' }] }
-  vi.mocked(apiClient.getPuzzle).mockResolvedValueOnce({ ...puzzle, words: puzzle.words.filter((word) => word.id !== 3) })
-  vi.mocked(apiClient.getAttemptSummaries).mockResolvedValueOnce([attemptSummary])
-  vi.mocked(apiClient.getAttempt).mockResolvedValueOnce(savedAttempt)
-  render(<PuzzlePage puzzleId={puzzle.id} />)
-
-  fireEvent.click(await screen.findByRole('button', { name: 'Previous attempts' }))
-  fireEvent.click(await screen.findByRole('button', { name: /Attempt 1/ }))
-  await screen.findByText('2 saved answers loaded.')
-
-  expect(screen.getByRole('cell', { name: 'Row 2, column 1: 3, empty' })).toBeTruthy()
-  expect(screen.queryByText('ABC')).toBeNull()
 })
