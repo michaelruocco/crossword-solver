@@ -1,6 +1,7 @@
 from uuid import UUID
 
 from crossword_solver_domain_entities.answer import Answer
+from crossword_solver_domain_entities.invalid_answer_error import InvalidAnswerError
 
 from .attempt_finder import AttemptFinder
 from .attempt_repository import AttemptRepository
@@ -13,4 +14,7 @@ class AttemptAnswerSaver:
 
     def save(self, puzzle_id: UUID, attempt_id: UUID, answer: Answer) -> None:
         attempt = self.finder.find_by_id(puzzle_id, attempt_id)
-        self.repository.save(attempt.save_answer(answer))
+        updated_attempt = attempt.save_answer(answer)
+        if not attempt.accepts(answer):
+            raise InvalidAnswerError(answer.id)
+        self.repository.save(updated_attempt)
