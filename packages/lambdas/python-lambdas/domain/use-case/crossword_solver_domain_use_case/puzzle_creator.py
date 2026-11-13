@@ -7,6 +7,7 @@ from crossword_solver_domain_entities.words_factory import WordsFactory
 
 from .clock import Clock, system_clock
 from .clue_extractor import ClueExtractor
+from .clue_length_population_policy import ClueLengthPopulationPolicy
 from .grid_extractor import GridExtractor
 from .image_downloader import ImageDownloader
 from .image_validator import ImageValidator
@@ -23,6 +24,7 @@ class PuzzleCreator:
         clock: Clock = system_clock,
         words_factory: WordsFactory | None = None,
         image_validator: ImageValidator | None = None,
+        clue_length_population_policy: ClueLengthPopulationPolicy | None = None,
     ):
         self.image_downloader = image_downloader
         self.clue_extractor = clue_extractor
@@ -31,6 +33,7 @@ class PuzzleCreator:
         self.clock = clock
         self.words_factory = words_factory or WordsFactory()
         self.image_validator = image_validator or ImageValidator()
+        self.clue_length_population_policy = clue_length_population_policy or ClueLengthPopulationPolicy()
 
     def create(self, image_url: str) -> UUID:
         image = self.image_downloader.download_image(image_url)
@@ -44,6 +47,7 @@ class PuzzleCreator:
             grid_future = executor.submit(self.grid_extractor.extract_grid, image)
             clues = clues_future.result()
             grid = grid_future.result()
+            clues = self.clue_length_population_policy.populate(clues, grid)
             puzzle = Puzzle(
                 id=uid.uuid4(),
                 name=image.name,

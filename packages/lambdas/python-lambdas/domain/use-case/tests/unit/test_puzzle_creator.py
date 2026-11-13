@@ -57,7 +57,8 @@ def test_create_downloads_image_extracts_clues_and_grid_and_saves_puzzle():
     assert puzzle.name == "puzzle14"
     assert puzzle.format == ".jpg"
     assert puzzle.hash == "hash-value"
-    assert puzzle.clues is clues
+    assert puzzle.clues is not clues
+    assert list(puzzle.clues) == list(clues)
     assert puzzle.grid is grid
     assert puzzle.created_at == NOW
 
@@ -84,6 +85,30 @@ def test_create_builds_words_from_the_clues_and_grid_cells():
     assert list(puzzle.words) == [Word(Id.across(1), 3, Coordinates(0, 2))]
 
 
+def test_create_populates_missing_clue_lengths_before_building_words():
+    clues = Clues([Clue(Id.across(1), "clue", [])])
+    grid = Grid(
+        Cells(
+            [
+                Cell(Coordinates(0, 2), black=False, id=1),
+                Cell(Coordinates(1, 2), black=False),
+                Cell(Coordinates(2, 2), black=False),
+                Cell(Coordinates(3, 2), black=True),
+            ]
+        ),
+        10,
+        10,
+    )
+    repository = Mock()
+    repository.find_by_hash.return_value = None
+
+    a_creator(clues, grid, repository).create("https://example.com/puzzle.png")
+
+    puzzle = repository.save.call_args.args[0]
+    assert puzzle.clues.find(Id.across(1)).lengths == [3]
+    assert list(puzzle.words) == [Word(Id.across(1), 3, Coordinates(0, 2))]
+
+
 def test_create_uses_given_words_factory():
     clues = Clues([])
     grid = Grid(Cells([]), 10, 10)
@@ -95,8 +120,11 @@ def test_create_uses_given_words_factory():
 
     a_creator(clues, grid, repository, words_factory=words_factory).create("https://example.com/puzzle.png")
 
-    words_factory.to_words.assert_called_once_with(clues, grid.cells)
-    assert repository.save.call_args.args[0].words is words
+    puzzle = repository.save.call_args.args[0]
+    words_factory.to_words.assert_called_once_with(puzzle.clues, grid.cells)
+    assert puzzle.clues is not clues
+    assert list(puzzle.clues) == list(clues)
+    assert puzzle.words is words
 
 
 def test_create_raises_error_and_saves_nothing_when_a_clue_has_no_cell():
@@ -174,7 +202,8 @@ def test_create_extracts_clues_and_grid_at_the_same_time():
     creator.create("https://example.com/puzzle.png")
 
     puzzle = repository.save.call_args.args[0]
-    assert puzzle.clues is clues
+    assert puzzle.clues is not clues
+    assert list(puzzle.clues) == list(clues)
     assert puzzle.grid is grid
 
 
