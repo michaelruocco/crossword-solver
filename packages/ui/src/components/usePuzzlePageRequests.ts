@@ -1,6 +1,6 @@
 import { useEffect, useState, type Dispatch, type SetStateAction } from 'react'
 import { apiClient, type Puzzle, type PuzzleAttempt, type PuzzleAttemptSummary } from '../apiClient'
-import { mergeAttemptSummaries, sortAttemptsNewestFirst } from './puzzlePageHelpers'
+import { mergeAttemptSummaries, sortAttemptsOldestFirst } from './puzzlePageHelpers'
 
 export type PuzzleState = { status: 'loading' } | { status: 'error'; message: string } | { status: 'ready'; puzzle: Puzzle }
 export type AttemptDetailsState =
@@ -49,9 +49,9 @@ export function useAttemptSummariesRequest(
     apiClient.getAttemptSummaries(puzzleId, controller.signal)
       .then((summaries) => {
         if (!controller.signal.aborted) {
-          const orderedSummaries = sortAttemptsNewestFirst(summaries)
+          const orderedSummaries = sortAttemptsOldestFirst(summaries)
           setAttemptSummaries((existing) => mergeAttemptSummaries(existing, orderedSummaries))
-          setSelectedAttemptId((current) => current ?? orderedSummaries[0]?.id ?? null)
+          setSelectedAttemptId((current) => current ?? orderedSummaries.at(-1)?.id ?? null)
           setAttemptSummariesState('ready')
         }
       })

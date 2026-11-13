@@ -1,6 +1,6 @@
 import { useState, type Dispatch, type SetStateAction } from 'react'
 import { apiClient, type PuzzleAnswer, type PuzzleAttempt, type PuzzleAttemptSummary, type PuzzleClue } from '../apiClient'
-import { clueAnswerId, sortAttemptsNewestFirst } from './puzzlePageHelpers'
+import { clueAnswerId, sortAttemptsOldestFirst } from './puzzlePageHelpers'
 import type { AttemptDetailsState } from './usePuzzlePageRequests'
 
 type StateSetter<T> = Dispatch<SetStateAction<T>>
@@ -62,7 +62,7 @@ export function usePuzzlePageActions({
         answerCount: created.answerCount,
         clueCount: created.puzzle.clues.length,
       }
-      setAttemptSummaries((summaries) => sortAttemptsNewestFirst([
+      setAttemptSummaries((summaries) => sortAttemptsOldestFirst([
         summary,
         ...summaries.filter((existing) => existing.id !== summary.id),
       ]))

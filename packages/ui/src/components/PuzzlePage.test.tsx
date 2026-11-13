@@ -110,7 +110,7 @@ test('selects across and down entries independently when their numbers match', a
 test('loads and selects previous attempts with their summary status', async () => {
   const olderAttempt = { ...attemptSummary, id: 'attempt-older', createdAt: '2026-10-17T09:30:00Z' }
   const latestAttempt = { ...attemptSummary, id: 'attempt-latest', createdAt: '2026-10-19T09:30:00Z' }
-  vi.mocked(apiClient.getAttemptSummaries).mockResolvedValueOnce([olderAttempt, latestAttempt])
+  vi.mocked(apiClient.getAttemptSummaries).mockResolvedValueOnce([latestAttempt, olderAttempt])
   vi.mocked(apiClient.getAttempt).mockImplementation((_puzzleId, attemptId) => Promise.resolve({
     ...attempt,
     id: attemptId,
@@ -120,17 +120,19 @@ test('loads and selects previous attempts with their summary status', async () =
   await screen.findByRole('table')
 
   const selectedStatus = await screen.findByRole('status', { name: 'Selected attempt status' })
-  expect(within(selectedStatus).getByText('Selected attempt 1')).toBeTruthy()
+  expect(within(selectedStatus).getByText('Selected attempt 2')).toBeTruthy()
   expect(apiClient.getAttempt).toHaveBeenCalledWith(puzzle.id, latestAttempt.id, expect.any(AbortSignal))
 
   fireEvent.click(screen.getByRole('button', { name: 'Previous attempts' }))
   const previousAttempt = await screen.findByRole('button', { name: /Attempt 1/ })
-  expect(previousAttempt.getAttribute('aria-pressed')).toBe('true')
+  expect(previousAttempt.getAttribute('aria-pressed')).toBe('false')
+  fireEvent.click(previousAttempt)
+  expect(within(selectedStatus).getByText('Selected attempt 1')).toBeTruthy()
+  fireEvent.click(screen.getByRole('button', { name: 'Previous attempts' }))
+  expect((await screen.findByRole('button', { name: /Attempt 1/ })).getAttribute('aria-pressed')).toBe('true')
+  expect((await screen.findByRole('button', { name: /Attempt 2/ })).getAttribute('aria-pressed')).toBe('false')
   fireEvent.click(screen.getByRole('button', { name: /Attempt 2/ }))
   expect(within(selectedStatus).getByText('Selected attempt 2')).toBeTruthy()
-  fireEvent.click(screen.getByRole('button', { name: 'Previous attempts' }))
-  await screen.findByRole('button', { name: /Attempt 1/ })
-  expect((await screen.findByRole('button', { name: /Attempt 2/ })).getAttribute('aria-pressed')).toBe('true')
 
   expect(within(selectedStatus).getByText('2 of 3 clues answered')).toBeTruthy()
   expect(within(selectedStatus).getByText('Solving')).toBeTruthy()
@@ -228,7 +230,7 @@ test('creates an attempt for the current puzzle and reports success', async () =
 test('creates a new attempt while preserving drafts scoped to an existing attempt', async () => {
   vi.mocked(apiClient.createAttempt)
     .mockResolvedValueOnce(attempt)
-    .mockResolvedValueOnce({ ...attempt, id: 'attempt-2' })
+    .mockResolvedValueOnce({ ...attempt, id: 'attempt-2', createdAt: '2026-10-19T09:30:00Z' })
   render(<PuzzlePage puzzleId={puzzle.id} />)
   fireEvent.click(await screen.findByRole('button', { name: 'New attempt' }))
   await screen.findByText('0 saved answers loaded.')
@@ -237,14 +239,14 @@ test('creates a new attempt while preserving drafts scoped to an existing attemp
   fireEvent.click(screen.getByRole('button', { name: 'New attempt' }))
   await screen.findAllByText('0 saved answers loaded.')
 
-  expect(within(screen.getByRole('status', { name: 'Selected attempt status' })).getByText('Selected attempt 1')).toBeTruthy()
-  expect(answerInputValues(3)).toEqual(['', '', ''])
-  fireEvent.click(screen.getByRole('button', { name: 'Previous attempts' }))
-  fireEvent.click(await screen.findByRole('button', { name: /Attempt 1/ }))
-  fireEvent.click(screen.getByRole('button', { name: '1 Across: A horizontal entry' }))
+  expect(within(screen.getByRole('status', { name: 'Selected attempt status' })).getByText('Selected attempt 2')).toBeTruthy()
   expect(answerInputValues(3)).toEqual(['', '', ''])
   fireEvent.click(screen.getByRole('button', { name: 'Previous attempts' }))
   fireEvent.click(await screen.findByRole('button', { name: /Attempt 2/ }))
+  fireEvent.click(screen.getByRole('button', { name: '1 Across: A horizontal entry' }))
+  expect(answerInputValues(3)).toEqual(['', '', ''])
+  fireEvent.click(screen.getByRole('button', { name: 'Previous attempts' }))
+  fireEvent.click(await screen.findByRole('button', { name: /Attempt 1/ }))
   fireEvent.click(screen.getByRole('button', { name: '1 Across: A horizontal entry' }))
   expect(answerInputValues(3)).toEqual(['A', 'R', 'C'])
 })
@@ -327,7 +329,7 @@ test('uses a fallback when loading an attempt fails without an Error', async () 
 })
 
 test.each(['resolve', 'reject'] as const)('ignores a late attempt %s after selecting a different attempt', async (outcome) => {
-  const otherAttemptSummary = { ...attemptSummary, id: 'attempt-2' }
+  const otherAttemptSummary = { ...attemptSummary, id: 'attempt-2', createdAt: '2026-10-17T09:30:00Z' }
   let resolveRequest: (value: typeof attempt) => void = () => undefined
   let rejectRequest: (reason: Error) => void = () => undefined
   vi.mocked(apiClient.getAttemptSummaries).mockResolvedValueOnce([attemptSummary, otherAttemptSummary])
@@ -347,8 +349,6 @@ test.each(['resolve', 'reject'] as const)('ignores a late attempt %s after selec
   fireEvent.click(await screen.findByRole('button', { name: 'Previous attempts' }))
   fireEvent.click(await screen.findByRole('button', { name: /Attempt 1/ }))
   const signal = vi.mocked(apiClient.getAttempt).mock.calls[0][2]
-  fireEvent.click(screen.getByRole('button', { name: 'Previous attempts' }))
-  fireEvent.click(await screen.findByRole('button', { name: /Attempt 2/ }))
   expect(signal?.aborted).toBe(true)
   expect(await screen.findByText('1 saved answer loaded.')).toBeTruthy()
 

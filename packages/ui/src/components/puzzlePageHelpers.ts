@@ -4,8 +4,8 @@ export type PuzzleDraftAnswer = { id: string; characters: string[] }
 export type AttemptLoadStatus = 'loading' | 'error' | null
 type PuzzlePageState = { status: 'loading' } | { status: 'error'; message: string } | { status: 'ready'; puzzle: Puzzle }
 
-export function sortAttemptsNewestFirst(summaries: PuzzleAttemptSummary[]): PuzzleAttemptSummary[] {
-  return [...summaries].sort((first, second) => Date.parse(second.createdAt) - Date.parse(first.createdAt))
+export function sortAttemptsOldestFirst(summaries: PuzzleAttemptSummary[]): PuzzleAttemptSummary[] {
+  return [...summaries].sort((first, second) => Date.parse(first.createdAt) - Date.parse(second.createdAt))
 }
 
 export function mergeAttemptSummaries(
@@ -13,7 +13,7 @@ export function mergeAttemptSummaries(
   loaded: PuzzleAttemptSummary[],
 ): PuzzleAttemptSummary[] {
   const loadedIds = new Set(loaded.map((summary) => summary.id))
-  return sortAttemptsNewestFirst([
+  return sortAttemptsOldestFirst([
     ...loaded,
     ...existing.filter((summary) => !loadedIds.has(summary.id)),
   ])

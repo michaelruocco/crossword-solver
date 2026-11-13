@@ -4,8 +4,8 @@ import { expect, test, vi } from 'vitest'
 import { PuzzleAttemptSelector } from './PuzzleAttemptSelector'
 
 const summaries = [
-  { id: 'attempt-1', createdAt: '2026-10-19T09:30:00Z', solving: true, answerCount: 1, clueCount: 3 },
-  { id: 'attempt-2', createdAt: '2026-10-18T09:30:00Z', solving: false, answerCount: 3, clueCount: 3 },
+  { id: 'attempt-1', createdAt: '2026-10-18T09:30:00Z', solving: false, answerCount: 3, clueCount: 3 },
+  { id: 'attempt-2', createdAt: '2026-10-19T09:30:00Z', solving: true, answerCount: 1, clueCount: 3 },
 ]
 
 function renderSelector(overrides: Partial<ComponentProps<typeof PuzzleAttemptSelector>> = {}) {
@@ -13,14 +13,14 @@ function renderSelector(overrides: Partial<ComponentProps<typeof PuzzleAttemptSe
     summaries,
     summariesState: 'ready',
     summariesError: '',
-    selectedAttemptId: summaries[0].id,
+    selectedAttemptId: summaries[1].id,
     historyOpen: true,
     creatingAttempt: false,
     attemptError: '',
     attemptLoadStatus: null,
     attemptLoadError: '',
-    selectedAttempt: summaries[0],
-    selectedAttemptNumber: 1,
+    selectedAttempt: summaries[1],
+    selectedAttemptNumber: 2,
     savedAnswerCount: 1,
     onToggleHistory: vi.fn(),
     onCreateAttempt: vi.fn(),
@@ -35,15 +35,15 @@ function renderSelector(overrides: Partial<ComponentProps<typeof PuzzleAttemptSe
 test('displays numbered attempts and reports selection, history, and creation actions', () => {
   const { props } = renderSelector()
 
-  expect(screen.getByText('Selected attempt 1')).toBeTruthy()
-  expect(screen.getByRole('button', { name: /Attempt 1/ }).getAttribute('aria-pressed')).toBe('true')
-  expect(screen.getByRole('button', { name: /Attempt 2/ }).getAttribute('aria-pressed')).toBe('false')
+  expect(screen.getByText('Selected attempt 2')).toBeTruthy()
+  expect(screen.getByRole('button', { name: /Attempt 1/ }).getAttribute('aria-pressed')).toBe('false')
+  expect(screen.getByRole('button', { name: /Attempt 2/ }).getAttribute('aria-pressed')).toBe('true')
 
-  fireEvent.click(screen.getByRole('button', { name: /Attempt 2/ }))
+  fireEvent.click(screen.getByRole('button', { name: /Attempt 1/ }))
   fireEvent.click(screen.getByRole('button', { name: 'Previous attempts' }))
   fireEvent.click(screen.getByRole('button', { name: 'New attempt' }))
 
-  expect(props.onSelectAttempt).toHaveBeenCalledWith('attempt-2')
+  expect(props.onSelectAttempt).toHaveBeenCalledWith('attempt-1')
   expect(props.onToggleHistory).toHaveBeenCalledOnce()
   expect(props.onCreateAttempt).toHaveBeenCalledOnce()
 })
@@ -61,7 +61,7 @@ test('displays loading, error, empty-history, and selected-attempt retry states'
   const status = screen.getByRole('status', { name: 'Selected attempt status' })
   expect(within(status).getByText('Attempt unavailable')).toBeTruthy()
   fireEvent.click(within(status).getByRole('button', { name: 'Retry' }))
-  expect(props.onRetryAttempt).toHaveBeenCalledWith('attempt-1')
+  expect(props.onRetryAttempt).toHaveBeenCalledWith('attempt-2')
 
   rerender(<PuzzleAttemptSelector
     {...props}
