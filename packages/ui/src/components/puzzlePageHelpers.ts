@@ -1,10 +1,97 @@
-import type { Puzzle, PuzzleAnswer, PuzzleAttemptSummary, PuzzleClue } from '../apiClient'
+import type { Puzzle, PuzzleAnswer, PuzzleAttempt, PuzzleAttemptSummary, PuzzleClue } from '../apiClient'
 
 export type PuzzleDraftAnswer = { id: string; characters: string[] }
 export type AttemptLoadStatus = 'loading' | 'error' | null
+type PuzzlePageState = { status: 'loading' } | { status: 'error'; message: string } | { status: 'ready'; puzzle: Puzzle }
+
+export function sortAttemptsOldestFirst(summaries: PuzzleAttemptSummary[]): PuzzleAttemptSummary[] {
+  return [...summaries].sort((first, second) => Date.parse(first.createdAt) - Date.parse(second.createdAt))
+}
+
+export function mergeAttemptSummaries(
+  existing: PuzzleAttemptSummary[],
+  loaded: PuzzleAttemptSummary[],
+): PuzzleAttemptSummary[] {
+  const loadedIds = new Set(loaded.map((summary) => summary.id))
+  return sortAttemptsOldestFirst([
+    ...loaded,
+    ...existing.filter((summary) => !loadedIds.has(summary.id)),
+  ])
+}
 
 export function clueAnswerId(clue: Pick<PuzzleClue, 'id' | 'direction'>): string {
   return `${clue.id}${clue.direction === 'ACROSS' ? 'A' : 'D'}`
+}
+
+export function getPuzzleFromState(state: PuzzlePageState): Puzzle | null {
+  return state.status === 'ready' ? state.puzzle : null
+}
+
+export function getSelectedAttempt(
+  summaries: PuzzleAttemptSummary[],
+  selectedAttemptId: string | null,
+): PuzzleAttemptSummary | null {
+  return summaries.find((summary) => summary.id === selectedAttemptId) ?? null
+}
+
+export function getSelectedAttemptNumber(
+  summaries: PuzzleAttemptSummary[],
+  selectedAttempt: PuzzleAttemptSummary | null,
+): number | null {
+  return selectedAttempt ? summaries.findIndex((summary) => summary.id === selectedAttempt.id) + 1 : null
+}
+
+export function getLoadedAttempt(
+  attemptDetails: { attemptId: string; status: string; attempt?: PuzzleAttempt } | null,
+  selectedAttemptId: string | null,
+): PuzzleAttempt | null {
+  return attemptDetails?.status === 'ready' && attemptDetails.attemptId === selectedAttemptId
+    ? attemptDetails.attempt ?? null
+    : null
+}
+
+export function getSelectedSavedAnswer(
+  clue: PuzzleClue | null,
+  savedAnswers: PuzzleAnswer[],
+): PuzzleAnswer | undefined {
+  return clue ? savedAnswers.find((answer) => answer.id === clueAnswerId(clue)) : undefined
+}
+
+export function getSelectedWord(
+  puzzle: Puzzle | null,
+  clue: PuzzleClue | null,
+): Puzzle['words'][number] | undefined {
+  return puzzle && clue
+    ? puzzle.words.find((word) => word.id === clue.id && word.direction === clue.direction)
+    : undefined
+}
+
+export function getAnswerLength(clue: PuzzleClue | null, word: Puzzle['words'][number] | undefined): number {
+  return clue ? word?.length ?? clue.lengths.reduce((length, part) => length + part, 0) : 0
+}
+
+export function getSelectedCrossingCharacters(
+  puzzle: Puzzle | null,
+  clue: PuzzleClue | null,
+  savedAnswers: PuzzleAnswer[],
+  draftAnswers: PuzzleDraftAnswer[],
+): Map<string, string> {
+  return puzzle && clue
+    ? getAnswerCharacterMap(puzzle, savedAnswers, draftAnswers, clueAnswerId(clue))
+    : new Map<string, string>()
+}
+
+export function getAttemptLoadError(
+  attemptDetails: { attemptId: string; status: string; message?: string } | null,
+  selectedAttemptId: string | null,
+): string {
+  return attemptDetails?.status === 'error' && attemptDetails.attemptId === selectedAttemptId
+    ? attemptDetails.message ?? ''
+    : ''
+}
+
+export function canSubmitAnswer(submitAvailable: boolean, characters: string[]): boolean {
+  return submitAvailable && characters.length > 0 && characters.every(Boolean)
 }
 
 export function normalizeAnswer(value: string): string[] {

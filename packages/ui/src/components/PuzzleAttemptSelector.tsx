@@ -12,6 +12,7 @@ type Props = Readonly<{
   attemptLoadStatus: 'loading' | 'error' | null
   attemptLoadError: string
   selectedAttempt: PuzzleAttemptSummary | null
+  selectedAttemptNumber: number | null
   savedAnswerCount: number
   onToggleHistory: () => void
   onCreateAttempt: () => void
@@ -30,6 +31,7 @@ export function PuzzleAttemptSelector({
   attemptLoadStatus,
   attemptLoadError,
   selectedAttempt,
+  selectedAttemptNumber,
   savedAnswerCount,
   onToggleHistory,
   onCreateAttempt,
@@ -70,7 +72,7 @@ export function PuzzleAttemptSelector({
       )}
       {selectedAttempt && (
         <output className="attempt-status" aria-label="Selected attempt status">
-          <strong>Selected attempt</strong>
+          <strong>Selected attempt {selectedAttemptNumber}</strong>
           <span>{selectedAttempt.answerCount} of {selectedAttempt.clueCount} clues answered</span>
           <span>{selectedAttempt.solving ? 'Solving' : 'Not solving'}</span>
           {attemptLoadStatus === 'loading' && <span className="attempt-status-note">Loading saved answers...</span>}

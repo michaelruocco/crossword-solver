@@ -43,6 +43,18 @@ test('shows a fallback when the puzzle date is invalid', () => {
   expect(screen.getByText('Date unavailable')).toBeTruthy()
 })
 
+test('uses a fallback title when the puzzle has no name', () => {
+  render(
+    <PuzzleListItem
+      puzzle={{ ...puzzle, name: '' }}
+      rowIndex={0}
+      onDelete={vi.fn().mockResolvedValue(undefined)}
+    />,
+  )
+
+  expect(screen.getByRole('heading', { name: 'Untitled puzzle' })).toBeTruthy()
+})
+
 test('requires confirmation before deleting a puzzle', () => {
   const onDelete = vi.fn().mockResolvedValue(undefined)
   render(<PuzzleListItem puzzle={puzzle} rowIndex={0} onDelete={onDelete} />)
