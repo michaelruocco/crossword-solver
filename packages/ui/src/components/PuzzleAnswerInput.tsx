@@ -21,7 +21,7 @@ type Props = Readonly<{
   onSubmit: () => void
 }>
 
-export function PuzzleAnswerEntry({
+export function PuzzleAnswerInput({
   clue,
   word,
   savedAnswer,

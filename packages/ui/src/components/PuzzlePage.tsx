@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { ArrowLeft, Sparkles } from 'lucide-react'
 import { apiClient, type Puzzle, type PuzzleAnswer, type PuzzleAttempt, type PuzzleAttemptSummary, type PuzzleClue } from '../apiClient'
-import { PuzzleAnswerEntry } from './PuzzleAnswerEntry'
+import { PuzzleAnswerInput } from './PuzzleAnswerInput'
 import { PuzzleAttemptSelector } from './PuzzleAttemptSelector'
 import { PuzzleClueList } from './PuzzleClueList'
 import { PuzzleGrid } from './PuzzleGrid'
@@ -150,9 +150,8 @@ export function PuzzlePage({ puzzleId }: Readonly<{ puzzleId: string }>) {
     setSelectedClue(null)
   }
 
-  const retryAttempt = () => {
-    if (!selectedAttempt) return
-    setAttemptDetails({ attemptId: selectedAttempt.id, status: 'loading' })
+  const retryAttempt = (attemptId: string) => {
+    setAttemptDetails({ attemptId, status: 'loading' })
     setAttemptReloadKey((key) => key + 1)
   }
 
@@ -269,7 +268,7 @@ export function PuzzlePage({ puzzleId }: Readonly<{ puzzleId: string }>) {
             </section>
             <section className="puzzle-clues-section" aria-label="Puzzle clues">
               {selectedClue && (
-                <PuzzleAnswerEntry
+                <PuzzleAnswerInput
                   clue={selectedClue}
                   word={selectedWord}
                   savedAnswer={selectedSavedAnswer}

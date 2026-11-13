@@ -416,6 +416,10 @@ test('allows typing and clearing a local answer draft and updates the grid as ea
   fireEvent.change(input, { target: { value: 'c' } })
   expect(input.value).toBe('C')
   expect(screen.getByText('Unsaved draft')).toBeTruthy()
+  fireEvent.change(getAnswerInput(2), { target: { value: 'a' } })
+  getAnswerInput(2).focus()
+  fireEvent.change(getAnswerInput(2), { target: { value: '' } })
+  expect(document.activeElement).toBe(getAnswerInput(2))
   expect(clear.disabled).toBe(false)
   expect((screen.getByRole('button', { name: 'Submit answer' }) as HTMLButtonElement).disabled).toBe(true)
   expect((screen.getByRole('button', { name: 'Delete saved answer' }) as HTMLButtonElement).disabled).toBe(true)
@@ -499,6 +503,22 @@ test('moves focus to the previous editable input when deleting from an empty cha
 
   fireEvent.keyDown(getAnswerInput(3), { key: 'Delete', code: 'Delete' })
   expect(document.activeElement).toBe(getAnswerInput(1))
+})
+
+test('keeps focus in place for other keys and when deleting a populated character', async () => {
+  render(<PuzzlePage puzzleId={puzzle.id} />)
+
+  fireEvent.click(await screen.findByRole('button', { name: '1 Across: A horizontal entry' }))
+  const secondInput = getAnswerInput(2)
+  secondInput.focus()
+  fireEvent.keyDown(secondInput, { key: 'ArrowLeft', code: 'ArrowLeft' })
+  expect(document.activeElement).toBe(secondInput)
+
+  fireEvent.change(getAnswerInput(1), { target: { value: 'a' } })
+  fireEvent.change(getAnswerInput(2), { target: { value: 'b' } })
+  getAnswerInput(2).focus()
+  fireEvent.keyDown(getAnswerInput(2), { key: 'Backspace', code: 'Backspace' })
+  expect(document.activeElement).toBe(getAnswerInput(2))
 })
 
 test('preserves independent drafts for across and down clues and only clears the selected draft', async () => {

@@ -16,7 +16,7 @@ type Props = Readonly<{
   onToggleHistory: () => void
   onCreateAttempt: () => void
   onSelectAttempt: (attemptId: string) => void
-  onRetryAttempt: () => void
+  onRetryAttempt: (attemptId: string) => void
 }>
 
 export function PuzzleAttemptSelector({
@@ -77,7 +77,7 @@ export function PuzzleAttemptSelector({
           {attemptLoadStatus === 'error' && (
             <span className="attempt-status-note" role="alert">
               {attemptLoadError}{' '}
-              <button type="button" className="inline-button" onClick={onRetryAttempt}>Retry</button>
+              <button type="button" className="inline-button" onClick={() => onRetryAttempt(selectedAttempt.id)}>Retry</button>
             </span>
           )}
           {attemptLoadStatus === null && <span className="attempt-status-note">{savedAnswerCount} saved {savedAnswerCount === 1 ? 'answer' : 'answers'} loaded.</span>}
