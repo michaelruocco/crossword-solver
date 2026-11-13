@@ -2,9 +2,13 @@ import { expect, test } from 'vitest'
 import type { Puzzle, PuzzleAttemptSummary } from '../apiClient'
 import {
   getAnswerCharacterMap,
+  getAnswerLength,
   getAnswerStatus,
+  getAttemptLoadError,
   getAttemptLoadStatus,
   getDisplayedAnswerCharacters,
+  getLoadedAttempt,
+  mergeAttemptSummaries,
   getPuzzleDraftAnswers,
   updateDraftAnswers,
 } from './puzzlePageHelpers'
@@ -32,6 +36,27 @@ const attemptSummary: PuzzleAttemptSummary = {
   answerCount: 0,
   clueCount: 3,
 }
+
+test('merges attempt summaries while retaining existing summaries not returned by the request', () => {
+  const existing = { ...attemptSummary, id: 'existing', createdAt: '2026-10-17T09:30:00Z' }
+  const loaded = { ...attemptSummary, answerCount: 2 }
+
+  expect(mergeAttemptSummaries([existing, { ...loaded, answerCount: 1 }], [loaded])).toEqual([existing, loaded])
+})
+
+test('returns null when a ready attempt has no attempt payload', () => {
+  expect(getLoadedAttempt({ attemptId: 'attempt-1', status: 'ready' }, 'attempt-1')).toBeNull()
+})
+
+test('uses clue lengths when no matching word exists', () => {
+  expect(getAnswerLength(puzzle.clues[0], undefined)).toBe(2)
+  expect(getAnswerLength(null, puzzle.words[0])).toBe(0)
+  expect(getAnswerLength(puzzle.clues[0], puzzle.words[0])).toBe(2)
+})
+
+test('returns an empty attempt error message when the error has no message', () => {
+  expect(getAttemptLoadError({ attemptId: 'attempt-1', status: 'error' }, 'attempt-1')).toBe('')
+})
 
 test('skips answers with no matching word and maps saved and draft letters without overwriting existing cells', () => {
   const characters = getAnswerCharacterMap(
