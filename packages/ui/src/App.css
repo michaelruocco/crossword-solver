@@ -56,7 +56,7 @@
 .answer-label > span:first-child { color:var(--forest); font-weight:600; }
 .answer-label span { color:var(--muted); }
 .answer-entry { display:flex; align-items:center; gap:8px; }
-.answer-character-inputs { display:flex; flex:1; flex-wrap:wrap; gap:5px; min-width:0; }
+.answer-character-inputs { display:flex; flex:1; flex-wrap:wrap; gap:5px; min-width:0; min-inline-size:0; padding:0; margin:0; border:0; }
 .answer-character-inputs input { width:36px; min-height:40px; padding:7px 4px; border:1px solid #b9c8b9; border-radius:4px; background:white; color:var(--ink); font:500 16px/1.4 var(--mono); text-align:center; text-transform:uppercase; }
 .answer-character-inputs input:disabled { border-color:#cbd6c7; background:#e7f2b7; color:var(--forest); opacity:1; }
 .answer-actions { display:flex; flex-shrink:0; gap:5px; }
