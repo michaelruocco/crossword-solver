@@ -124,9 +124,11 @@
 .icon-button:disabled { cursor:wait; opacity:.6; }
 .list-heading, .puzzle-row { display:grid; grid-template-columns:minmax(260px, 1fr) 140px 170px 180px; align-items:center; column-gap:20px; }
 .list-heading { min-height:42px; padding:0 22px; color:#5f6d63; background:#f5f7f3; font-size:9px; font-weight:700; letter-spacing:1.05px; }
-.puzzle-row { min-height:98px; padding:13px 22px; border-bottom:1px solid #edf0eb; animation:row-in .32s both; animation-delay:calc(min(var(--row-index), 8) * 28ms); }
+.puzzle-row { position:relative; min-height:98px; padding:13px 22px; border-bottom:1px solid #edf0eb; animation:row-in .32s both; animation-delay:calc(min(var(--row-index), 8) * 28ms); }
 .puzzle-row:last-child { border-bottom:0; }
 .puzzle-row:hover { background:#fbfcfa; }
+.puzzle-row-link { position:absolute; inset:0; z-index:1; border-radius:inherit; }
+.puzzle-row-link:focus-visible { outline:2px solid var(--forest-soft); outline-offset:-3px; }
 .puzzle-identity { min-width:0; display:flex; align-items:center; gap:15px; }
 .grid-preview { width:62px; height:68px; flex:none; object-fit:contain; padding:4px; border:1px solid #e2e8e0; border-radius:4px; background:#f5f7f3; image-rendering:auto; }
 .grid-preview-fallback { display:grid; place-items:center; color:#a0aaa1; }
@@ -138,7 +140,9 @@
 .added-date { color:#65736a; font-size:12px; }
 .open-grid { width:max-content; display:inline-flex; align-items:center; justify-self:end; gap:7px; padding:8px 10px; border-radius:4px; color:var(--forest); font-size:11px; font-weight:650; text-decoration:none; transition:background .18s, color .18s; }
 .open-grid:hover { color:#182c20; background:#edf3e9; }
-.row-actions { display:flex; align-items:center; justify-self:end; gap:3px; }
+.row-actions { position:relative; z-index:2; display:flex; align-items:center; justify-self:end; gap:3px; pointer-events:none; }
+.row-actions > * { pointer-events:none; }
+.row-actions button { pointer-events:auto; }
 .delete-puzzle-button { width:34px; height:34px; display:grid; place-items:center; border:0; border-radius:4px; color:#7b8980; background:transparent; cursor:pointer; transition:color .18s, background .18s; }
 .delete-puzzle-button:hover { color:#a23e31; background:#faeee9; }
 .delete-confirm { min-width:0; margin:0; padding:0; border:0; display:flex; align-items:center; justify-content:flex-end; gap:5px; color:#6e7971; font-size:10px; white-space:nowrap; }
