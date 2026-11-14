@@ -33,6 +33,13 @@ export function PuzzleListItem({ puzzle, rowIndex, onDelete }: Readonly<PuzzleLi
 
   return (
     <article className="puzzle-row" style={{ '--row-index': rowIndex } as React.CSSProperties}>
+      <a
+        className="puzzle-row-link"
+        href={`#puzzle=${encodeURIComponent(puzzle.id)}`}
+        aria-label={`View puzzle ${puzzle.name || 'Untitled puzzle'}`}
+      >
+        <span className="visually-hidden">View puzzle {puzzle.name || 'Untitled puzzle'}</span>
+      </a>
       <div className="puzzle-identity">
         {previewFailed ? (
           <span className="grid-preview grid-preview-fallback" aria-label="Grid preview unavailable">
@@ -62,15 +69,10 @@ export function PuzzleListItem({ puzzle, rowIndex, onDelete }: Readonly<PuzzleLi
         {formatDate(puzzle.createdAt)}
       </time>
       <div className="row-actions">
-        <a
-          className="open-grid"
-          href={`#puzzle=${encodeURIComponent(puzzle.id)}`}
-          aria-label={`View puzzle ${puzzle.name}`}
-          title="View puzzle"
-        >
+        <span className="open-grid" aria-hidden="true">
           <span>View puzzle</span>
           <ArrowUpRight size={16} strokeWidth={1.8} aria-hidden="true" />
-        </a>
+        </span>
         {confirmingDelete ? (
           <fieldset className="delete-confirm" aria-label={`Delete ${puzzle.name}`}>
             {deleteError ? <span className="delete-error" role="alert">{deleteError}</span> : <span>Delete puzzle?</span>}
