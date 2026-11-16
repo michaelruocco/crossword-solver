@@ -1,7 +1,9 @@
 import json
+from unittest.mock import Mock
 from uuid import UUID, uuid4
 
 import pytest
+from aws_lambda_powertools import Logger
 from aws_lambda_powertools.utilities.parser.models import APIGatewayProxyEventV2Model
 
 from crossword_solver_adapter_api.api_response import (
@@ -12,6 +14,7 @@ from crossword_solver_adapter_api.api_response import (
 )
 from crossword_solver_adapter_api.path_parameters import (
     answer_id_path_parameter,
+    attempt_answer_path_ids,
     attempt_id_path_parameter,
     puzzle_id_path_parameter,
     uuid_path_parameter,
@@ -72,6 +75,39 @@ def test_puzzle_and_attempt_id_path_parameters_read_their_named_ids(build_event)
 
     assert puzzle_id_path_parameter(event) == puzzle_id
     assert attempt_id_path_parameter(event) == attempt_id
+
+
+def test_attempt_answer_path_ids_returns_puzzle_and_attempt_ids(build_event):
+    puzzle_id = uuid4()
+    attempt_id = uuid4()
+    event = APIGatewayProxyEventV2Model.model_validate(
+        build_event(None, {"puzzleId": str(puzzle_id), "attemptId": str(attempt_id)})
+    )
+    logger = Mock(spec=Logger)
+
+    assert attempt_answer_path_ids(event, logger) == (puzzle_id, attempt_id)
+    logger.error.assert_not_called()
+
+
+@pytest.mark.parametrize(
+    ("path_parameters", "error", "log_message"),
+    [
+        ({"puzzleId": "invalid", "attemptId": str(uuid4())}, "Invalid puzzle id", "Invalid puzzle id path parameter"),
+        ({"attemptId": str(uuid4())}, "Invalid puzzle id", "Invalid puzzle id path parameter"),
+        ({"puzzleId": str(uuid4()), "attemptId": "invalid"}, "Invalid attempt id", "Invalid attempt id path parameter"),
+        ({"puzzleId": str(uuid4())}, "Invalid attempt id", "Invalid attempt id path parameter"),
+    ],
+)
+def test_attempt_answer_path_ids_logs_and_raises_for_invalid_ids(
+    build_event, path_parameters, error, log_message
+):
+    event = APIGatewayProxyEventV2Model.model_validate(build_event(None, path_parameters))
+    logger = Mock(spec=Logger)
+
+    with pytest.raises(ValueError, match=error):
+        attempt_answer_path_ids(event, logger)
+
+    logger.error.assert_called_once_with(log_message, exc_info=True)
 
 
 def test_answer_id_path_parameter_reads_its_named_id(build_event):
