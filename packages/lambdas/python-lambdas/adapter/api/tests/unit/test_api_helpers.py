@@ -98,9 +98,7 @@ def test_attempt_answer_path_ids_returns_puzzle_and_attempt_ids(build_event):
         ({"puzzleId": str(uuid4())}, "Invalid attempt id", "Invalid attempt id path parameter"),
     ],
 )
-def test_attempt_answer_path_ids_logs_and_raises_for_invalid_ids(
-    build_event, path_parameters, error, log_message
-):
+def test_attempt_answer_path_ids_logs_and_raises_for_invalid_ids(build_event, path_parameters, error, log_message):
     event = APIGatewayProxyEventV2Model.model_validate(build_event(None, path_parameters))
     logger = Mock(spec=Logger)
 
