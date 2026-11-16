@@ -3,6 +3,7 @@ name = "nx-workspace"
 version = "1.0.0"
 dependencies = [
   "crossword-solver-adapter-api",
+  "crossword-solver-adapter-answer-finder",
   "crossword-solver-adapter-clue-extractor",
   "crossword-solver-adapter-grid-extractor",
   "crossword-solver-adapter-queue",
@@ -20,6 +21,7 @@ dependencies = [
 [tool.uv.workspace]
 members = [
   "packages/lambdas/python-lambdas/adapter/api",
+  "packages/lambdas/python-lambdas/adapter/answer_finder",
   "packages/lambdas/python-lambdas/adapter/clue_extractor",
   "packages/lambdas/python-lambdas/adapter/grid_extractor",
   "packages/lambdas/python-lambdas/adapter/queue",
@@ -35,6 +37,9 @@ members = [
 ]
 
 [tool.uv.sources.crossword-solver-adapter-api]
+workspace = true
+
+[tool.uv.sources.crossword-solver-adapter-answer-finder]
 workspace = true
 
 [tool.uv.sources.crossword-solver-adapter-clue-extractor]

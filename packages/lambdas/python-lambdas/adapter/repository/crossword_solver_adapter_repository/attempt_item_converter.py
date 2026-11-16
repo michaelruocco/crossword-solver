@@ -20,19 +20,17 @@ class AttemptItemConverter:
             "created_at": attempt.created_at.isoformat(),
             "solving": attempt.solving,
             "answer_count": attempt.answer_count,
-            "answers": {str(answer.id): answer.value for answer in attempt.answers},
+            "answers": {
+                str(answer.id): {
+                    "value": answer.value,
+                    "confidence_score": answer.confidence_score,
+                }
+                for answer in attempt.answers
+            },
         }
 
     def to_attempt(self, item: Item, puzzle: Puzzle) -> Attempt:
-        answers = Answers(
-            [
-                Answer(
-                    id=Id(int(answer_id[:-1]), Direction(answer_id[-1])),
-                    value=value,
-                )
-                for answer_id, value in item.get("answers", {}).items()
-            ]
-        )
+        answers = Answers([_answer_from_item(answer_id, value) for answer_id, value in item.get("answers", {}).items()])
         return Attempt(
             id=UUID(item["attempt_id"]),
             created_at=datetime.fromisoformat(item["created_at"]),
@@ -41,3 +39,14 @@ class AttemptItemConverter:
             answer_count=int(item["answer_count"]),
             answers=answers,
         )
+
+
+def _answer_from_item(answer_id: str, value: str | dict[str, Any]) -> Answer:
+    if isinstance(value, str):
+        return Answer(id=Id(int(answer_id[:-1]), Direction(answer_id[-1])), value=value)
+
+    return Answer(
+        id=Id(int(answer_id[:-1]), Direction(answer_id[-1])),
+        value=value["value"],
+        confidence_score=int(value.get("confidence_score", 0)),
+    )

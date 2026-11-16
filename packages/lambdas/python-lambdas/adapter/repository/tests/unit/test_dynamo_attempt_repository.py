@@ -218,16 +218,21 @@ def test_saves_and_loads_answers_by_clue_id(repositories):
         created_at=CREATED_AT,
         puzzle=puzzle,
         answer_count=1,
-        answers=Answers([Answer(Id.down(1), "OWL")]),
+        answers=Answers([Answer(Id.down(1), "OWL", confidence_score=90)]),
     )
 
     attempts.save(attempt)
 
+    item = attempts.table.get_item(
+        Key={"puzzle_id": str(puzzle.id), "attempt_id": str(attempt.id)},
+        ConsistentRead=True,
+    )["Item"]
     restored = attempts.find_by_id(puzzle.id, attempt.id)
 
+    assert item["answers"] == {"1D": {"value": "OWL", "confidence_score": 90}}
     assert restored is not None
     assert restored.answer_count == 1
-    assert restored.answers.find(Id.down(1)) == Answer(Id.down(1), "OWL")
+    assert restored.answers.find(Id.down(1)) == Answer(Id.down(1), "OWL", confidence_score=90)
 
 
 def test_loads_legacy_attempt_without_answers(repositories):
