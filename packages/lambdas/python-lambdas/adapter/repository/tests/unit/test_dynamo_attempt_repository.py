@@ -257,6 +257,28 @@ def test_loads_legacy_attempt_without_answers(repositories):
     assert len(restored.answers) == 0
 
 
+def test_loads_legacy_answer_stored_as_a_string(repositories):
+    attempts, puzzles = repositories
+    puzzle = a_puzzle()
+    puzzles.save(puzzle)
+    attempt_id = uuid4()
+    attempts.table.put_item(
+        Item={
+            "puzzle_id": str(puzzle.id),
+            "attempt_id": str(attempt_id),
+            "created_at": CREATED_AT.isoformat(),
+            "solving": False,
+            "answer_count": 1,
+            "answers": {"1D": "OWL"},
+        }
+    )
+
+    restored = attempts.find_by_id(puzzle.id, attempt_id)
+
+    assert restored is not None
+    assert restored.answers.find(Id.down(1)) == Answer(Id.down(1), "OWL")
+
+
 @pytest.mark.parametrize("error_code", ["ProvisionedThroughputExceededException", "TransactionCanceledException"])
 def test_save_propagates_client_errors_when_puzzle_still_exists(error_code):
     puzzle = a_puzzle()
