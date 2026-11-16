@@ -4,7 +4,14 @@ import { apiClient, type Puzzle, type PuzzleAttempt, type PuzzleAttemptSummary }
 import { PuzzlePage } from './PuzzlePage'
 
 vi.mock('../apiClient', () => ({
-  apiClient: { getPuzzle: vi.fn(), getAttemptSummaries: vi.fn(), getAttempt: vi.fn(), createAttempt: vi.fn(), postAttemptAnswer: vi.fn() },
+  apiClient: {
+    getPuzzle: vi.fn(),
+    getAttemptSummaries: vi.fn(),
+    getAttempt: vi.fn(),
+    createAttempt: vi.fn(),
+    postAttemptAnswer: vi.fn(),
+    deleteAttemptAnswer: vi.fn(),
+  },
 }))
 
 const puzzle: Puzzle = {
@@ -58,6 +65,7 @@ beforeEach(() => {
   vi.mocked(apiClient.getAttemptSummaries).mockResolvedValue([])
   vi.mocked(apiClient.getAttempt).mockResolvedValue(attempt)
   vi.mocked(apiClient.createAttempt).mockResolvedValue(attempt)
+  vi.mocked(apiClient.deleteAttemptAnswer).mockResolvedValue(attempt)
 })
 
 function getAnswerInput(index = 1): HTMLInputElement {
@@ -458,6 +466,53 @@ test('submits an answer for the selected attempt and displays it in the clue and
   expect(apiClient.postAttemptAnswer).toHaveBeenCalledWith(puzzle.id, attempt.id, { id: '1A', value: 'CAT' })
   expect(screen.getByRole('cell', { name: 'Row 1, column 1: 1, C' })).toBeTruthy()
   expect(screen.getByRole('cell', { name: 'Row 1, column 3: T' })).toBeTruthy()
+})
+
+test('deletes a saved answer and updates the clue, grid, and attempt summary', async () => {
+  const savedAttempt = { ...attempt, answerCount: 1, answers: [{ id: '1A', value: 'CAT' }] }
+  const updatedAttempt = { ...savedAttempt, answerCount: 0, answers: [] }
+  vi.mocked(apiClient.getAttemptSummaries).mockResolvedValueOnce([attemptSummary])
+  vi.mocked(apiClient.getAttempt).mockResolvedValueOnce(savedAttempt)
+  vi.mocked(apiClient.deleteAttemptAnswer).mockResolvedValueOnce(updatedAttempt)
+  render(<PuzzlePage puzzleId={puzzle.id} />)
+
+  fireEvent.click(await screen.findByRole('button', { name: '1 Across: A horizontal entry' }))
+  expect(await screen.findByText('Saved answer:')).toBeTruthy()
+  const deleteButton = screen.getByRole('button', { name: 'Delete saved answer' }) as HTMLButtonElement
+  expect(deleteButton.disabled).toBe(false)
+  fireEvent.click(deleteButton)
+
+  expect(apiClient.deleteAttemptAnswer).toHaveBeenCalledWith(puzzle.id, attempt.id, '1A')
+  expect(await screen.findByText('Not submitted', { selector: 'span' })).toBeTruthy()
+  expect(screen.queryByText('Saved answer:')).toBeNull()
+  expect(screen.getByRole('cell', { name: 'Row 1, column 1: 1, A' })).toBeTruthy()
+  expect((screen.getByRole('button', { name: 'Delete saved answer' }) as HTMLButtonElement).disabled).toBe(true)
+  const selectedStatus = await screen.findByRole('status', { name: 'Selected attempt status' })
+  expect(selectedStatus.textContent).toContain('0 of 3 clues answered')
+})
+
+test('disables answer deletion while the request is in flight and reports failures', async () => {
+  const savedAttempt = { ...attempt, answerCount: 1, answers: [{ id: '1A', value: 'CAT' }] }
+  vi.mocked(apiClient.getAttemptSummaries).mockResolvedValueOnce([attemptSummary])
+  vi.mocked(apiClient.getAttempt).mockResolvedValueOnce(savedAttempt)
+  let rejectDelete: (reason: Error) => void = () => undefined
+  vi.mocked(apiClient.deleteAttemptAnswer).mockImplementationOnce(() => new Promise((_resolve, reject) => {
+    rejectDelete = reject
+  }))
+  render(<PuzzlePage puzzleId={puzzle.id} />)
+
+  fireEvent.click(await screen.findByRole('button', { name: '1 Across: A horizontal entry' }))
+  const deleteButton = screen.getByRole('button', { name: 'Delete saved answer' })
+  fireEvent.click(deleteButton)
+  expect((screen.getByRole('button', { name: 'Deleting saved answer' }) as HTMLButtonElement).disabled).toBe(true)
+
+  await act(async () => {
+    rejectDelete(new Error('Unable to delete answer'))
+    await Promise.resolve()
+  })
+
+  expect(screen.getByRole('alert').textContent).toBe('Unable to delete answer')
+  expect((screen.getByRole('button', { name: 'Delete saved answer' }) as HTMLButtonElement).disabled).toBe(false)
 })
 
 test('disables submission without an attempt, without an answer, and while a save is in flight', async () => {

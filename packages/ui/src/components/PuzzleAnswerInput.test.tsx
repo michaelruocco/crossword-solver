@@ -18,12 +18,14 @@ function renderAnswerInput(overrides: Partial<ComponentProps<typeof PuzzleAnswer
     hasDraft: false,
     attemptSelected: true,
     saving: false,
+    deleting: false,
     error: '',
     focusKey: 'attempt-1:ACROSS-1',
     canSubmit: false,
     onChange: vi.fn(),
     onClear: vi.fn(),
     onSubmit: vi.fn(),
+    onDelete: vi.fn(),
     ...overrides,
   }
   render(<PuzzleAnswerInput {...props} />)
@@ -72,6 +74,7 @@ test('keeps focus for other keys and populated input deletion, and reports answe
   const onChange = vi.fn()
   const onClear = vi.fn()
   const onSubmit = vi.fn()
+  const onDelete = vi.fn()
   renderAnswerInput({
     characters: ['A', 'B', 'C'],
     hasDraft: true,
@@ -82,6 +85,7 @@ test('keeps focus for other keys and populated input deletion, and reports answe
     onChange,
     onClear,
     onSubmit,
+    onDelete,
   })
 
   input(2).focus()
@@ -92,8 +96,10 @@ test('keeps focus for other keys and populated input deletion, and reports answe
   expect(screen.getByRole('alert').textContent).toBe('Answer rejected')
   fireEvent.click(screen.getByRole('button', { name: 'Clear answer draft' }))
   fireEvent.click(screen.getByRole('button', { name: 'Submitting answer' }))
+  fireEvent.click(screen.getByRole('button', { name: 'Delete saved answer' }))
   expect(onClear).toHaveBeenCalledOnce()
   expect(onSubmit).not.toHaveBeenCalled()
+  expect(onDelete).not.toHaveBeenCalled()
   fireEvent.change(input(1), { target: { value: 'x' } })
   expect(onChange).toHaveBeenCalledWith(0, 'x')
 })

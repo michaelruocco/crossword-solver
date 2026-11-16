@@ -75,12 +75,14 @@ export function PuzzlePage({ puzzleId }: Readonly<{ puzzleId: string }>) {
   const {
     creatingAttempt,
     savingAnswer,
+    deletingAnswer,
     attemptError,
     answerError,
     setAnswerError,
     selectAttempt,
     createAttempt,
     submitAnswer,
+    deleteAnswer,
   } = usePuzzlePageActions({
     puzzleId,
     selectedAttemptId,
@@ -117,6 +119,9 @@ export function PuzzlePage({ puzzleId }: Readonly<{ puzzleId: string }>) {
 
   const submitAnswerAction = loadedAttempt && selectedClue
     ? () => void submitAnswer(loadedAttempt, selectedClue)
+    : undefined
+  const deleteAnswerAction = loadedAttempt && selectedClue && selectedSavedAnswer
+    ? () => void deleteAnswer(loadedAttempt, selectedClue)
     : undefined
   const attemptLoadStatus = getAttemptLoadStatus(selectedAttempt, attemptDetails)
   const attemptLoadError = getAttemptLoadError(attemptDetails, selectedAttemptId)
@@ -170,6 +175,7 @@ export function PuzzlePage({ puzzleId }: Readonly<{ puzzleId: string }>) {
         crossingCharacters={selectedCrossingCharacters}
         hasAnswerDraft={hasAnswerDraft}
         savingAnswer={savingAnswer}
+        deletingAnswer={deletingAnswer}
         answerError={answerError}
         focusKey={`${selectedClueKey}:${loadedAttempt?.id ?? ''}`}
         canSubmit={canSubmitAnswer(Boolean(submitAnswerAction), displayedCharacters)}
@@ -180,6 +186,7 @@ export function PuzzlePage({ puzzleId }: Readonly<{ puzzleId: string }>) {
         onChangeAnswer={updateAnswerDraft}
         onClearAnswer={clearAnswerDraft}
         onSubmitAnswer={() => submitAnswerAction?.()}
+        onDeleteAnswer={() => deleteAnswerAction?.()}
         onSelectClue={selectClue}
       />
     </main>

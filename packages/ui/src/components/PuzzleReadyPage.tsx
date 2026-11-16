@@ -30,6 +30,7 @@ type Props = Readonly<{
   crossingCharacters: Map<string, string>
   hasAnswerDraft: boolean
   savingAnswer: boolean
+  deletingAnswer: boolean
   answerError: string
   focusKey: string
   canSubmit: boolean
@@ -40,6 +41,7 @@ type Props = Readonly<{
   onChangeAnswer: (index: number, value: string) => void
   onClearAnswer: () => void
   onSubmitAnswer: () => void
+  onDeleteAnswer: () => void
   onSelectClue: (clue: PuzzleClue) => void
 }>
 
@@ -67,6 +69,7 @@ export function PuzzleReadyPage({
   crossingCharacters,
   hasAnswerDraft,
   savingAnswer,
+  deletingAnswer,
   answerError,
   focusKey,
   canSubmit,
@@ -77,6 +80,7 @@ export function PuzzleReadyPage({
   onChangeAnswer,
   onClearAnswer,
   onSubmitAnswer,
+  onDeleteAnswer,
   onSelectClue,
 }: Props) {
   return (
@@ -123,12 +127,14 @@ export function PuzzleReadyPage({
               hasDraft={hasAnswerDraft}
               attemptSelected={Boolean(selectedAttemptId)}
               saving={savingAnswer}
+              deleting={deletingAnswer}
               error={answerError}
               focusKey={focusKey}
               canSubmit={canSubmit}
               onChange={onChangeAnswer}
               onClear={onClearAnswer}
               onSubmit={onSubmitAnswer}
+              onDelete={onDeleteAnswer}
             />
           )}
           <PuzzleClueList

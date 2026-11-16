@@ -13,12 +13,14 @@ type Props = Readonly<{
   hasDraft: boolean
   attemptSelected: boolean
   saving: boolean
+  deleting: boolean
   error: string
   focusKey: string
   canSubmit: boolean
   onChange: (index: number, value: string) => void
   onClear: () => void
   onSubmit: () => void
+  onDelete: () => void
 }>
 
 export function PuzzleAnswerInput({
@@ -31,12 +33,14 @@ export function PuzzleAnswerInput({
   hasDraft,
   attemptSelected,
   saving,
+  deleting,
   error,
   focusKey,
   canSubmit,
   onChange,
   onClear,
   onSubmit,
+  onDelete,
 }: Props) {
   const inputRefs = useRef<(HTMLInputElement | null)[]>([])
 
@@ -88,8 +92,15 @@ export function PuzzleAnswerInput({
         </fieldset>
         <div className="answer-actions">
           <button type="button" className="icon-button" disabled={!hasDraft} onClick={onClear} aria-label="Clear answer draft" title="Clear answer draft"><Eraser size={17} aria-hidden="true" /></button>
-          <button type="button" className="icon-button answer-delete" disabled aria-label="Delete saved answer" title="Saved-answer deletion is not available yet"><Trash2 size={17} aria-hidden="true" /></button>
-          <button type="button" className="icon-button" disabled={!canSubmit || saving} onClick={onSubmit} aria-label={saving ? 'Submitting answer' : 'Submit answer'} title="Submit answer"><Send size={17} aria-hidden="true" /></button>
+          <button
+            type="button"
+            className="icon-button answer-delete"
+            disabled={!savedAnswer || !attemptSelected || saving || deleting}
+            onClick={onDelete}
+            aria-label={deleting ? 'Deleting saved answer' : 'Delete saved answer'}
+            title="Delete saved answer"
+          ><Trash2 size={17} aria-hidden="true" /></button>
+          <button type="button" className="icon-button" disabled={!canSubmit || saving || deleting} onClick={onSubmit} aria-label={saving ? 'Submitting answer' : 'Submit answer'} title="Submit answer"><Send size={17} aria-hidden="true" /></button>
         </div>
       </div>
       {!attemptSelected && <p className="attempt-status-note">Create or select an attempt before submitting an answer.</p>}

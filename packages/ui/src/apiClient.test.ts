@@ -188,6 +188,24 @@ test('posts an answer for an attempt and returns the updated attempt', async () 
   )
 })
 
+test('deletes an answer for an attempt and returns the updated attempt', async () => {
+  const attempt = {
+    id: 'attempt-1',
+    answerCount: 0,
+    answers: [],
+  }
+  const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify(attempt), { status: 200 }))
+  vi.stubGlobal('fetch', fetchMock)
+  const client = new ApiClient('https://api.test')
+  const controller = new AbortController()
+
+  await expect(client.deleteAttemptAnswer('puzzle /1', 'attempt /1', '23D', controller.signal)).resolves.toEqual(attempt)
+  expect(fetchMock).toHaveBeenCalledWith(
+    'https://api.test/v1/puzzles/puzzle%20%2F1/attempts/attempt%20%2F1/answers/23D',
+    { method: 'DELETE', signal: controller.signal },
+  )
+})
+
 test('loads attempt summaries for an encoded puzzle id', async () => {
   const summaries = [{
     id: 'attempt-1',

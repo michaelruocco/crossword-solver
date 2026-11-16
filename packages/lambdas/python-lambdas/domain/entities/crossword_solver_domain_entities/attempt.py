@@ -5,6 +5,7 @@ from uuid import UUID
 from .answer import Answer
 from .answers import Answers
 from .clue_not_found_for_id_error import ClueNotFoundForIdError
+from .id import Id
 from .puzzle import Puzzle
 
 
@@ -45,4 +46,15 @@ class Attempt:
             solving=self.solving,
             answer_count=answer_count,
             answers=updated_answers,
+        )
+
+    def delete_answer(self, answer_id: Id) -> Attempt:
+        answer_exists = self.answers.find(answer_id) is not None
+        return Attempt(
+            id=self.id,
+            created_at=self.created_at,
+            puzzle=self.puzzle,
+            solving=self.solving,
+            answer_count=max(0, self.answer_count - int(answer_exists)),
+            answers=self.answers.delete(answer_id),
         )

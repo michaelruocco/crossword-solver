@@ -21,3 +21,8 @@ class Answers:
         updated_values = self._values.copy()
         updated_values[answer.id] = answer
         return Answers(updated_values.values())
+
+    def delete(self, answer_id: Id) -> Answers:
+        updated_values = self._values.copy()
+        updated_values.pop(answer_id, None)
+        return Answers(updated_values.values())
