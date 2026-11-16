@@ -491,6 +491,22 @@ test('deletes a saved answer and updates the clue, grid, and attempt summary', a
   expect(selectedStatus.textContent).toContain('0 of 3 clues answered')
 })
 
+test('does not replace the selected attempt when delete returns a different attempt', async () => {
+  const savedAttempt = { ...attempt, answerCount: 1, answers: [{ id: '1A', value: 'CAT' }] }
+  const unrelatedAttempt = { ...savedAttempt, id: 'attempt-2', answerCount: 0, answers: [] }
+  vi.mocked(apiClient.getAttemptSummaries).mockResolvedValueOnce([attemptSummary])
+  vi.mocked(apiClient.getAttempt).mockResolvedValueOnce(savedAttempt)
+  vi.mocked(apiClient.deleteAttemptAnswer).mockResolvedValueOnce(unrelatedAttempt)
+  render(<PuzzlePage puzzleId={puzzle.id} />)
+
+  fireEvent.click(await screen.findByRole('button', { name: '1 Across: A horizontal entry' }))
+  expect(await screen.findByText('Saved answer:')).toBeTruthy()
+  fireEvent.click(screen.getByRole('button', { name: 'Delete saved answer' }))
+
+  expect(await screen.findByText('Saved answer:')).toBeTruthy()
+  expect(screen.getByText('CAT', { selector: 'strong' })).toBeTruthy()
+})
+
 test('disables answer deletion while the request is in flight and reports failures', async () => {
   const savedAttempt = { ...attempt, answerCount: 1, answers: [{ id: '1A', value: 'CAT' }] }
   vi.mocked(apiClient.getAttemptSummaries).mockResolvedValueOnce([attemptSummary])
@@ -513,6 +529,20 @@ test('disables answer deletion while the request is in flight and reports failur
 
   expect(screen.getByRole('alert').textContent).toBe('Unable to delete answer')
   expect((screen.getByRole('button', { name: 'Delete saved answer' }) as HTMLButtonElement).disabled).toBe(false)
+})
+
+test('uses a fallback message when deleting an answer fails with a non-error value', async () => {
+  const savedAttempt = { ...attempt, answerCount: 1, answers: [{ id: '1A', value: 'CAT' }] }
+  vi.mocked(apiClient.getAttemptSummaries).mockResolvedValueOnce([attemptSummary])
+  vi.mocked(apiClient.getAttempt).mockResolvedValueOnce(savedAttempt)
+  vi.mocked(apiClient.deleteAttemptAnswer).mockRejectedValueOnce('unexpected failure')
+  render(<PuzzlePage puzzleId={puzzle.id} />)
+
+  fireEvent.click(await screen.findByRole('button', { name: '1 Across: A horizontal entry' }))
+  expect(await screen.findByText('Saved answer:')).toBeTruthy()
+  fireEvent.click(screen.getByRole('button', { name: 'Delete saved answer' }))
+
+  expect(await screen.findByRole('alert')).toHaveProperty('textContent', 'Unable to delete saved answer.')
 })
 
 test('disables submission without an attempt, without an answer, and while a save is in flight', async () => {
