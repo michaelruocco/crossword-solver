@@ -30,7 +30,7 @@ EXPECTED_SIZES = {
     "puzzle24.jpg": (15, 15),
     "web-puzzle.jpg": (15, 15),
     "web-puzzle2.webp": (12, 12),
-    "math-puzzle.png": (10, 10),
+    "math-puzzle.webp": (10, 10),
     "zen-puzzle.jpg": (13, 13),
 }
 
