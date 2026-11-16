@@ -208,6 +208,21 @@ export class ApiClient {
     return this.readJson<PuzzleAttempt>(response, 'Unable to save attempt answer.')
   }
 
+  async deleteAttemptAnswer(
+    puzzleId: string,
+    attemptId: string,
+    answerId: string,
+    signal?: AbortSignal,
+  ): Promise<PuzzleAttempt> {
+    const response = await fetch(
+      this.endpoint(
+        `/v1/puzzles/${encodeURIComponent(puzzleId)}/attempts/${encodeURIComponent(attemptId)}/answers/${encodeURIComponent(answerId)}`,
+      ),
+      { method: 'DELETE', signal },
+    )
+    return this.readJson<PuzzleAttempt>(response, 'Unable to delete attempt answer.')
+  }
+
   async getAttemptSummaries(puzzleId: string, signal?: AbortSignal): Promise<PuzzleAttemptSummary[]> {
     const response = await fetch(this.endpoint(`/v1/puzzles/${encodeURIComponent(puzzleId)}/attempt-summaries`), { signal })
     return this.readJson<PuzzleAttemptSummary[]>(response, 'Unable to load attempt summaries.')

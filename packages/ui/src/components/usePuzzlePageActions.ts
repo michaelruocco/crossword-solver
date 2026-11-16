@@ -36,6 +36,7 @@ export function usePuzzlePageActions({
 }: PuzzlePageActionOptions) {
   const [creatingAttempt, setCreatingAttempt] = useState(false)
   const [savingAnswer, setSavingAnswer] = useState(false)
+  const [deletingAnswer, setDeletingAnswer] = useState(false)
   const [attemptError, setAttemptError] = useState('')
   const [answerError, setAnswerError] = useState('')
 
@@ -117,14 +118,37 @@ export function usePuzzlePageActions({
     }
   }
 
+  const deleteAnswer = async (
+    attempt: PuzzleAttempt,
+    clue: PuzzleClue,
+  ) => {
+    setDeletingAnswer(true)
+    setAnswerError('')
+    try {
+      const updatedAttempt = await apiClient.deleteAttemptAnswer(puzzleId, attempt.id, clueAnswerId(clue))
+      setAttemptDetails((details) => details?.attemptId === updatedAttempt.id
+        ? { attemptId: updatedAttempt.id, status: 'ready', attempt: updatedAttempt }
+        : details)
+      setAttemptSummaries((summaries) => summaries.map((summary) => (
+        summary.id === updatedAttempt.id ? { ...summary, answerCount: updatedAttempt.answerCount } : summary
+      )))
+    } catch (error) {
+      setAnswerError(error instanceof Error ? error.message : 'Unable to delete saved answer.')
+    } finally {
+      setDeletingAnswer(false)
+    }
+  }
+
   return {
     creatingAttempt,
     savingAnswer,
+    deletingAnswer,
     attemptError,
     answerError,
     setAnswerError,
     selectAttempt,
     createAttempt,
     submitAnswer,
+    deleteAnswer,
   }
 }

@@ -20,11 +20,10 @@ def test_handler_saves_answer_and_returns_updated_attempt(build_event, lambda_co
     attempt_converter.to_response.return_value.model_dump_json.return_value = '{"id":"attempt-id","answerCount":1}'
 
     with (
-        patch.object(update_attempt_answer_handler, "attempt_answer_saver") as saver,
-        patch.object(update_attempt_answer_handler, "attempt_finder") as finder,
+        patch.object(update_attempt_answer_handler, "attempt_answer_service") as service,
         patch.object(update_attempt_answer_handler, "attempt_converter", attempt_converter),
     ):
-        finder.find_by_id.return_value = attempt
+        service.update_answer.return_value = attempt
         response = update_attempt_answer_handler.lambda_handler(
             build_event(
                 {"id": "3A", "value": "CAT"},
@@ -33,11 +32,10 @@ def test_handler_saves_answer_and_returns_updated_attempt(build_event, lambda_co
             lambda_context,
         )
 
-    saver.save.assert_called_once()
-    saved_answer = saver.save.call_args.args[2]
+    service.update_answer.assert_called_once()
+    saved_answer = service.update_answer.call_args.args[2]
     assert str(saved_answer.id) == "3A"
     assert saved_answer.value == "CAT"
-    finder.find_by_id.assert_called_once_with(puzzle_id, attempt_id)
     attempt_converter.to_response.assert_called_once_with(attempt)
     assert response_status(response) == 200
     assert response_json(response) == {"id": "attempt-id", "answerCount": 1}
@@ -46,19 +44,23 @@ def test_handler_saves_answer_and_returns_updated_attempt(build_event, lambda_co
 @pytest.mark.parametrize(
     ("path_parameters", "expected_message"),
     [
-        ({"puzzleId": "invalid", "attemptId": str(uuid4())}, "Puzzle not found"),
-        ({"puzzleId": str(uuid4()), "attemptId": "invalid"}, "Attempt not found"),
+        ({"puzzleId": "invalid", "attemptId": str(uuid4())}, "Invalid puzzle id"),
+        ({"puzzleId": str(uuid4()), "attemptId": "invalid"}, "Invalid attempt id"),
+        ({"attemptId": str(uuid4())}, "Invalid puzzle id"),
+        ({"puzzleId": str(uuid4())}, "Invalid attempt id"),
     ],
 )
-def test_handler_returns_not_found_for_invalid_path_ids(build_event, lambda_context, path_parameters, expected_message):
-    with patch.object(update_attempt_answer_handler, "attempt_answer_saver") as saver:
+def test_handler_returns_bad_request_for_invalid_or_missing_path_ids(
+    build_event, lambda_context, path_parameters, expected_message
+):
+    with patch.object(update_attempt_answer_handler, "attempt_answer_service") as service:
         response = update_attempt_answer_handler.lambda_handler(
             build_event({"id": "3A", "value": "CAT"}, path_parameters),
             lambda_context,
         )
 
-    saver.save.assert_not_called()
-    assert response_status(response) == 404
+    service.update_answer.assert_not_called()
+    assert response_status(response) == 400
     assert response_json(response) == {"message": expected_message}
 
 
@@ -79,8 +81,8 @@ def test_handler_returns_bad_request_for_invalid_answer(build_event, lambda_cont
 
 def test_handler_returns_not_found_when_attempt_does_not_exist(build_event, lambda_context):
     with patch.object(
-        update_attempt_answer_handler.attempt_answer_saver,
-        "save",
+        update_attempt_answer_handler.attempt_answer_service,
+        "update_answer",
         side_effect=AttemptNotFoundError(uuid4(), uuid4()),
     ):
         response = update_attempt_answer_handler.lambda_handler(
@@ -100,7 +102,7 @@ def test_handler_returns_not_found_when_attempt_does_not_exist(build_event, lamb
     ],
 )
 def test_handler_returns_not_found_for_puzzle_or_clue(build_event, lambda_context, error, expected_message):
-    with patch.object(update_attempt_answer_handler.attempt_answer_saver, "save", side_effect=error):
+    with patch.object(update_attempt_answer_handler.attempt_answer_service, "update_answer", side_effect=error):
         response = update_attempt_answer_handler.lambda_handler(
             build_event({"id": "3A", "value": "CAT"}, {"puzzleId": str(uuid4()), "attemptId": str(uuid4())}),
             lambda_context,
@@ -112,8 +114,8 @@ def test_handler_returns_not_found_for_puzzle_or_clue(build_event, lambda_contex
 
 def test_handler_returns_bad_request_for_an_invalid_answer(build_event, lambda_context):
     with patch.object(
-        update_attempt_answer_handler.attempt_answer_saver,
-        "save",
+        update_attempt_answer_handler.attempt_answer_service,
+        "update_answer",
         side_effect=InvalidAnswerError(Id.across(3)),
     ):
         response = update_attempt_answer_handler.lambda_handler(
@@ -126,7 +128,9 @@ def test_handler_returns_bad_request_for_an_invalid_answer(build_event, lambda_c
 
 
 def test_handler_returns_internal_server_error_when_save_fails(build_event, lambda_context):
-    with patch.object(update_attempt_answer_handler.attempt_answer_saver, "save", side_effect=RuntimeError("boom")):
+    with patch.object(
+        update_attempt_answer_handler.attempt_answer_service, "update_answer", side_effect=RuntimeError("boom")
+    ):
         response = update_attempt_answer_handler.lambda_handler(
             build_event({"id": "3A", "value": "CAT"}, {"puzzleId": str(uuid4()), "attemptId": str(uuid4())}),
             lambda_context,

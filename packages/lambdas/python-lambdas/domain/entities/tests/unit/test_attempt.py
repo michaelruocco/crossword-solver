@@ -92,6 +92,49 @@ def test_saving_answer_rejects_a_clue_not_in_the_puzzle():
     assert error.value.clue_id == clue_id
 
 
+def test_deleting_an_answer_removes_it_and_decrements_the_answer_count():
+    answer = Answer(Id.across(1), "CAT")
+    attempt = _attempt_with(
+        [Clue(Id.across(1), "A clue", [3])],
+        [ACROSS_1],
+        [answer],
+    )
+    attempt.answer_count = 1
+
+    updated_attempt = attempt.delete_answer(answer.id)
+
+    assert attempt.answers.find(answer.id) == answer
+    assert attempt.answer_count == 1
+    assert updated_attempt.answers.find(answer.id) is None
+    assert updated_attempt.answer_count == 0
+
+
+def test_deleting_a_missing_answer_does_not_change_the_answer_count():
+    attempt = _attempt_with(
+        [Clue(Id.across(1), "A clue", [3])],
+        [ACROSS_1],
+        [Answer(Id.across(1), "CAT")],
+    )
+    attempt.answer_count = 1
+
+    updated_attempt = attempt.delete_answer(Id.down(1))
+
+    assert updated_attempt.answers.find(Id.across(1)) == Answer(Id.across(1), "CAT")
+    assert updated_attempt.answer_count == 1
+
+
+def test_deleting_an_answer_does_not_make_answer_count_negative():
+    attempt = _attempt_with(
+        [Clue(Id.across(1), "A clue", [3])],
+        [ACROSS_1],
+        [Answer(Id.across(1), "CAT")],
+    )
+
+    updated_attempt = attempt.delete_answer(Id.across(1))
+
+    assert updated_attempt.answer_count == 0
+
+
 def test_accepts_answers_with_the_clue_length_and_ignores_whitespace_and_case():
     attempt = _attempt_with(
         [Clue(Id.across(1), "A clue", [3, 2])],

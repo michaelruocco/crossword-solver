@@ -11,15 +11,15 @@ _ANSWER_ID_PATTERN = re.compile(r"([1-9]\d*)([AD])")
 
 
 class AnswerConverter:
-    def to_domain(self, request: AnswerRequest) -> Answer:
-        match = _ANSWER_ID_PATTERN.fullmatch(request.id)
+    def to_id(self, clue_id: str) -> Id:
+        match = _ANSWER_ID_PATTERN.fullmatch(clue_id)
         if match is None:
             raise ValueError("Answer id must be a clue id such as 1A or 1D")
 
-        return Answer(
-            id=Id(number=int(match.group(1)), direction=Direction(match.group(2))),
-            value=request.value,
-        )
+        return Id(number=int(match.group(1)), direction=Direction(match.group(2)))
+
+    def to_answer(self, request: AnswerRequest) -> Answer:
+        return Answer(id=self.to_id(request.id), value=request.value)
 
     def to_response(self, answer: Answer) -> AnswerResponse:
         return AnswerResponse(id=str(answer.id), value=answer.value)
