@@ -19,7 +19,7 @@ class AnswerConverter:
         return Id(number=int(match.group(1)), direction=Direction(match.group(2)))
 
     def to_answer(self, request: AnswerRequest) -> Answer:
-        return Answer(id=self.to_id(request.id), value=request.value)
+        return Answer(id=self.to_id(request.id), value=request.value, confidence_score=100)
 
     def to_response(self, answer: Answer) -> AnswerResponse:
         return AnswerResponse(id=str(answer.id), value=answer.value)

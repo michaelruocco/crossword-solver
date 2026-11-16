@@ -15,7 +15,7 @@ from crossword_solver_adapter_api.answer_request import AnswerRequest
 def test_converts_answer_request_to_domain_answer(clue_id, expected_id):
     answer = AnswerConverter().to_answer(AnswerRequest(id=clue_id, value="CAT"))
 
-    assert answer == Answer(id=expected_id, value="CAT")
+    assert answer == Answer(id=expected_id, value="CAT", confidence_score=100)
 
 
 @pytest.mark.parametrize(
