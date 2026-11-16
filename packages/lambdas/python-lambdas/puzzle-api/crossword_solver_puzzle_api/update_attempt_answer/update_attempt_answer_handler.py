@@ -4,7 +4,7 @@ from aws_lambda_powertools.utilities.parser.models import APIGatewayProxyEventV2
 from aws_lambda_powertools.utilities.typing import LambdaContext
 from aws_lambda_typing.responses import APIGatewayProxyResponseV2
 from crossword_solver_adapter_api.api_response import json_response, message_response
-from crossword_solver_adapter_api.path_parameters import attempt_id_path_parameter, puzzle_id_path_parameter
+from crossword_solver_adapter_api.path_parameters import attempt_answer_path_ids
 
 from ..attempt_answer_dependencies import answer_converter, attempt_answer_service, attempt_converter, event_converter
 from ..attempt_answer_error_handler import attempt_answer_error_response
@@ -20,19 +20,12 @@ def lambda_handler(event: APIGatewayProxyEventV2Model, context: LambdaContext) -
     logger.info("Received event", extra={"event": event.model_dump()})
 
     try:
-        puzzle_id = puzzle_id_path_parameter(event)
-    except ValueError:
-        logger.error("Invalid puzzle id path parameter", exc_info=True)
-        return message_response(400, "Invalid puzzle id")
+        puzzle_id, attempt_id = attempt_answer_path_ids(event, logger)
+    except ValueError as error:
+        return message_response(400, str(error))
 
     try:
-        attempt_id = attempt_id_path_parameter(event)
-    except ValueError:
-        logger.error("Invalid attempt id path parameter", exc_info=True)
-        return message_response(400, "Invalid attempt id")
-
-    try:
-        answer = answer_converter.to_domain(event_converter.to_answer_request(event))
+        answer = answer_converter.to_answer(event_converter.to_answer_request(event))
     except ValueError:
         logger.warning("Invalid answer request", exc_info=True)
         return message_response(400, "Invalid answer request")

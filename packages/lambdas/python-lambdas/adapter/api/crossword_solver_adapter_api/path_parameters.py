@@ -1,5 +1,6 @@
 from uuid import UUID
 
+from aws_lambda_powertools import Logger
 from aws_lambda_powertools.utilities.parser.models import APIGatewayProxyEventV2Model
 
 
@@ -24,6 +25,22 @@ def answer_id_path_parameter(event: APIGatewayProxyEventV2Model) -> str:
     if not value:
         raise ValueError("answerId path parameter is required")
     return value
+
+
+def attempt_answer_path_ids(event: APIGatewayProxyEventV2Model, logger: Logger) -> tuple[UUID, UUID]:
+    try:
+        puzzle_id = puzzle_id_path_parameter(event)
+    except ValueError as error:
+        logger.error("Invalid puzzle id path parameter", exc_info=True)
+        raise ValueError("Invalid puzzle id") from error
+
+    try:
+        attempt_id = attempt_id_path_parameter(event)
+    except ValueError as error:
+        logger.error("Invalid attempt id path parameter", exc_info=True)
+        raise ValueError("Invalid attempt id") from error
+
+    return puzzle_id, attempt_id
 
 
 def _required_uuid_path_parameter(event: APIGatewayProxyEventV2Model, name: str) -> UUID:
