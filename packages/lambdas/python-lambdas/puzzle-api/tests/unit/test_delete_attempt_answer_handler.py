@@ -18,11 +18,10 @@ def test_handler_deletes_answer_and_returns_updated_attempt(build_event, lambda_
     attempt_converter.to_response.return_value.model_dump_json.return_value = '{"id":"attempt-id","answerCount":0}'
 
     with (
-        patch.object(delete_attempt_answer_handler, "attempt_answer_deleter") as deleter,
-        patch.object(delete_attempt_answer_handler, "attempt_finder") as finder,
+        patch.object(delete_attempt_answer_handler, "attempt_answer_service") as service,
         patch.object(delete_attempt_answer_handler, "attempt_converter", attempt_converter),
     ):
-        finder.find_by_id.return_value = attempt
+        service.delete_answer.return_value = attempt
         response = delete_attempt_answer_handler.lambda_handler(
             build_event(
                 None,
@@ -31,8 +30,7 @@ def test_handler_deletes_answer_and_returns_updated_attempt(build_event, lambda_
             lambda_context,
         )
 
-    deleter.delete.assert_called_once_with(puzzle_id, attempt_id, Id.down(23))
-    finder.find_by_id.assert_called_once_with(puzzle_id, attempt_id)
+    service.delete_answer.assert_called_once_with(puzzle_id, attempt_id, Id.down(23))
     attempt_converter.to_response.assert_called_once_with(attempt)
     assert response_status(response) == 200
     assert response_json(response) == {"id": "attempt-id", "answerCount": 0}
@@ -41,18 +39,20 @@ def test_handler_deletes_answer_and_returns_updated_attempt(build_event, lambda_
 @pytest.mark.parametrize(
     ("path_parameters", "expected_message"),
     [
-        ({"puzzleId": "invalid", "attemptId": str(uuid4()), "answerId": "23D"}, "Puzzle not found"),
-        ({"puzzleId": str(uuid4()), "attemptId": "invalid", "answerId": "23D"}, "Attempt not found"),
+        ({"puzzleId": "invalid", "attemptId": str(uuid4()), "answerId": "23D"}, "Invalid puzzle id"),
+        ({"puzzleId": str(uuid4()), "attemptId": "invalid", "answerId": "23D"}, "Invalid attempt id"),
+        ({"attemptId": str(uuid4()), "answerId": "23D"}, "Invalid puzzle id"),
+        ({"puzzleId": str(uuid4()), "answerId": "23D"}, "Invalid attempt id"),
     ],
 )
-def test_handler_returns_not_found_for_invalid_puzzle_or_attempt_id(
+def test_handler_returns_bad_request_for_invalid_or_missing_puzzle_or_attempt_id(
     build_event, lambda_context, path_parameters, expected_message
 ):
-    with patch.object(delete_attempt_answer_handler, "attempt_answer_deleter") as deleter:
+    with patch.object(delete_attempt_answer_handler, "attempt_answer_service") as service:
         response = delete_attempt_answer_handler.lambda_handler(build_event(None, path_parameters), lambda_context)
 
-    deleter.delete.assert_not_called()
-    assert response_status(response) == 404
+    service.delete_answer.assert_not_called()
+    assert response_status(response) == 400
     assert response_json(response) == {"message": expected_message}
 
 
@@ -85,7 +85,7 @@ def test_handler_returns_bad_request_when_answer_id_is_missing(build_event, lamb
     ],
 )
 def test_handler_maps_missing_resources_to_not_found(build_event, lambda_context, error, expected_message):
-    with patch.object(delete_attempt_answer_handler.attempt_answer_deleter, "delete", side_effect=error):
+    with patch.object(delete_attempt_answer_handler.attempt_answer_service, "delete_answer", side_effect=error):
         response = delete_attempt_answer_handler.lambda_handler(
             build_event(None, {"puzzleId": str(uuid4()), "attemptId": str(uuid4()), "answerId": "23D"}),
             lambda_context,
@@ -97,8 +97,8 @@ def test_handler_maps_missing_resources_to_not_found(build_event, lambda_context
 
 def test_handler_returns_internal_server_error_when_delete_fails(build_event, lambda_context):
     with patch.object(
-        delete_attempt_answer_handler.attempt_answer_deleter,
-        "delete",
+        delete_attempt_answer_handler.attempt_answer_service,
+        "delete_answer",
         side_effect=RuntimeError("boom"),
     ):
         response = delete_attempt_answer_handler.lambda_handler(
