@@ -108,3 +108,9 @@ test('keeps focus for other keys and populated input deletion, and reports answe
   fireEvent.change(input(1), { target: { value: 'x' } })
   expect(onChange).toHaveBeenCalledWith(0, 'x')
 })
+
+test('shows when candidate answers are empty', () => {
+  renderAnswerInput({ candidateAnswers: [] })
+
+  expect(screen.getByText('No candidate answers found.')).toBeTruthy()
+})
