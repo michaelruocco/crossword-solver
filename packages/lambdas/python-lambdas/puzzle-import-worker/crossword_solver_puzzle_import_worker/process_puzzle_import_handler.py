@@ -7,12 +7,14 @@ from aws_lambda_powertools.utilities.parser import envelopes, event_parser
 from aws_lambda_powertools.utilities.typing import LambdaContext
 from crossword_solver_adapter_api.puzzle_import_message import PuzzleImportMessage
 from crossword_solver_adapter_clue_extractor.bedrock_clue_extractor import BedrockClueExtractor
+from crossword_solver_adapter_clue_extractor.bedrock_clue_type_policy import BedrockClueTypePolicy
 from crossword_solver_adapter_grid_extractor.cell_classifier import CellClassifier
 from crossword_solver_adapter_grid_extractor.default_grid_extractor import DefaultGridExtractor
 from crossword_solver_adapter_grid_extractor.grid_numberer import GridNumberer
 from crossword_solver_adapter_repository.dynamo_puzzle_import_repository import DynamoPuzzleImportRepository
 from crossword_solver_adapter_repository.dynamo_puzzle_repository import DynamoPuzzleRepository
 from crossword_solver_adapter_storage.s3_image_downloader import S3ImageDownloader
+from crossword_solver_domain_use_case.clues_factory import CluesFactory
 from crossword_solver_domain_use_case.puzzle_creator import PuzzleCreator
 from crossword_solver_domain_use_case.puzzle_import_processor import PuzzleImportProcessor
 
@@ -33,7 +35,10 @@ copy_config_to_registered_loggers(
 puzzle_import_processor = PuzzleImportProcessor(
     repository=DynamoPuzzleImportRepository(os.environ["PUZZLE_IMPORTS_TABLE_NAME"]),
     creator=PuzzleCreator(
-        clue_extractor=BedrockClueExtractor(model_id=os.environ["CLUE_EXTRACTOR_MODEL_ID"]),
+        clues_factory=CluesFactory(
+            clue_extractor=BedrockClueExtractor(model_id=os.environ["CLUE_EXTRACTOR_MODEL_ID"]),
+            clue_type_policy=BedrockClueTypePolicy(model_id=os.environ["CLUE_TYPE_POLICY_MODEL_ID"]),
+        ),
         grid_extractor=DefaultGridExtractor(CellClassifier(), numberer=GridNumberer()),
         image_downloader=S3ImageDownloader(os.environ["PUZZLE_IMAGES_BUCKET_NAME"]),
         repository=DynamoPuzzleRepository(os.environ["PUZZLES_TABLE_NAME"]),

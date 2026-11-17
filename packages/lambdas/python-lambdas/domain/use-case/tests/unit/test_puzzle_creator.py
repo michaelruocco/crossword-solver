@@ -9,6 +9,7 @@ from crossword_solver_domain_entities.cell import Cell
 from crossword_solver_domain_entities.cell_not_found_for_id_error import CellNotFoundForIdError
 from crossword_solver_domain_entities.cells import Cells
 from crossword_solver_domain_entities.clue import Clue
+from crossword_solver_domain_entities.clue_type import ClueType
 from crossword_solver_domain_entities.clues import Clues
 from crossword_solver_domain_entities.coordinates import Coordinates
 from crossword_solver_domain_entities.grid import Grid
@@ -16,6 +17,7 @@ from crossword_solver_domain_entities.id import Id
 from crossword_solver_domain_entities.word import Word
 from crossword_solver_domain_entities.words import Words
 
+from crossword_solver_domain_use_case.clues_factory import CluesFactory
 from crossword_solver_domain_use_case.invalid_image_error import InvalidImageError
 from crossword_solver_domain_use_case.puzzle_creator import PuzzleCreator
 
@@ -34,12 +36,15 @@ def test_create_downloads_image_extracts_clues_and_grid_and_saves_puzzle():
     image_downloader.download_image.return_value = image
     clue_extractor = Mock()
     clue_extractor.extract_clues.return_value = clues
+    clue_type_policy = Mock()
+    clue_type_policy.determine_clue_type.return_value = ClueType.CRYPTIC
+    clues_factory = CluesFactory(clue_extractor, clue_type_policy)
     grid_extractor = Mock()
     grid_extractor.extract_grid.return_value = grid
     repository = Mock()
     repository.find_by_hash.return_value = None
     creator = PuzzleCreator(
-        clue_extractor=clue_extractor,
+        clues_factory=clues_factory,
         grid_extractor=grid_extractor,
         image_downloader=image_downloader,
         repository=repository,
@@ -50,6 +55,7 @@ def test_create_downloads_image_extracts_clues_and_grid_and_saves_puzzle():
 
     image_downloader.download_image.assert_called_once_with("https://example.com/puzzle14.jpg")
     clue_extractor.extract_clues.assert_called_once_with(image)
+    clue_type_policy.determine_clue_type.assert_called_once_with(clues)
     grid_extractor.extract_grid.assert_called_once_with(image)
     repository.save.assert_called_once()
     puzzle = repository.save.call_args.args[0]
@@ -58,7 +64,7 @@ def test_create_downloads_image_extracts_clues_and_grid_and_saves_puzzle():
     assert puzzle.format == ".jpg"
     assert puzzle.hash == "hash-value"
     assert puzzle.clues is not clues
-    assert list(puzzle.clues) == list(clues)
+    assert [clue.type for clue in puzzle.clues] == [ClueType.CRYPTIC] * len(clues)
     assert puzzle.grid is grid
     assert puzzle.created_at == NOW
 
@@ -68,9 +74,12 @@ def a_creator(clues: Clues, grid: Grid, repository: Mock, image=None, **kwargs) 
     image_downloader.download_image.return_value = image or an_image()
     clue_extractor = Mock()
     clue_extractor.extract_clues.return_value = clues
+    clue_type_policy = Mock()
+    clue_type_policy.determine_clue_type.return_value = ClueType.STANDARD
+    clues_factory = CluesFactory(clue_extractor, clue_type_policy)
     grid_extractor = Mock()
     grid_extractor.extract_grid.return_value = grid
-    return PuzzleCreator(clue_extractor, grid_extractor, image_downloader, repository, **kwargs)
+    return PuzzleCreator(clues_factory, grid_extractor, image_downloader, repository, **kwargs)
 
 
 def test_create_builds_words_from_the_clues_and_grid_cells():
@@ -191,13 +200,13 @@ def test_create_extracts_clues_and_grid_at_the_same_time():
 
     image_downloader = Mock()
     image_downloader.download_image.return_value = an_image()
-    clue_extractor = Mock()
-    clue_extractor.extract_clues.side_effect = extract_clues
+    clues_factory = Mock()
+    clues_factory.build.side_effect = extract_clues
     grid_extractor = Mock()
     grid_extractor.extract_grid.side_effect = extract_grid
     repository = Mock()
     repository.find_by_hash.return_value = None
-    creator = PuzzleCreator(clue_extractor, grid_extractor, image_downloader, repository)
+    creator = PuzzleCreator(clues_factory, grid_extractor, image_downloader, repository)
 
     creator.create("https://example.com/puzzle.png")
 
@@ -211,17 +220,17 @@ def test_create_returns_existing_puzzle_id_without_extracting_when_hash_already_
     existing_id = uuid4()
     image_downloader = Mock()
     image_downloader.download_image.return_value = an_image(image_hash="known-hash")
-    clue_extractor = Mock()
+    clues_factory = Mock()
     grid_extractor = Mock()
     repository = Mock()
     repository.find_by_hash.return_value = SimpleNamespace(id=existing_id)
-    creator = PuzzleCreator(clue_extractor, grid_extractor, image_downloader, repository)
+    creator = PuzzleCreator(clues_factory, grid_extractor, image_downloader, repository)
 
     puzzle_id = creator.create("https://example.com/puzzle.png")
 
     assert puzzle_id == existing_id
     repository.find_by_hash.assert_called_once_with("known-hash")
-    clue_extractor.extract_clues.assert_not_called()
+    clues_factory.build.assert_not_called()
     grid_extractor.extract_grid.assert_not_called()
     repository.save.assert_not_called()
 
@@ -229,13 +238,13 @@ def test_create_returns_existing_puzzle_id_without_extracting_when_hash_already_
 def test_create_raises_error_from_either_extractor():
     image_downloader = Mock()
     image_downloader.download_image.return_value = an_image()
-    clue_extractor = Mock()
-    clue_extractor.extract_clues.return_value = Clues([])
+    clues_factory = Mock()
+    clues_factory.build.return_value = Clues([])
     grid_extractor = Mock()
     grid_extractor.extract_grid.side_effect = ValueError("No grid lines found")
     repository = Mock()
     repository.find_by_hash.return_value = None
-    creator = PuzzleCreator(clue_extractor, grid_extractor, image_downloader, repository)
+    creator = PuzzleCreator(clues_factory, grid_extractor, image_downloader, repository)
 
     with pytest.raises(ValueError, match="No grid lines found"):
         creator.create("https://example.com/puzzle.png")
