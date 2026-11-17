@@ -7,6 +7,8 @@ from crossword_solver_domain_entities.id import Id
 from crossword_solver_domain_use_case.answer_finder import AnswerFinder
 
 from crossword_solver_adapter_answer_finder.bedrock_answer_finder import BedrockAnswerFinder
+from crossword_solver_adapter_answer_finder.bedrock_conversation_config import DefaultBedrockConversationConfig
+from crossword_solver_adapter_answer_finder.prompt_text_executor import PromptTextExecutor
 
 
 def test_finds_candidates_and_filters_answers_that_do_not_match_clue():
@@ -32,6 +34,17 @@ def test_bedrock_finder_satisfies_answer_finder_protocol():
     finder: AnswerFinder = BedrockAnswerFinder(prompt_text_executor=Mock())
 
     assert isinstance(finder, BedrockAnswerFinder)
+
+
+def test_builds_prompt_executor_from_client_and_default_configuration():
+    client = Mock()
+
+    finder = BedrockAnswerFinder(client=client)
+
+    assert isinstance(finder.prompt_text_executor, PromptTextExecutor)
+    assert finder.prompt_text_executor.client is client
+    assert isinstance(finder.prompt_text_executor.conversation_config, DefaultBedrockConversationConfig)
+    assert finder.prompt_text_executor.model_id == BedrockAnswerFinder.DEFAULT_MODEL_ID
 
 
 def test_delegates_to_standard_prompt_for_standard_and_unspecified_clue_types():

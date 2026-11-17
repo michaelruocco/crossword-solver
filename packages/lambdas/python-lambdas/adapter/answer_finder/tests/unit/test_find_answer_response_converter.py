@@ -12,7 +12,8 @@ def converter():
 
 def test_parses_normalizes_sorts_and_deduplicates_candidates(converter):
     candidates = converter.to_candidates(
-        "Candidates:\n1A|c a t|75\nmalformed line\n1A|DOG|90\n1A|CAT|95\n1A|ignored|too|many|fields\n1A|BEE|60"
+        "Candidates:\n1A|c a t|75\nmalformed line\n1A|DOG|90\n1A|CAT|95\n1A|DOG|80\n"
+        "1A|ignored|too|many|fields\n1A|BEE|60"
     )
 
     assert list(candidates) == [
