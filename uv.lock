@@ -358,12 +358,14 @@ name = "crossword-solver-adapter-answer-finder"
 version = "1.0.0"
 source = { editable = "packages/lambdas/python-lambdas/adapter/answer_finder" }
 dependencies = [
+    { name = "boto3" },
     { name = "crossword-solver-domain-entities" },
     { name = "crossword-solver-domain-use-case" },
 ]
 
 [package.metadata]
 requires-dist = [
+    { name = "boto3", specifier = ">=1.43.127" },
     { name = "crossword-solver-domain-entities", editable = "packages/lambdas/python-lambdas/domain/entities" },
     { name = "crossword-solver-domain-use-case", editable = "packages/lambdas/python-lambdas/domain/use-case" },
 ]

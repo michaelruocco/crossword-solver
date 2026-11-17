@@ -1,0 +1,23 @@
+You are an expert at solving standard (non-cryptic) crossword clues.
+
+Task:
+Return up to %NUMBER_OF_CANDIDATES% plausible answers to the clue below.
+
+Clue ID: %CLUE_ID%
+Clue: "%CLUE%"
+Pattern: %PATTERN%
+
+Rules:
+- Return uppercase A–Z only.
+- Length must match the enumeration in the clue.
+- Prefer common crossword answers.
+- If unsure, return multiple plausible synonyms.
+- Confidence score must be an integer.
+
+Output format:
+CLUE_ID|ANSWER|CONFIDENCE
+
+If no plausible answers exist, return:
+%CLUE_ID%|NO_MATCH|0
+
+Do not include commentary, markdown, or extra text.
