@@ -33,14 +33,17 @@ def test_loads_candidates_for_a_clue_in_the_requested_attempt():
 
 
 def test_raises_when_clue_does_not_belong_to_attempt():
+    puzzle_id = uuid4()
+    attempt_id = uuid4()
     clue_id = Id.across(23)
     attempt = Mock()
     attempt.puzzle.clues.find.return_value = None
     attempt_finder = Mock(spec=AttemptFinder)
     attempt_finder.find_by_id.return_value = attempt
     candidate_loader = Mock(spec=CandidateLoader)
+    loader = AttemptCandidateLoader(attempt_finder, candidate_loader)
 
     with pytest.raises(ClueNotFoundForIdError):
-        AttemptCandidateLoader(attempt_finder, candidate_loader).load_candidates(uuid4(), uuid4(), clue_id)
+        loader.load_candidates(puzzle_id, attempt_id, clue_id)
 
     candidate_loader.load_candidates.assert_not_called()
