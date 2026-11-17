@@ -53,6 +53,15 @@ export interface PuzzleAnswer {
   value: string
 }
 
+export interface PuzzleCandidateAnswer extends PuzzleAnswer {
+  confidenceScore: number
+}
+
+export interface PuzzleCandidateAnswers {
+  clue: PuzzleClue
+  answers: PuzzleCandidateAnswer[]
+}
+
 export interface PuzzleAttemptSummary {
   id: string
   createdAt: string
@@ -206,6 +215,21 @@ export class ApiClient {
       },
     )
     return this.readJson<PuzzleAttempt>(response, 'Unable to save attempt answer.')
+  }
+
+  async postCandidateAnswers(
+    puzzleId: string,
+    attemptId: string,
+    clueId: string,
+    signal?: AbortSignal,
+  ): Promise<PuzzleCandidateAnswers> {
+    const response = await fetch(
+      this.endpoint(
+        `/v1/puzzles/${encodeURIComponent(puzzleId)}/attempts/${encodeURIComponent(attemptId)}/candidate-answers/${encodeURIComponent(clueId)}`,
+      ),
+      { method: 'POST', signal },
+    )
+    return this.readJson<PuzzleCandidateAnswers>(response, 'Unable to load candidate answers.')
   }
 
   async deleteAttemptAnswer(

@@ -16,6 +16,7 @@ from crossword_solver_adapter_api.path_parameters import (
     answer_id_path_parameter,
     attempt_answer_path_ids,
     attempt_id_path_parameter,
+    clue_id_path_parameter,
     puzzle_id_path_parameter,
     uuid_path_parameter,
 )
@@ -114,12 +115,26 @@ def test_answer_id_path_parameter_reads_its_named_id(build_event):
     assert answer_id_path_parameter(event) == "23D"
 
 
+def test_clue_id_path_parameter_reads_its_named_id(build_event):
+    event = APIGatewayProxyEventV2Model.model_validate(build_event(None, {"clueId": "23A"}))
+
+    assert clue_id_path_parameter(event) == "23A"
+
+
 @pytest.mark.parametrize("path_parameters", [None, {}, {"answerId": ""}])
 def test_answer_id_path_parameter_raises_when_missing_or_empty(build_event, path_parameters):
     event = APIGatewayProxyEventV2Model.model_validate(build_event(None, path_parameters))
 
     with pytest.raises(ValueError, match="answerId path parameter is required"):
         answer_id_path_parameter(event)
+
+
+@pytest.mark.parametrize("path_parameters", [None, {}, {"clueId": ""}])
+def test_clue_id_path_parameter_raises_when_missing_or_empty(build_event, path_parameters):
+    event = APIGatewayProxyEventV2Model.model_validate(build_event(None, path_parameters))
+
+    with pytest.raises(ValueError, match="clueId path parameter is required"):
+        clue_id_path_parameter(event)
 
 
 @pytest.mark.parametrize(

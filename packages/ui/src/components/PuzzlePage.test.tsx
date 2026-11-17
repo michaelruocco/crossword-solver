@@ -9,6 +9,7 @@ vi.mock('../apiClient', () => ({
     getAttemptSummaries: vi.fn(),
     getAttempt: vi.fn(),
     createAttempt: vi.fn(),
+    postCandidateAnswers: vi.fn(),
     postAttemptAnswer: vi.fn(),
     deleteAttemptAnswer: vi.fn(),
   },
@@ -466,6 +467,46 @@ test('submits an answer for the selected attempt and displays it in the clue and
   expect(apiClient.postAttemptAnswer).toHaveBeenCalledWith(puzzle.id, attempt.id, { id: '1A', value: 'CAT' })
   expect(screen.getByRole('cell', { name: 'Row 1, column 1: 1, C' })).toBeTruthy()
   expect(screen.getByRole('cell', { name: 'Row 1, column 3: T' })).toBeTruthy()
+})
+
+test('loads candidate answers and saves a selected candidate to the selected attempt', async () => {
+  const savedAttempt = { ...attempt, answerCount: 1, answers: [{ id: '1A', value: 'CAT' }] }
+  vi.mocked(apiClient.getAttemptSummaries).mockResolvedValueOnce([attemptSummary])
+  vi.mocked(apiClient.getAttempt).mockResolvedValueOnce(attempt)
+  vi.mocked(apiClient.postCandidateAnswers).mockResolvedValueOnce({
+    clue: puzzle.clues[2],
+    answers: [
+      { id: '1A', value: 'CAT', confidenceScore: 95 },
+      { id: '1A', value: 'CAR', confidenceScore: 80 },
+    ],
+  })
+  vi.mocked(apiClient.postAttemptAnswer).mockResolvedValueOnce(savedAttempt)
+  render(<PuzzlePage puzzleId={puzzle.id} />)
+
+  fireEvent.click(await screen.findByRole('button', { name: '1 Across: A horizontal entry' }))
+  await screen.findByText('0 saved answers loaded.')
+  fireEvent.click(screen.getByRole('button', { name: 'Load candidate answers' }))
+  expect(await screen.findByRole('button', { name: 'Save CAT, confidence 95' })).toBeTruthy()
+  expect(apiClient.postCandidateAnswers).toHaveBeenCalledWith(puzzle.id, attempt.id, '1A')
+
+  fireEvent.click(screen.getByRole('button', { name: 'Save CAT, confidence 95' }))
+
+  expect(apiClient.postAttemptAnswer).toHaveBeenCalledWith(puzzle.id, attempt.id, { id: '1A', value: 'CAT' })
+  expect(await within(screen.getByRole('region', { name: 'Selected clue' })).findByText(/Saved answer:/)).toBeTruthy()
+  expect(screen.getByRole('cell', { name: 'Row 1, column 1: 1, C' })).toBeTruthy()
+})
+
+test('shows an error when candidate answers cannot be loaded', async () => {
+  vi.mocked(apiClient.getAttemptSummaries).mockResolvedValueOnce([attemptSummary])
+  vi.mocked(apiClient.getAttempt).mockResolvedValueOnce(attempt)
+  vi.mocked(apiClient.postCandidateAnswers).mockRejectedValueOnce(new Error('Candidate service unavailable'))
+  render(<PuzzlePage puzzleId={puzzle.id} />)
+
+  fireEvent.click(await screen.findByRole('button', { name: '1 Across: A horizontal entry' }))
+  await screen.findByText('0 saved answers loaded.')
+  fireEvent.click(screen.getByRole('button', { name: 'Load candidate answers' }))
+
+  expect(await screen.findByRole('alert')).toHaveProperty('textContent', 'Candidate service unavailable')
 })
 
 test('deletes a saved answer and updates the clue, grid, and attempt summary', async () => {

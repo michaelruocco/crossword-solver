@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
-import { Eraser, Send, Trash2 } from 'lucide-react'
-import type { PuzzleAnswer, PuzzleClue, Puzzle } from '../apiClient'
+import { Eraser, Lightbulb, Send, Trash2 } from 'lucide-react'
+import type { PuzzleAnswer, PuzzleCandidateAnswer, PuzzleClue, Puzzle } from '../apiClient'
 import { wordCoordinate } from './puzzlePageHelpers'
 
 type Props = Readonly<{
@@ -15,12 +15,17 @@ type Props = Readonly<{
   saving: boolean
   deleting: boolean
   error: string
+  candidateAnswers: PuzzleCandidateAnswer[] | null
+  candidateLoading: boolean
+  candidateError: string
   focusKey: string
   canSubmit: boolean
   onChange: (index: number, value: string) => void
   onClear: () => void
   onSubmit: () => void
   onDelete: () => void
+  onLoadCandidates: () => void
+  onSelectCandidate: (answer: PuzzleCandidateAnswer) => void
 }>
 
 export function PuzzleAnswerInput({
@@ -35,12 +40,17 @@ export function PuzzleAnswerInput({
   saving,
   deleting,
   error,
+  candidateAnswers,
+  candidateLoading,
+  candidateError,
   focusKey,
   canSubmit,
   onChange,
   onClear,
   onSubmit,
   onDelete,
+  onLoadCandidates,
+  onSelectCandidate,
 }: Props) {
   const inputRefs = useRef<(HTMLInputElement | null)[]>([])
 
@@ -105,6 +115,41 @@ export function PuzzleAnswerInput({
       </div>
       {!attemptSelected && <p className="attempt-status-note">Create or select an attempt before submitting an answer.</p>}
       {error && <p className="attempt-error" role="alert">{error}</p>}
+      <div className="candidate-answer-actions">
+        <button
+          type="button"
+          className="upload-button import-button"
+          disabled={!attemptSelected || candidateLoading || saving || deleting}
+          onClick={onLoadCandidates}
+        >
+          <Lightbulb size={15} aria-hidden="true" />
+          {candidateLoading ? 'Loading candidates…' : 'Load candidate answers'}
+        </button>
+      </div>
+      {candidateError && <p className="attempt-error" role="alert">{candidateError}</p>}
+      {candidateAnswers && (
+        <div className="candidate-answer-list" aria-label="Candidate answers">
+          {candidateAnswers.length === 0
+            ? <p>No candidate answers found.</p>
+            : (
+              <ul>
+                {candidateAnswers.map((answer) => (
+                  <li key={`${answer.id}:${answer.value}`}>
+                    <button
+                      type="button"
+                      disabled={!attemptSelected || saving || deleting}
+                      onClick={() => onSelectCandidate(answer)}
+                      aria-label={`Save ${answer.value}, confidence ${answer.confidenceScore}`}
+                    >
+                      <strong>{answer.value}</strong>
+                      <span>{answer.confidenceScore}% confidence</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+        </div>
+      )}
     </section>
   )
 }

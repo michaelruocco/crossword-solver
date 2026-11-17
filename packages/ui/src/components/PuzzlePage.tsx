@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { ArrowLeft } from 'lucide-react'
-import type { PuzzleClue } from '../apiClient'
+import type { PuzzleCandidateAnswer, PuzzleClue } from '../apiClient'
 import { PuzzleReadyPage } from './PuzzleReadyPage'
+import { PuzzlePageStatus } from './PuzzlePageStatus'
 import {
   canSubmitAnswer,
   getAnswerStatus,
@@ -20,6 +21,7 @@ import {
   updateDraftAnswers,
 } from './puzzlePageHelpers'
 import { usePuzzlePageActions } from './usePuzzlePageActions'
+import { usePuzzleCandidateAnswers } from './usePuzzleCandidateAnswers'
 import { useAttemptDetailsRequest, useAttemptSummariesRequest, usePuzzleRequest } from './usePuzzlePageRequests'
 
 export function PuzzlePage({ puzzleId }: Readonly<{ puzzleId: string }>) {
@@ -71,6 +73,12 @@ export function PuzzlePage({ puzzleId }: Readonly<{ puzzleId: string }>) {
   )
   const displayedAnswer = displayedCharacters.join('')
   const answerStatus = getAnswerStatus(hasAnswerDraft, selectedSavedAnswer)
+  const candidateAnswers = usePuzzleCandidateAnswers(
+    puzzleId,
+    selectedAttemptId,
+    selectedClue,
+    Boolean(loadedAttempt),
+  )
 
   const {
     creatingAttempt,
@@ -112,6 +120,12 @@ export function PuzzlePage({ puzzleId }: Readonly<{ puzzleId: string }>) {
     })
   }
 
+  const selectCandidateAnswer = (answer: PuzzleCandidateAnswer) => {
+    if (loadedAttempt && selectedClue) {
+      void submitAnswer(loadedAttempt, selectedClue, answer.value)
+    }
+  }
+
   const selectClue = (clue: PuzzleClue) => {
     setSelectedClue(clue)
     setAnswerError('')
@@ -126,27 +140,7 @@ export function PuzzlePage({ puzzleId }: Readonly<{ puzzleId: string }>) {
   const attemptLoadStatus = getAttemptLoadStatus(selectedAttempt, attemptDetails)
   const attemptLoadError = getAttemptLoadError(attemptDetails, selectedAttemptId)
 
-  if (state.status === 'loading') {
-    return (
-      <main className="main-content puzzle-page">
-        <a className="puzzle-back" href="/"><ArrowLeft size={16} aria-hidden="true" /> Puzzle library</a>
-        <output className="state-panel">Loading puzzle...</output>
-      </main>
-    )
-  }
-
-  if (state.status === 'error') {
-    return (
-      <main className="main-content puzzle-page">
-        <a className="puzzle-back" href="/"><ArrowLeft size={16} aria-hidden="true" /> Puzzle library</a>
-        <div className="state-panel" role="alert">
-          <h1>Could not load puzzle</h1>
-          <p>{state.message}</p>
-          <button type="button" className="retry-button" onClick={retry}>Try again</button>
-        </div>
-      </main>
-    )
-  }
+  if (state.status !== 'ready') return <PuzzlePageStatus state={state} onRetry={retry} />
 
   return (
     <main className="main-content puzzle-page">
@@ -177,6 +171,9 @@ export function PuzzlePage({ puzzleId }: Readonly<{ puzzleId: string }>) {
         savingAnswer={savingAnswer}
         deletingAnswer={deletingAnswer}
         answerError={answerError}
+        candidateAnswers={candidateAnswers.answers}
+        candidateLoading={candidateAnswers.loading}
+        candidateError={candidateAnswers.error}
         focusKey={`${selectedClueKey}:${loadedAttempt?.id ?? ''}`}
         canSubmit={canSubmitAnswer(Boolean(submitAnswerAction), displayedCharacters)}
         onToggleHistory={() => setAttemptHistoryOpen((open) => !open)}
@@ -187,6 +184,8 @@ export function PuzzlePage({ puzzleId }: Readonly<{ puzzleId: string }>) {
         onClearAnswer={clearAnswerDraft}
         onSubmitAnswer={() => submitAnswerAction?.()}
         onDeleteAnswer={() => deleteAnswerAction?.()}
+        onLoadCandidates={() => void candidateAnswers.load()}
+        onSelectCandidate={selectCandidateAnswer}
         onSelectClue={selectClue}
       />
     </main>

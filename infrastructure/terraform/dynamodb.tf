@@ -57,3 +57,14 @@ resource "aws_dynamodb_table" "attempts" {
     type = "S"
   }
 }
+
+resource "aws_dynamodb_table" "candidates" {
+  name         = "crossword-solver-${var.environment}-candidates"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "candidate_id"
+
+  attribute {
+    name = "candidate_id"
+    type = "S"
+  }
+}

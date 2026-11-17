@@ -188,6 +188,23 @@ test('posts an answer for an attempt and returns the updated attempt', async () 
   )
 })
 
+test('loads candidate answers for an encoded attempt clue', async () => {
+  const candidates = {
+    clue: { id: 23, direction: 'ACROSS', text: 'Feline', lengths: [3] },
+    answers: [{ id: '23A', value: 'CAT', confidenceScore: 90 }],
+  }
+  const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify(candidates), { status: 200 }))
+  vi.stubGlobal('fetch', fetchMock)
+  const client = new ApiClient('https://api.test')
+  const controller = new AbortController()
+
+  await expect(client.postCandidateAnswers('puzzle /1', 'attempt /1', '23A', controller.signal)).resolves.toEqual(candidates)
+  expect(fetchMock).toHaveBeenCalledWith(
+    'https://api.test/v1/puzzles/puzzle%20%2F1/attempts/attempt%20%2F1/candidate-answers/23A',
+    { method: 'POST', signal: controller.signal },
+  )
+})
+
 test('deletes an answer for an attempt and returns the updated attempt', async () => {
   const attempt = {
     id: 'attempt-1',

@@ -471,27 +471,25 @@ name = "crossword-solver-adapter-repository"
 version = "1.0.0"
 source = { editable = "packages/lambdas/python-lambdas/adapter/repository" }
 dependencies = [
+    { name = "boto3" },
     { name = "crossword-solver-domain-entities" },
     { name = "crossword-solver-domain-use-case" },
 ]
 
 [package.dev-dependencies]
 dev = [
-    { name = "boto3" },
     { name = "moto", extra = ["dynamodb"] },
 ]
 
 [package.metadata]
 requires-dist = [
+    { name = "boto3", specifier = ">=1.43.127" },
     { name = "crossword-solver-domain-entities", editable = "packages/lambdas/python-lambdas/domain/entities" },
     { name = "crossword-solver-domain-use-case", editable = "packages/lambdas/python-lambdas/domain/use-case" },
 ]
 
 [package.metadata.requires-dev]
-dev = [
-    { name = "boto3", specifier = ">=1.43.127" },
-    { name = "moto", extras = ["dynamodb"], specifier = ">=5.2.5" },
-]
+dev = [{ name = "moto", extras = ["dynamodb"], specifier = ">=5.2.5" }]
 
 [[package]]
 name = "crossword-solver-adapter-storage"
@@ -579,6 +577,7 @@ source = { editable = "packages/lambdas/python-lambdas/puzzle-api" }
 dependencies = [
     { name = "aws-lambda-powertools", extra = ["parser", "tracer"] },
     { name = "aws-lambda-typing" },
+    { name = "crossword-solver-adapter-answer-finder" },
     { name = "crossword-solver-adapter-api" },
     { name = "crossword-solver-adapter-grid-extractor" },
     { name = "crossword-solver-adapter-queue" },
@@ -601,6 +600,7 @@ requires-dist = [
     { name = "aws-lambda-powertools", extras = ["parser"], specifier = "==3.35.0" },
     { name = "aws-lambda-powertools", extras = ["tracer"], specifier = "==3.35.0" },
     { name = "aws-lambda-typing", specifier = "==2.20.0" },
+    { name = "crossword-solver-adapter-answer-finder", editable = "packages/lambdas/python-lambdas/adapter/answer_finder" },
     { name = "crossword-solver-adapter-api", editable = "packages/lambdas/python-lambdas/adapter/api" },
     { name = "crossword-solver-adapter-grid-extractor", editable = "packages/lambdas/python-lambdas/adapter/grid_extractor" },
     { name = "crossword-solver-adapter-queue", editable = "packages/lambdas/python-lambdas/adapter/queue" },

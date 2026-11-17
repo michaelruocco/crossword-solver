@@ -20,12 +20,17 @@ function renderAnswerInput(overrides: Partial<ComponentProps<typeof PuzzleAnswer
     saving: false,
     deleting: false,
     error: '',
+    candidateAnswers: null,
+    candidateLoading: false,
+    candidateError: '',
     focusKey: 'attempt-1:ACROSS-1',
     canSubmit: false,
     onChange: vi.fn(),
     onClear: vi.fn(),
     onSubmit: vi.fn(),
     onDelete: vi.fn(),
+    onLoadCandidates: vi.fn(),
+    onSelectCandidate: vi.fn(),
     ...overrides,
   }
   render(<PuzzleAnswerInput {...props} />)
@@ -102,4 +107,10 @@ test('keeps focus for other keys and populated input deletion, and reports answe
   expect(onDelete).not.toHaveBeenCalled()
   fireEvent.change(input(1), { target: { value: 'x' } })
   expect(onChange).toHaveBeenCalledWith(0, 'x')
+})
+
+test('shows when candidate answers are empty', () => {
+  renderAnswerInput({ candidateAnswers: [] })
+
+  expect(screen.getByText('No candidate answers found.')).toBeTruthy()
 })

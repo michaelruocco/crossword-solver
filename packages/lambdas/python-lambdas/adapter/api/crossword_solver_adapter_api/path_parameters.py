@@ -21,9 +21,17 @@ def attempt_id_path_parameter(event: APIGatewayProxyEventV2Model) -> UUID:
 
 
 def answer_id_path_parameter(event: APIGatewayProxyEventV2Model) -> str:
-    value = (event.pathParameters or {}).get("answerId")
+    return string_path_parameter(event, "answerId")
+
+
+def clue_id_path_parameter(event: APIGatewayProxyEventV2Model) -> str:
+    return string_path_parameter(event, "clueId")
+
+
+def string_path_parameter(event: APIGatewayProxyEventV2Model, name: str) -> str:
+    value = (event.pathParameters or {}).get(name)
     if not value:
-        raise ValueError("answerId path parameter is required")
+        raise ValueError(f"{name} path parameter is required")
     return value
 
 
