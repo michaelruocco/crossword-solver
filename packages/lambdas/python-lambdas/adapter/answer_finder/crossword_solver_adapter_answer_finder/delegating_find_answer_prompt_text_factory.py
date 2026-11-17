@@ -1,11 +1,11 @@
 import logging
-from importlib.resources import files
 
 from crossword_solver_domain_entities.clue import Clue
 from crossword_solver_domain_entities.clue_type import ClueType
 
 from .default_find_answer_prompt_text_factory import DefaultFindAnswerPromptTextFactory
 from .find_answer_prompt_text_factory import FindAnswerPromptTextFactory
+from .find_answer_prompts import CRYPTIC_FIND_ANSWER_PROMPT, STANDARD_FIND_ANSWER_PROMPT
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +27,5 @@ class DelegatingFindAnswerPromptTextFactory:
 
     @staticmethod
     def build(clue_type: ClueType) -> FindAnswerPromptTextFactory:
-        template_path = files("crossword_solver_adapter_answer_finder").joinpath(
-            "prompts", f"find-candidates-{clue_type.value.lower()}.txt"
-        )
-        return DefaultFindAnswerPromptTextFactory(template_path.read_text(encoding="utf-8"))
+        prompt = CRYPTIC_FIND_ANSWER_PROMPT if clue_type == ClueType.CRYPTIC else STANDARD_FIND_ANSWER_PROMPT
+        return DefaultFindAnswerPromptTextFactory(prompt)
