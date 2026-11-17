@@ -42,6 +42,10 @@ output "attempts_table_name" {
   value = aws_dynamodb_table.attempts.name
 }
 
+output "candidates_table_name" {
+  value = aws_dynamodb_table.candidates.name
+}
+
 output "puzzle_import_queue_url" {
   value = aws_sqs_queue.puzzle_import.url
 }
