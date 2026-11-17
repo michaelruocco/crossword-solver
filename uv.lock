@@ -577,6 +577,7 @@ source = { editable = "packages/lambdas/python-lambdas/puzzle-api" }
 dependencies = [
     { name = "aws-lambda-powertools", extra = ["parser", "tracer"] },
     { name = "aws-lambda-typing" },
+    { name = "crossword-solver-adapter-answer-finder" },
     { name = "crossword-solver-adapter-api" },
     { name = "crossword-solver-adapter-grid-extractor" },
     { name = "crossword-solver-adapter-queue" },
@@ -599,6 +600,7 @@ requires-dist = [
     { name = "aws-lambda-powertools", extras = ["parser"], specifier = "==3.35.0" },
     { name = "aws-lambda-powertools", extras = ["tracer"], specifier = "==3.35.0" },
     { name = "aws-lambda-typing", specifier = "==2.20.0" },
+    { name = "crossword-solver-adapter-answer-finder", editable = "packages/lambdas/python-lambdas/adapter/answer_finder" },
     { name = "crossword-solver-adapter-api", editable = "packages/lambdas/python-lambdas/adapter/api" },
     { name = "crossword-solver-adapter-grid-extractor", editable = "packages/lambdas/python-lambdas/adapter/grid_extractor" },
     { name = "crossword-solver-adapter-queue", editable = "packages/lambdas/python-lambdas/adapter/queue" },

@@ -141,6 +141,29 @@ locals {
         { actions = ["dynamodb:PutItem"], resources = [aws_dynamodb_table.attempts.arn] },
       ]
     }
+
+    get-candidate-answers = {
+      handler   = "crossword_solver_puzzle_api.get_candidate_answers.get_candidate_answers_handler.lambda_handler"
+      route_key = "POST /v1/puzzles/{puzzleId}/attempts/{attemptId}/candidate-answers/{clueId}"
+      timeout   = 30
+      environment = {
+        ATTEMPTS_TABLE_NAME    = aws_dynamodb_table.attempts.name
+        CANDIDATES_TABLE_NAME  = aws_dynamodb_table.candidates.name
+        PUZZLES_TABLE_NAME     = aws_dynamodb_table.puzzles.name
+        ANSWER_FINDER_MODEL_ID = "eu.anthropic.claude-opus-4-6-v1"
+      }
+      statements = [
+        { actions = ["dynamodb:GetItem"], resources = [aws_dynamodb_table.attempts.arn, aws_dynamodb_table.puzzles.arn, aws_dynamodb_table.candidates.arn] },
+        { actions = ["dynamodb:PutItem"], resources = [aws_dynamodb_table.candidates.arn] },
+        {
+          actions = ["bedrock:InvokeModel"]
+          resources = [
+            "arn:aws:bedrock:${var.aws_region}:${data.aws_caller_identity.current.account_id}:inference-profile/eu.anthropic.claude-opus-4-6-v1",
+            "arn:aws:bedrock:*::foundation-model/anthropic.claude-opus-4-6-v1",
+          ]
+        },
+      ]
+    }
   }
 }
 

@@ -66,6 +66,11 @@
         "generator": "py#lambda-function",
         "path": "crossword_solver_puzzle_api/delete_attempt_answer/delete_attempt_answer_handler.py",
         "name": "delete-attempt-answer"
+      },
+      {
+        "generator": "py#lambda-function",
+        "path": "crossword_solver_puzzle_api/get_candidate_answers/get_candidate_answers_handler.py",
+        "name": "get-candidate-answers"
       }
     ]
   },

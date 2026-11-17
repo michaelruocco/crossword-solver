@@ -6,3 +6,6 @@ Domain use cases for the crossword solver python lambdas.
 finder. `CandidateBatchLoader` loads multiple clues concurrently using an
 injected executor, with a 30-second per-clue timeout and empty candidates for
 individual lookup failures.
+
+`AttemptCandidateLoader` resolves a clue within an attempt before delegating to
+`CandidateLoader`.
