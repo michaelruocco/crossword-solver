@@ -1,3 +1,5 @@
+from unittest.mock import Mock
+
 import boto3
 import pytest
 from crossword_solver_domain_entities.answer import Answer
@@ -93,3 +95,40 @@ def test_delete_all_removes_every_candidate(repository):
 
     assert repository.get(first) is None
     assert repository.get(second) is None
+
+
+def test_delete_all_deletes_candidates_from_all_scan_pages(repository, monkeypatch):
+    first = a_clue()
+    second = a_clue(clue_id=Id.down(2), pattern="D??")
+    repository.save(Candidates(first, [Answer(first.id, "CAT", 90)]))
+    repository.save(Candidates(second, [Answer(second.id, "DOG", 90)]))
+    first_key = repository.hash_factory.to_hash(first)
+    second_key = repository.hash_factory.to_hash(second)
+    first_page_key = {"candidate_id": first_key}
+    scan = Mock(
+        side_effect=[
+            {"Items": [{"candidate_id": first_key}], "LastEvaluatedKey": first_page_key},
+            {"Items": [{"candidate_id": second_key}]},
+        ]
+    )
+    monkeypatch.setattr(repository.table, "scan", scan)
+
+    repository.delete_all()
+
+    assert scan.call_count == 2
+    assert scan.call_args_list[0].kwargs == {"ProjectionExpression": "candidate_id"}
+    assert scan.call_args_list[1].kwargs == {
+        "ProjectionExpression": "candidate_id",
+        "ExclusiveStartKey": first_page_key,
+    }
+    assert repository.get(first) is None
+    assert repository.get(second) is None
+
+
+def test_delete_all_does_not_open_batch_writer_when_table_is_empty(repository):
+    batch_writer = Mock()
+    repository.table.batch_writer = batch_writer
+
+    repository.delete_all()
+
+    batch_writer.assert_not_called()
