@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { ArrowLeft } from 'lucide-react'
-import type { PuzzleClue } from '../apiClient'
+import { apiClient, type PuzzleCandidateAnswer, type PuzzleClue } from '../apiClient'
 import { PuzzleReadyPage } from './PuzzleReadyPage'
 import {
   canSubmitAnswer,
@@ -28,6 +28,12 @@ export function PuzzlePage({ puzzleId }: Readonly<{ puzzleId: string }>) {
   const [answerDrafts, setAnswerDrafts] = useState<Record<string, string[]>>({})
   const [selectedAttemptId, setSelectedAttemptId] = useState<string | null>(null)
   const [attemptHistoryOpen, setAttemptHistoryOpen] = useState(false)
+  const [candidateAnswersState, setCandidateAnswersState] = useState<{
+    key: string
+    status: 'loading' | 'ready' | 'error'
+    answers: PuzzleCandidateAnswer[]
+    error: string
+  } | null>(null)
   const {
     attemptSummaries,
     setAttemptSummaries,
@@ -44,6 +50,10 @@ export function PuzzlePage({ puzzleId }: Readonly<{ puzzleId: string }>) {
   const selectedClueKey = selectedClue
     ? `${selectedAttemptId ?? 'unselected'}:${selectedClue.direction}-${selectedClue.id}`
     : ''
+  const candidateLookupKey = selectedClue && selectedAttemptId ? selectedClueKey : ''
+  const candidateAnswersStateForSelection = candidateAnswersState?.key === candidateLookupKey
+    ? candidateAnswersState
+    : null
   const answerDraft = answerDrafts[selectedClueKey] ?? []
   const hasAnswerDraft = answerDraft.some(Boolean)
   const selectedAttempt = getSelectedAttempt(attemptSummaries, selectedAttemptId)
@@ -112,6 +122,33 @@ export function PuzzlePage({ puzzleId }: Readonly<{ puzzleId: string }>) {
     })
   }
 
+  const loadCandidateAnswers = async () => {
+    if (!selectedClue || !selectedAttemptId || !loadedAttempt) return
+    const key = selectedClueKey
+    setCandidateAnswersState({ key, status: 'loading', answers: [], error: '' })
+    try {
+      const result = await apiClient.postCandidateAnswers(
+        puzzleId,
+        selectedAttemptId,
+        `${selectedClue.id}${selectedClue.direction === 'ACROSS' ? 'A' : 'D'}`,
+      )
+      setCandidateAnswersState({ key, status: 'ready', answers: result.answers, error: '' })
+    } catch (error) {
+      setCandidateAnswersState({
+        key,
+        status: 'error',
+        answers: [],
+        error: error instanceof Error ? error.message : 'Unable to load candidate answers.',
+      })
+    }
+  }
+
+  const selectCandidateAnswer = (answer: PuzzleCandidateAnswer) => {
+    if (loadedAttempt && selectedClue) {
+      void submitAnswer(loadedAttempt, selectedClue, answer.value)
+    }
+  }
+
   const selectClue = (clue: PuzzleClue) => {
     setSelectedClue(clue)
     setAnswerError('')
@@ -177,6 +214,13 @@ export function PuzzlePage({ puzzleId }: Readonly<{ puzzleId: string }>) {
         savingAnswer={savingAnswer}
         deletingAnswer={deletingAnswer}
         answerError={answerError}
+        candidateAnswers={candidateAnswersStateForSelection?.status === 'ready'
+          ? candidateAnswersStateForSelection.answers
+          : null}
+        candidateLoading={candidateAnswersStateForSelection?.status === 'loading'}
+        candidateError={candidateAnswersStateForSelection?.status === 'error'
+          ? candidateAnswersStateForSelection.error
+          : ''}
         focusKey={`${selectedClueKey}:${loadedAttempt?.id ?? ''}`}
         canSubmit={canSubmitAnswer(Boolean(submitAnswerAction), displayedCharacters)}
         onToggleHistory={() => setAttemptHistoryOpen((open) => !open)}
@@ -187,6 +231,8 @@ export function PuzzlePage({ puzzleId }: Readonly<{ puzzleId: string }>) {
         onClearAnswer={clearAnswerDraft}
         onSubmitAnswer={() => submitAnswerAction?.()}
         onDeleteAnswer={() => deleteAnswerAction?.()}
+        onLoadCandidates={() => void loadCandidateAnswers()}
+        onSelectCandidate={selectCandidateAnswer}
         onSelectClue={selectClue}
       />
     </main>

@@ -61,6 +61,15 @@
 .answer-character-inputs input:disabled { border-color:#cbd6c7; background:#e7f2b7; color:var(--forest); opacity:1; }
 .answer-actions { display:flex; flex-shrink:0; gap:5px; }
 .answer-delete { color:#a23e31; }
+.candidate-answer-actions { margin-top:12px; }
+.candidate-answer-actions button { min-height:34px; }
+.candidate-answer-list { margin-top:12px; }
+.candidate-answer-list > p { color:var(--muted); font-size:12px; }
+.candidate-answer-list ul { display:flex; flex-wrap:wrap; gap:7px; padding:0; margin:0; list-style:none; }
+.candidate-answer-list button { display:grid; gap:3px; padding:8px 10px; border:1px solid #cbd6c7; border-radius:4px; background:#fff; color:var(--ink); text-align:left; cursor:pointer; }
+.candidate-answer-list button:hover { border-color:var(--forest-soft); background:#edf3e9; }
+.candidate-answer-list button strong { color:var(--forest); font:600 13px/1.3 var(--mono); }
+.candidate-answer-list button span { color:var(--muted); font-size:10px; }
 @media (max-width:1000px) {
   .puzzle-workspace { grid-template-columns:minmax(0, 1fr) minmax(0, .8fr); gap:26px; }
   .clue-columns { grid-template-columns:minmax(0, 1fr); }

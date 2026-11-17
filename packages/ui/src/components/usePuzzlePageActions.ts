@@ -92,12 +92,13 @@ export function usePuzzlePageActions({
   const submitAnswer = async (
     attempt: PuzzleAttempt,
     clue: PuzzleClue,
+    answerValue = displayedAnswer,
   ) => {
     setSavingAnswer(true)
     setAnswerError('')
     const answer: PuzzleAnswer = {
       id: clueAnswerId(clue),
-      value: displayedAnswer.trim().toUpperCase(),
+      value: answerValue.trim().toUpperCase(),
     }
     try {
       const updatedAttempt = await apiClient.postAttemptAnswer(puzzleId, attempt.id, answer)

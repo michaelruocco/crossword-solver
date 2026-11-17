@@ -1,5 +1,5 @@
 import { Sparkles } from 'lucide-react'
-import type { Puzzle, PuzzleAnswer, PuzzleAttemptSummary, PuzzleClue } from '../apiClient'
+import type { Puzzle, PuzzleAnswer, PuzzleAttemptSummary, PuzzleCandidateAnswer, PuzzleClue } from '../apiClient'
 import { PuzzleAnswerInput } from './PuzzleAnswerInput'
 import { PuzzleAttemptSelector } from './PuzzleAttemptSelector'
 import { PuzzleClueList } from './PuzzleClueList'
@@ -32,6 +32,9 @@ type Props = Readonly<{
   savingAnswer: boolean
   deletingAnswer: boolean
   answerError: string
+  candidateAnswers: PuzzleCandidateAnswer[] | null
+  candidateLoading: boolean
+  candidateError: string
   focusKey: string
   canSubmit: boolean
   onToggleHistory: () => void
@@ -42,6 +45,8 @@ type Props = Readonly<{
   onClearAnswer: () => void
   onSubmitAnswer: () => void
   onDeleteAnswer: () => void
+  onLoadCandidates: () => void
+  onSelectCandidate: (answer: PuzzleCandidateAnswer) => void
   onSelectClue: (clue: PuzzleClue) => void
 }>
 
@@ -71,6 +76,9 @@ export function PuzzleReadyPage({
   savingAnswer,
   deletingAnswer,
   answerError,
+  candidateAnswers,
+  candidateLoading,
+  candidateError,
   focusKey,
   canSubmit,
   onToggleHistory,
@@ -81,6 +89,8 @@ export function PuzzleReadyPage({
   onClearAnswer,
   onSubmitAnswer,
   onDeleteAnswer,
+  onLoadCandidates,
+  onSelectCandidate,
   onSelectClue,
 }: Props) {
   return (
@@ -125,16 +135,21 @@ export function PuzzleReadyPage({
               characters={displayedCharacters}
               crossingCharacters={crossingCharacters}
               hasDraft={hasAnswerDraft}
-              attemptSelected={Boolean(selectedAttemptId)}
+              attemptSelected={Boolean(selectedAttemptId && attemptLoadStatus === null)}
               saving={savingAnswer}
               deleting={deletingAnswer}
               error={answerError}
+              candidateAnswers={candidateAnswers}
+              candidateLoading={candidateLoading}
+              candidateError={candidateError}
               focusKey={focusKey}
               canSubmit={canSubmit}
               onChange={onChangeAnswer}
               onClear={onClearAnswer}
               onSubmit={onSubmitAnswer}
               onDelete={onDeleteAnswer}
+              onLoadCandidates={onLoadCandidates}
+              onSelectCandidate={onSelectCandidate}
             />
           )}
           <PuzzleClueList

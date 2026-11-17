@@ -20,12 +20,17 @@ function renderAnswerInput(overrides: Partial<ComponentProps<typeof PuzzleAnswer
     saving: false,
     deleting: false,
     error: '',
+    candidateAnswers: null,
+    candidateLoading: false,
+    candidateError: '',
     focusKey: 'attempt-1:ACROSS-1',
     canSubmit: false,
     onChange: vi.fn(),
     onClear: vi.fn(),
     onSubmit: vi.fn(),
     onDelete: vi.fn(),
+    onLoadCandidates: vi.fn(),
+    onSelectCandidate: vi.fn(),
     ...overrides,
   }
   render(<PuzzleAnswerInput {...props} />)
