@@ -6,8 +6,8 @@ from crossword_solver_domain_entities.puzzle import Puzzle
 from crossword_solver_domain_entities.words_factory import WordsFactory
 
 from .clock import Clock, system_clock
-from .clue_extractor import ClueExtractor
 from .clue_length_population_policy import ClueLengthPopulationPolicy
+from .clues_factory import CluesFactory
 from .grid_extractor import GridExtractor
 from .image_downloader import ImageDownloader
 from .image_validator import ImageValidator
@@ -17,7 +17,7 @@ from .puzzle_repository import PuzzleRepository
 class PuzzleCreator:
     def __init__(
         self,
-        clue_extractor: ClueExtractor,
+        clues_factory: CluesFactory,
         grid_extractor: GridExtractor,
         image_downloader: ImageDownloader,
         repository: PuzzleRepository,
@@ -27,7 +27,7 @@ class PuzzleCreator:
         clue_length_population_policy: ClueLengthPopulationPolicy | None = None,
     ):
         self.image_downloader = image_downloader
-        self.clue_extractor = clue_extractor
+        self.clues_factory = clues_factory
         self.grid_extractor = grid_extractor
         self.repository = repository
         self.clock = clock
@@ -43,7 +43,7 @@ class PuzzleCreator:
             return existing.id
         # Bedrock waits on the network while grid extraction runs OCR, so threads let them overlap.
         with ThreadPoolExecutor(max_workers=2) as executor:
-            clues_future = executor.submit(self.clue_extractor.extract_clues, image)
+            clues_future = executor.submit(self.clues_factory.build, image)
             grid_future = executor.submit(self.grid_extractor.extract_grid, image)
             clues = clues_future.result()
             grid = grid_future.result()

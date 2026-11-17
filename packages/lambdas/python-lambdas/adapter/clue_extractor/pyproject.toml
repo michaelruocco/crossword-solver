@@ -43,6 +43,7 @@ description = "Crossword solver clue extraction adapter (Bedrock)."
 requires-python = ">=3.14"
 readme = "README.md"
 dependencies = [
+  "boto3>=1.43.127",
   "pydantic",
   "crossword-solver-domain-entities",
   "crossword-solver-domain-use-case",
@@ -53,9 +54,6 @@ dependencies = [
 crossword-solver-domain-use-case = { workspace = true }
 crossword-solver-domain-entities = { workspace = true }
 crossword-solver-image = { workspace = true }
-
-[dependency-groups]
-dev = [ "boto3>=1.43.127" ]
 
 [build-system]
 requires = [ "hatchling" ]

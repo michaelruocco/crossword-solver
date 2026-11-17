@@ -37,7 +37,8 @@ data "archive_file" "puzzle_import_worker" {
 data "aws_caller_identity" "current" {}
 
 locals {
-  create_puzzle_clue_extractor_model_id = "eu.anthropic.claude-opus-4-6-v1"
+  create_puzzle_clue_extractor_model_id   = "eu.anthropic.claude-opus-4-6-v1"
+  create_puzzle_clue_type_policy_model_id = "eu.anthropic.claude-opus-4-6-v1"
 }
 
 data "aws_iam_policy_document" "create_puzzle_bedrock" {
@@ -45,10 +46,15 @@ data "aws_iam_policy_document" "create_puzzle_bedrock" {
     actions = ["bedrock:InvokeModel"]
 
     # The eu.* inference profile routes to the model in several EU regions, so the model ARN needs a wildcard region.
-    resources = [
-      "arn:aws:bedrock:${var.aws_region}:${data.aws_caller_identity.current.account_id}:inference-profile/${local.create_puzzle_clue_extractor_model_id}",
-      "arn:aws:bedrock:*::foundation-model/${trimprefix(local.create_puzzle_clue_extractor_model_id, "eu.")}",
-    ]
+    resources = flatten([
+      for model_id in toset([
+        local.create_puzzle_clue_extractor_model_id,
+        local.create_puzzle_clue_type_policy_model_id,
+        ]) : [
+        "arn:aws:bedrock:${var.aws_region}:${data.aws_caller_identity.current.account_id}:inference-profile/${model_id}",
+        "arn:aws:bedrock:*::foundation-model/${trimprefix(model_id, "eu.")}",
+      ]
+    ])
   }
 }
 
@@ -124,6 +130,7 @@ resource "aws_lambda_function" "process_puzzle_import" {
   environment {
     variables = {
       CLUE_EXTRACTOR_MODEL_ID   = local.create_puzzle_clue_extractor_model_id
+      CLUE_TYPE_POLICY_MODEL_ID = local.create_puzzle_clue_type_policy_model_id
       LD_LIBRARY_PATH           = "/opt/lib:/var/lang/lib:/lib64:/usr/lib64:/var/runtime:/var/task"
       PUZZLES_TABLE_NAME        = aws_dynamodb_table.puzzles.name
       PUZZLE_IMPORTS_TABLE_NAME = aws_dynamodb_table.puzzle_imports.name

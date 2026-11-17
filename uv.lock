@@ -402,27 +402,21 @@ name = "crossword-solver-adapter-clue-extractor"
 version = "1.0.0"
 source = { editable = "packages/lambdas/python-lambdas/adapter/clue_extractor" }
 dependencies = [
+    { name = "boto3" },
     { name = "crossword-solver-domain-entities" },
     { name = "crossword-solver-domain-use-case" },
     { name = "crossword-solver-image" },
     { name = "pydantic" },
 ]
 
-[package.dev-dependencies]
-dev = [
-    { name = "boto3" },
-]
-
 [package.metadata]
 requires-dist = [
+    { name = "boto3", specifier = ">=1.43.127" },
     { name = "crossword-solver-domain-entities", editable = "packages/lambdas/python-lambdas/domain/entities" },
     { name = "crossword-solver-domain-use-case", editable = "packages/lambdas/python-lambdas/domain/use-case" },
     { name = "crossword-solver-image", editable = "packages/lambdas/python-lambdas/image" },
     { name = "pydantic" },
 ]
-
-[package.metadata.requires-dev]
-dev = [{ name = "boto3", specifier = ">=1.43.127" }]
 
 [[package]]
 name = "crossword-solver-adapter-grid-extractor"
