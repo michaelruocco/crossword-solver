@@ -43,7 +43,7 @@ description = "Crossword solver grid extraction adapter (OpenCV and structural n
 requires-python = ">=3.14"
 readme = "README.md"
 dependencies = [
-  "numpy>=2.5.4",
+  "numpy>=2.5.5",
   "crossword-solver-domain-entities",
   "crossword-solver-domain-use-case",
 ]

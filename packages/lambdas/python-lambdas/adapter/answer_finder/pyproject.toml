@@ -40,7 +40,7 @@ description = "Crossword solver answer finder adapter."
 requires-python = ">=3.14"
 readme = "README.md"
 dependencies = [
-  "boto3>=1.43.127",
+  "boto3>=1.44.4",
   "crossword-solver-domain-entities",
   "crossword-solver-domain-use-case",
 ]
