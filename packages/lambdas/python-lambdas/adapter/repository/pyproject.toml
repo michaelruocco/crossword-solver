@@ -50,7 +50,7 @@ crossword-solver-domain-use-case = { workspace = true }
 crossword-solver-domain-entities = { workspace = true }
 
 [dependency-groups]
-dev = ["moto[dynamodb]>=5.2.5"]
+dev = ["moto[dynamodb]>=5.2.6"]
 
 [build-system]
 requires = [ "hatchling" ]
