@@ -1,4 +1,5 @@
 from aws_lambda_powertools import Logger, Tracer
+from aws_lambda_powertools.logging.utils import copy_config_to_registered_loggers
 from aws_lambda_powertools.utilities.parser import event_parser
 from aws_lambda_powertools.utilities.parser.models import APIGatewayProxyEventV2Model
 from aws_lambda_powertools.utilities.typing import LambdaContext
@@ -15,6 +16,8 @@ from ..candidate_answer_dependencies import (
 
 logger: Logger = Logger(service="GetCandidateAnswers")
 tracer: Tracer = Tracer(service="GetCandidateAnswers")
+
+copy_config_to_registered_loggers(source_logger=logger, include={"crossword_solver_domain_use_case"})
 
 
 @tracer.capture_lambda_handler
