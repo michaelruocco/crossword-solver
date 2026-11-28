@@ -58,8 +58,9 @@ class Answer:
         return self.value[index] if 0 <= index < len(self.value) else None
 
     def matches(self, pattern: str) -> bool:
+        normalized_value = self.normalized_value
         return all(
-            not character.isalpha() or (index < len(self.value) and self.value[index] == character)
+            character == "?" or (index < len(normalized_value) and normalized_value[index] == character)
             for index, character in enumerate(pattern)
         )
 
