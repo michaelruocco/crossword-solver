@@ -15,7 +15,7 @@ class CandidateLoader:
         self.repository = repository
 
     def load_candidates(self, clue: Clue, candidates_per_clue: int = 5) -> Candidates:
-        logger.debug("getting candidates for clue %s", clue.as_string())
+        logger.info("getting candidates for clue %s", clue.as_string())
         cached_candidates = self.repository.get(clue)
         if cached_candidates is not None:
             return cached_candidates

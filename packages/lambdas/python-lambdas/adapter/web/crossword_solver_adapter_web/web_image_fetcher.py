@@ -38,7 +38,7 @@ def _connect_to_allowed_address(host: str, port: int, timeout: float, is_allowed
 
 # The address is checked at connect time, so it also covers redirects and DNS answers that change between lookups.
 class _AllowedHTTPConnection(http.client.HTTPConnection):
-    def __init__(self, *args, is_allowed: AddressPolicy, **kwargs):
+    def __init__(self, *args, is_allowed: AddressPolicy = is_public_address, **kwargs):
         super().__init__(*args, **kwargs)
         self._create_connection = lambda address, timeout, source_address=None: _connect_to_allowed_address(
             address[0], address[1], timeout, is_allowed
@@ -46,7 +46,7 @@ class _AllowedHTTPConnection(http.client.HTTPConnection):
 
 
 class _AllowedHTTPSConnection(http.client.HTTPSConnection):
-    def __init__(self, *args, is_allowed: AddressPolicy, **kwargs):
+    def __init__(self, *args, is_allowed: AddressPolicy = is_public_address, **kwargs):
         super().__init__(*args, **kwargs)
         self._create_connection = lambda address, timeout, source_address=None: _connect_to_allowed_address(
             address[0], address[1], timeout, is_allowed
