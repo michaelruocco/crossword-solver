@@ -60,6 +60,28 @@ def test_leaves_unknown_letters_when_there_are_no_saved_intersecting_answers():
     assert patterned_clue.pattern == "???"
 
 
+def test_leaves_unknown_letters_when_intersecting_answer_is_missing_or_too_short():
+    across_clue = Clue(Id.across(1), "Across", [3])
+    down_clue_with_short_answer = Clue(Id.down(1), "Down with short answer", [3])
+    unanswered_down_clue = Clue(Id.down(2), "Unanswered down", [3])
+    clues = Clues([across_clue, down_clue_with_short_answer, unanswered_down_clue])
+    attempt = _attempt_with(
+        clues,
+        [
+            Word(Id.across(1), 3, Coordinates(0, 0)),
+            Word(Id.down(1), 3, Coordinates(1, 2)),
+            Word(Id.down(2), 3, Coordinates(2, 0)),
+        ],
+        [Answer(Id.down(1), "A")],
+    )
+
+    patterned_clues = PatternFactory().add_patterns_to_clues(clues, attempt)
+
+    patterned_across = patterned_clues.find(across_clue.id)
+    assert patterned_across is not None
+    assert patterned_across.pattern == "???"
+
+
 def _attempt_with(clues: Clues, words: list[Word], answers: list[Answer]) -> Attempt:
     puzzle = Puzzle(
         id=uuid4(),
