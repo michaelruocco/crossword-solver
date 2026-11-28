@@ -30,6 +30,20 @@ def test_finds_candidates_and_filters_answers_that_do_not_match_clue():
     assert list(candidates) == [Answer(Id.across(1), "CAT", confidence_score=90)]
 
 
+def test_uses_math_prompt_and_filters_candidates_against_known_digits():
+    clue = Clue(Id.across(1), "22 + 22", [2], type=ClueType.MATH, pattern="4?")
+    executor = Mock()
+    executor.execute.return_value = "1A|44|90\n1A|34|80"
+    finder = BedrockAnswerFinder(prompt_text_executor=executor)
+
+    candidates = finder.find_candidates(clue, 2)
+    prompt = executor.execute.call_args.args[0]
+
+    assert "digits, not spelled-out number words" in prompt
+    assert "Pattern: 4?" in prompt
+    assert list(candidates) == [Answer(Id.across(1), "44", confidence_score=90)]
+
+
 def test_bedrock_finder_satisfies_answer_finder_protocol():
     finder: AnswerFinder = BedrockAnswerFinder(prompt_text_executor=Mock())
 

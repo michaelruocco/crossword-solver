@@ -48,3 +48,10 @@ def test_letter_at_and_matches_handle_bounds_and_unknown_pattern_characters():
     assert not answer.matches("D?T")
     assert not answer.matches("CATD")
     assert answer.matches("????")
+
+
+def test_matches_known_digits_in_numeric_patterns():
+    answer = Answer(Id.across(3), "42")
+
+    assert answer.matches("4?")
+    assert not answer.matches("3?")

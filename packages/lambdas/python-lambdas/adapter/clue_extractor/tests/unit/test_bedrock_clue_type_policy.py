@@ -12,7 +12,7 @@ from crossword_solver_adapter_clue_extractor.determine_puzzle_type_prompt_text_f
 )
 
 
-@pytest.mark.parametrize("response_text", ["STANDARD", "CRYPTIC"])
+@pytest.mark.parametrize("response_text", ["STANDARD", "CRYPTIC", "MATH"])
 def test_determines_clue_type_with_bedrock_converse(response_text):
     client = Mock()
     client.converse.return_value = {"output": {"message": {"content": [{"text": f" {response_text}\n"}]}}}
@@ -59,3 +59,5 @@ def test_prompt_factory_includes_all_clue_ids_and_text():
     assert "2D|Cryptic clue (4)" in prompt
     assert "STANDARD" in prompt
     assert "CRYPTIC" in prompt
+    assert "MATH" in prompt
+    assert "arithmetic, equations, sequences, or calculations" in prompt

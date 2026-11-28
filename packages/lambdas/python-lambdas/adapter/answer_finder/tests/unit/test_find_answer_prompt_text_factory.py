@@ -25,9 +25,11 @@ def test_default_prompt_factory_loads_standard_and_cryptic_templates():
     factory = DelegatingFindAnswerPromptTextFactory()
     standard = Clue(Id.across(1), "Feline", [3], type=ClueType.STANDARD)
     cryptic = Clue(Id.down(2), "Insect in engine", [3], type=ClueType.CRYPTIC)
+    math = Clue(Id.across(3), "22 + 22", [2], type=ClueType.MATH, pattern="4?")
 
     standard_prompt = factory.to_prompt_text(standard, 3)
     cryptic_prompt = factory.to_prompt_text(cryptic, 2)
+    math_prompt = factory.to_prompt_text(math, 1)
 
     assert "standard (non-cryptic) crossword clues" in standard_prompt
     assert "1A" in standard_prompt
@@ -36,3 +38,7 @@ def test_default_prompt_factory_loads_standard_and_cryptic_templates():
     assert "cryptic crossword clue" in cryptic_prompt
     assert "wordplay" in cryptic_prompt
     assert "up to 2 plausible answers" in cryptic_prompt
+    assert "mathematical crossword clues" in math_prompt
+    assert "digits, not spelled-out number words" in math_prompt
+    assert "Pattern: 4?" in math_prompt
+    assert "up to 1 plausible numeric answers" in math_prompt

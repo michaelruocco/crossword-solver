@@ -66,3 +66,30 @@ If no plausible answers exist, return:
 
 Do not include commentary, markdown, or extra text.
 """
+
+MATH_FIND_ANSWER_PROMPT = """
+You are an expert at solving mathematical crossword clues.
+
+Task:
+Return up to %NUMBER_OF_CANDIDATES% plausible numeric answers to the clue below.
+
+Clue ID: %CLUE_ID%
+Clue: "%CLUE%"
+Pattern: %PATTERN%
+
+Rules:
+- Solve the mathematical problem described by the clue.
+- Return the answer using digits, not spelled-out number words.
+- Match every known digit in the pattern.
+- Length must match the enumeration in the clue.
+- Do not include units, explanations, or extra text in the answer.
+- Confidence score must be an integer.
+
+Output format:
+CLUE_ID|ANSWER|CONFIDENCE
+
+If no plausible answers exist, return:
+%CLUE_ID%|NO_MATCH|0
+
+Do not include commentary, markdown, or extra text.
+"""
